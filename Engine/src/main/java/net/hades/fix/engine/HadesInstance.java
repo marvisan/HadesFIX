@@ -79,10 +79,9 @@ public class HadesInstance implements Engine, Reportable, Commandable {
     private static final int DEFAULT_MANAGEMENT_PORT = 33333;
     private static final String HADES_INSTANCE_EVENT_PROCESSOR = "HADES_INSTANCE";
 
-    private BlockingQueue<Command> commandQueue;
     private static MBeanServer server;
 
-    private HadesInstanceInfo configuration;
+    private final HadesInstanceInfo configuration;
 
     private ConcurrentMap<SessionAddress, SessionCoordinator> sessions;
     private ConcurrentMap<String, TCPServer> tcpServers;
@@ -111,7 +110,7 @@ public class HadesInstance implements Engine, Reportable, Commandable {
             HadesInstance engine = new HadesInstance();
             engine.initialise();
             engine.startEngine();
-            server = MBeanServerFactory.createMBeanServer("HadesDomain");
+            server = MBeanServerFactory.createMBeanServer("HadesFIXDomain");
             openMBean = new HadesFIXEngineMBean(engine);
             openMBeanObjectName = new ObjectName("HadesDomain", "engine", "HadesFIXEngineMBean");
             server.registerMBean(openMBean, openMBeanObjectName);
@@ -119,7 +118,7 @@ public class HadesInstance implements Engine, Reportable, Commandable {
 
             engine.eventProcessor.onAlertEvent(new AlertEvent(engine,
                     Alert.createAlert(engine.getConfiguration().getName(),
-                            ComponentType.HadesEngine.toString(),
+                            ComponentType.HadesFIXEngine.toString(),
                             BaseSeverityType.INFO,
                             AlertCode.COMPONENT_STARTED,
                             "HadesFIX engine successfully started", null)));
@@ -215,7 +214,7 @@ public class HadesInstance implements Engine, Reportable, Commandable {
                 String error = "Thread interrupted unexpectedly.";
                 LOGGER.log(Level.SEVERE, "{0} Error was : {1}", new Object[]{error, ExceptionUtil.getStackTrace(ex)});
 
-                eventProcessor.onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.HadesEngine.toString(),
+                eventProcessor.onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.HadesFIXEngine.toString(),
                         BaseSeverityType.WARNING, AlertCode.THREAD_INTERRUPTED, "HadesFIX engine process interrupted", ex)));
 
                 ThreadUtil.sleep(1000);

@@ -59,7 +59,7 @@ import net.hades.fix.message.util.MsgUtil;
  * 
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
  */
-public abstract class SessionCoordinator extends Thread implements Coordinable, Reportable, Commandable {
+public abstract class SessionCoordinator implements Handler {
 
     private static final Logger LOGGER = Logger.getLogger(SessionCoordinator.class.getName());
 

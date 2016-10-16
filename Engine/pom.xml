@@ -10,6 +10,35 @@
     <artifactId>Engine</artifactId>
     <packaging>jar</packaging>
     
+    <build>
+	<plugins>
+	    <plugin>
+		<groupId>org.codehaus.mojo</groupId>
+		<artifactId>jaxb2-maven-plugin</artifactId>
+		<version>2.2</version>
+		<executions>
+		    <execution>
+			<id>schemagen</id>
+			<goals>
+			    <goal>schemagen</goal>
+			</goals>
+		    </execution>
+		</executions>
+		<configuration>
+		    <packageName>net.hades.fix.config.model</packageName>
+		    <schemaSourceExcludeFilters>
+			<noJaxbIndex implementation="org.codehaus.mojo.jaxb2.shared.filters.pattern.PatternFileFilter">
+			    <patterns>
+				<pattern>jaxb\.index</pattern>
+			    </patterns>
+			</noJaxbIndex>
+			
+		    </schemaSourceExcludeFilters>
+		</configuration>
+	    </plugin>
+	</plugins>
+    </build>
+    
     <dependencies>
 	<dependency>
 	    <groupId>net.hades.fix</groupId>
