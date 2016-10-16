@@ -1,0 +1,378 @@
+========================================================================
+CLIENT
+========================================================================
+
++++ TC-0001 Normal Login Sequence
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+CLIENT									SERVER
+
+tx=1	-------------------------->		rx=1
+	Logon
+rx=1									tx=1
+
+rx=1	<------------------------		tx=1
+	Logon
+tx=2									rx=2
+
++++ TC-0005 Client RX seq > Server TX seq
++++         Client TX seq = Server RX seq
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+CLIENT									SERVER
+
+tx=1	-------------------------->		rx=1
+	Logon
+rx=3									tx=1
+
+rx=3	<------------------------		tx=1
+	Logon
+tx=2									rx=2
+
+tx=2	-------------------------->		rx=2
+	Logout (MsgSeqNum too low, expecting 3 but received 1)
+rx=3									tx=2
+
+rx=3	<------------------------		tx=2
+	Logout
+tx=3									rx=3
+
+...
+
+tx=3	-------------------------->		rx=3
+	Logon
+rx=3									tx=3
+
+rx=3	<------------------------		tx=3
+	Logon
+tx=4									rx=4
+
++++ TC-0010 Client TX seq > Server RX seq
++++         Client RX seq = Server TX seq
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+CLIENT									SERVER
+
+tx=3	-------------------------->		rx=1
+	Logon
+rx=1									tx=1
+
+rx=1	<------------------------		tx=1
+	Logon
+tx=4									rx=2
+
+rx=2	<--------------------------		tx=2
+	ResendRequest(Start=1,End=2)
+tx=4									rx=3
+
+tx=1	-------------------------->		rx=2
+	SequenceReset(PosDup=Y,GapFill=Y,NewSeq=3)
+rx=3									tx=3
+
+...
+
+rx=3	<--------------------------		tx=3
+	Heartbeat
+tx=4									rx=4
+
+tx=4	-------------------------->		rx=4
+	Heartbeat
+rx=4									tx=4
+
++++ TC-0015 Server RX seq > Client TX Teq
++++         Server TX seq = Client RX seq
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+CLIENT									SERVER
+
+tx=1	-------------------------->		rx=3
+	Logon
+rx=1									tx=1
+
+rx=1	<------------------------		tx=1
+	Logout(MsgSeqNum too low, expecting 3 but received 1)
+tx=2									rx=3
+
+tx=2	-------------------------->		rx=2
+	Logout ()
+rx=2									tx=2
+
+...
+
+tx=3	-------------------------->		rx=3
+	Logon
+rx=2									tx=2
+
+rx=2	<------------------------		tx=2
+	Logon
+tx=4									rx=4
+
++++ TC-0020 Server TX seq > Client RX Teq
++++         Server RX seq = Client TX seq
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+CLIENT									SERVER
+
+tx=1	-------------------------->		rx=1
+	Logon
+rx=1									tx=3
+
+rx=1	<------------------------		tx=3
+	Logon
+tx=2									rx=2
+
+tx=2	-------------------------->		rx=2
+	ResendRequest(Start=1,End=2)
+rx=2									tx=4
+
+rx=2	<------------------------		tx=1
+	SequenceReset(PosDup=Y,GapFill=Y,NewSeq=3)
+tx=3									rx=3
+
+...
+
+rx=4	<--------------------------		tx=4
+	Heartbeat
+tx=4									rx=3
+
+tx=3	-------------------------->		rx=3
+	Heartbeat
+rx=5									tx=5
+
++++ TC-0025 Client TX seq > Server RX Teq
++++         Client RX seq = Server TX seq
++++         Client RX seq > Client TX seq
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+CLIENT									SERVER
+
+tx=3	-------------------------->		rx=1
+	Logon
+rx=4									tx=1
+
+rx=4	<------------------------		tx=1
+	Logon
+tx=4									rx=2
+--- ignored
+rx=5	<------------------------		tx=2
+	ResendRequest(Start=1,End=2)
+tx=4									rx=2
+
+tx=4	-------------------------->		rx=2
+	Logout (MsgSeqNum too low, expecting 4 but received 1)
+rx=5									tx=3
+
+... No logout received (returned to start sequences)
+
+tx=3	-------------------------->		rx=1
+	Logon
+rx=4									tx=3
+
+rx=4	<------------------------		tx=3
+	Logon
+tx=4									rx=2
+
+rx=5	<------------------------		tx=4
+	ResendRequest(Start=1,End=2)
+tx=4									rx=2
+
+tx=4	-------------------------->		rx=2
+	Logout (MsgSeqNum too low, expecting 4 but received 3)
+rx=5									tx=5
+
+... No logout received (returned to start sequences)
+
+tx=3	-------------------------->		rx=1
+	Logon
+rx=4									tx=5
+
+rx=4	<------------------------		tx=5
+	Logon
+tx=4									rx=2
+
+tx=4	-------------------------->		rx=2
+	ResendRequest(Start=4,End=4)
+rx=5									tx=6
+
+rx=5	<------------------------		tx=6
+	ResendRequest(Start=1,End=2)
+tx=5									rx=3
+
+tx=1	-------------------------->		rx=3
+	SequenceReset(PosDup=Y,GapFill=Y,NewSeq=3)
+rx=6									tx=7
+
+rx=6	<------------------------		tx=4
+	SequenceReset(PosDup=Y,GapFill=Y,NewSeq=5)
+tx=2									rx=3
+
+...
+
+rx=7	<--------------------------		tx=7
+	Heartbeat
+tx=5									rx=5
+
+tx=5	-------------------------->		rx=5
+	Heartbeat
+rx=8									tx=8
+
++++ TC-0030 Invalid Logon response
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+CLIENT									SERVER
+
+tx=1	-------------------------->		rx=1
+	Logon
+rx=1									tx=1
+
+rx=1	<------------------------		tx=1
+	Invalid Logon Message
+tx=2									rx=2
+
+tx=2	-------------------------->		rx=2
+	Reject (Reason) - Optional
+rx=2									tx=2
+
+tx=2	-------------------------->		rx=2
+	Logout(Text=Reason)
+rx=3									tx=3
+
+Disconnect
+
++++ TC-0035 Other message than Logon response
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+CLIENT									SERVER
+
+tx=1	-------------------------->		rx=1
+	Logon
+rx=1									tx=1
+
+rx=1	<------------------------		tx=1
+	Other Message
+tx=2									rx=2
+
+tx=2	-------------------------->		rx=2
+	Reject (Reason) - Optional
+rx=2									tx=2
+
+tx=2	-------------------------->		rx=2
+	Logout(Text=Reason)
+rx=3									tx=3
+
+Disconnect
+
+
+
+
+
+
+
+========================================================================
+SERVER
+========================================================================
+
++++ TC-2000 Receive duplicate Logon (same port, address)
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+SERVER									CLIENT			
+						
+rx=1	<------------------------		tx=1
+	Logon
+tx=1									rx=1
+
+Log and disconnect (no seq num incr)
+
+
++++ TC-2005 Receive Logon (unauth, bad address)
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+SERVER									CLIENT			
+						
+rx=1	<------------------------		tx=1
+	Logon
+tx=1									rx=1
+
+Log and disconnect (no seq num incr)
+
+
++++ TC-20010 Receive invalid Logon 
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+SERVER									CLIENT			
+						
+rx=1	<------------------------		tx=1
+	Logon
+tx=1									rx=1
+
+tx=1	-------------------------->		rx=1
+	Reject (Reason) - Optional
+rx=2									tx=2
+
+tx=2	-------------------------->		rx=2
+	Logout(Text=Reason)
+rx=2									tx=2
+
+Disconnect
+
++++ TC-20015 Server connection lost 
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+SERVER									CLIENT			
+						
+rx=1	<------------------------		tx=1
+	Logon
+tx=1									rx=1
+
+tx=1	-------------------------->		rx=1
+	Logon 
+rx=2									tx=2
+
+rx=2	<--------------------------		tx=2
+	Heartbeat
+tx=2									rx=2
+
+tx=2	-------------------------->		rx=2
+	Heartbeat
+rx=3									tx=3
+
+Server disconnects
+
+rx=1	<------------------------		tx=3
+	Logon
+tx=1									rx=3
+
+tx=1	-------------------------->		rx=3
+	Logon 
+rx=2									tx=4
+
+tx=2	-------------------------->		rx=4
+	ResendRequest(Start=1,End=2)
+rx=2									tx=4
+
+rx=2	<------------------------		tx=4
+	Logout (MsgSeqNum too low, expecting 3 but received 1)
+tx=3									rx=5
+
+rx=3	<------------------------		tx=5
+	Logout (MsgSeqNum too low, expecting 3 but received 2)
+tx=3									rx=5
+
+Server disconnects
+
+rx=4	<------------------------		tx=6
+	Logon
+tx=3									rx=5
+
+tx=3	-------------------------->		rx=5
+	Logon 
+rx=5									tx=7
+
+tx=4	-------------------------->		rx=6
+	ResendRequest(Start=1,End=5)
+rx=5									tx=7
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,12 @@
+FIXML
+-----
+HadesFIX supports FIXML starting with FIX version 4.4. FIXML encoding/decoding is done at this point using JAXB.
+In order for a FIX message to be encoded in FIXML the toFixml() method must be called on the FIX message. The method will return the FIXML message representation of the FIX message as a String object.
+To decode a FIXML message fromFixml() method must be called of the FIX message. It is assumed that the message type is the same as the FIXML message string passed as a parameter.
+In order to improve performance the FixmlCoded instance is store in the ThreadLocal context. The FIXML encoding/decoding options (validation, error behaviour, XML printable format) are in this case set using the SessionContext thread local object. (See com.marvisan.hades.fix.message.config.SessionContext and com.marvisan.hades.fix.message.config.SessionContextKey classes javadoc).
+
+Another way of creating FIXML messages is to use the FixmlCodec class directly (see com.marvisan.hades.fix.message.xml.codec.FixmlCodec interface javadoc). To obtain a code instance it is easy, all you need is:
+ServiceLoader<FixmlCodec> codec = ServiceLoader.load(FixmlCodec.class);
+In this case you will need to cache yourself the FixmlCodec instance and set the desired encoding/decoding parameters. The FixmlCodec implementation is thread safe.
+In order to encode a message you will need to call the marshall() method passing the FIX message as parameter. The returned String object will contain the FIXML message.
+To decode a message call the unmarshall() method. The first parameter is the FIXML String object. The second parameter is the FIX message and it is optional. If the second parameter is provided then the message object will have the values populated from the FIXML data and returned as result. If second parameters is set to null then this method will create a new FIX message object and populate it with the FIXML data.

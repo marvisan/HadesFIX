@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Revision: 1.2.0
+  Date:  25 Aug 2000
+  FIX Protocol Base.dtd 
+  Copyright 2000 FIX Protocol Limited.  All rights reserved.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+  <xs:element name="Advertisement"/>
+  <xs:element name="AdvSide">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="4">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="4"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="B"/>
+            <xs:enumeration value="S"/>
+            <xs:enumeration value="X"/>
+            <xs:enumeration value="T"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="SDValue">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="Buy"/>
+            <xs:enumeration value="Sell"/>
+            <xs:enumeration value="Cross"/>
+            <xs:enumeration value="Trade"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="AdvTransType">
+    <xs:complexType>
+      <xs:choice>
+        <xs:element ref="AdvNew"/>
+        <xs:element ref="AdvCancel"/>
+        <xs:element ref="AdvReplace"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="AdvNew">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="5">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="5"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" default="N">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="N"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="AdvCancel">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="AdvRefID">
+          <xs:attribute name="FIXTag" default="5">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="5"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="DataType" default="char">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="char"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="Value" default="C">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="C"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="AdvReplace">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="AdvRefID">
+          <xs:attribute name="FIXTag" default="5">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="5"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="DataType" default="char">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="char"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="Value" default="R">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="R"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="AdvID">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="2">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="2"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="AdvRefID">
+    <xs:sequence>
+      <xs:element ref="AdvRefID"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="AdvRefID">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="3">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="3"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

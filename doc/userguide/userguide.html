@@ -1,0 +1,429 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head>  
+ 
+<title></title> 
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"> 
+<meta name="generator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<meta name="originator" content="TeX4ht (http://www.cse.ohio-state.edu/~gurari/TeX4ht/)"> 
+<!-- html --> 
+<meta name="src" content="userguide.tex"> 
+<meta name="date" content="2010-11-24 20:21:00"> 
+<link rel="stylesheet" type="text/css" href="userguide_files/userguide.css"> 
+</head><body>
+
+<!--l. 16--><p class="indent">
+
+<!--l. 16--></p><p class="indent">
+
+<!--l. 16--></p><p class="indent">
+
+   </p><h1 class="partHead"><span class="titlemark">Part&nbsp;I<br></span><a id="x1-1000I"></a>Introduction</h1>
+
+<!--l. 19--><p class="indent">
+
+<!--l. 19--></p><p class="indent">
+
+<!--l. 19--></p><p class="indent">
+
+   </p><h1 class="partHead"><span class="titlemark">Part&nbsp;II<br></span><a id="x1-2000II"></a>FIX Engine Configuration</h1>
+
+<!--l. 22--><p class="indent">
+
+   </p><h2 class="chapterHead"><span class="titlemark">Chapter&nbsp;1</span><br><a id="x1-30001"></a>Setting up engine configuration</h2>
+   <h3 class="sectionHead"><span class="titlemark">1.1   </span> <a id="x1-40001.1"></a>Prerequisites</h3>
+<!--l. 27--><p class="noindent">Hades engine is highly configurable. All the configuration for a Hades instance - Java
+process - is hold in a configuration file. This configuration file must be specified as a
+java environment parameter in the script file that starts the engine. The parameter
+name is <span class="ecti-1000">hades.engine.config.file. </span>This parameter must contain the full OS path of the
+file. The directory where this file is placed is considered as a base for all the other
+configuration data needed. The configuration file is a XML file. Its schema is
+placed in the distribution archive in the <span class="ecbx-1000">docs/schema </span>folder and it is named
+<span class="ecti-1000">HadesEngineConfig.xsd</span>. You will be able to validate your configuration using this
+XML schema file. The engine itself is doing the same thing when it starts
+up.
+<!--l. 39--></p><p class="indent">   A HadesFIX engine can run multiple FIX sessions at a time, either client or
+server, for each counterparty and each of them having its own FIX version.
+<!--l. 43--></p><p class="indent">   Secured messages and handler definitions can be specified at the engine,
+counterparty and session level. The settings at the counterpary level will override the
+settings at the engine level if using the same names. The same happens with the
+settings at the session level that will override the counterparty and engine level
+settings.
+<!--l. 50--></p><p class="noindent">
+   </p><h3 class="sectionHead"><span class="titlemark">1.2   </span> <a id="x1-50001.2"></a>HadesFIX engine instance</h3>
+<!--l. 52--><p class="noindent">The configuration of the engine is specified as attributes of the <span class="ecti-1000">&lt;hadesInstance&gt;</span>
+element of the configuration file. The configuration parameters of the engine are
+described bellow:
+     </p><ul class="itemize1">
+     <li class="itemize">name - instance name is a required attribute and it must be unique for
+     each engine instance running in the network. It can be a string containing
+     any printable character.
+     </li>
+     <li class="itemize">mgmtHost - this is the host IP address of the host on which the engine is
+     running. Must be specified if the host has multiple network interfaces.
+     </li>
+     <li class="itemize">mgmtPort - the port on which the remote management agent is running.
+     If not specified defaults to 33333.
+     </li>
+     <li class="itemize">mgmtUseAuth  -  flag  indicating  if  the  remote  access  to  this  engine
+     management interface is protected by a password. This parameter defaults
+     to  false  and  as  the  result  the  management  remote  access  <span class="ecbx-1000">it  is  not</span>
+     <span class="ecbx-1000">restricted by defaul</span>t. If this parameter is enabled then a user name
+     password must be created using the password bank utility.
+     </li>
+     <li class="itemize">mgmtUseSSL - flag indicating that the management interface connection
+
+     must use SSL. Defaults to false.If this parameter is set to true then and
+     mgmtKeystorePasswd config parameters will allow
+     </li>
+     <li class="itemize">mgmtKeystoreFile       -       path       to       the       keystore       file.
+     If not provided and <span class="ecti-1000">mgmtUseSSL </span>is set to true this parameter defaults to
+     <span class="ecbx-1000">&#8220;hadesfix-mgmt-key.ks&#8221; </span>which must be always located relative to the
+     engine configuration directory.
+     </li>
+     <li class="itemize">mgmtKeystorePasswd   -   keystore   password.   If   not   provided   and
+     <span class="ecti-1000">mgmtUseSSL </span>is set to true this parameter defaults to <span class="ecbx-1000">&#8220;hadesfix&#8221;</span>. This is
+     the password entry name as it is stored in the HadesFIX engine password
+     bank. See the HadesFIX pasword bank utility documentation.
+     </li>
+     <li class="itemize">mgmtUseSSLCliAuth - flag indicating that the SSL connection will use
+     client authentication. Defaults to false. If this flag is set to true then the
+     trustore file name and password can be configured using the following
+     two parameters: <span class="ecti-1000">mgmtTruststoreFile </span>and <span class="ecti-1000">mgmtTruststorePasswd</span>. If this
+     parameter is enabled then the <span class="ecti-1000">mgmtUseAuth </span>parameter is disabled.
+     </li>
+     <li class="itemize">mgmtTruststoreFile - path to the truststore file. Must be always located
+     relative to the engine configuration directory.
+     </li>
+     <li class="itemize">mgmtTruststorePasswd - keystore password. This is the password entry
+     name  as  it  is  stored  in  the  HadesFIX  engine  password  bank.  See  the
+     HadesFIX pasword bank utility documentation. .
+     </li>
+     <li class="itemize">clustered - this flag enable clustering for the HadesFIX servers. deafults
+     to false.
+     </li>
+     <li class="itemize">description - textual description of the engine. Optional.</li></ul>
+<!--l. 96--><p class="noindent">
+   </p><h3 class="sectionHead"><span class="titlemark">1.3   </span> <a id="x1-60001.3"></a>Counterparty session configuration</h3>
+<!--l. 98--><p class="noindent">Multiple sessions can be configured for a counterparty. The configuration for a
+counterparty consists of the FIX counterparty identification fields: <span class="ecti-1000">compID</span>, <span class="ecti-1000">subID</span>
+and <span class="ecti-1000">locationID</span>. Form these 3 the only required one is the <span class="ecti-1000">compID </span>attribute. The <span class="ecti-1000">side</span>
+attribute is only used when HadesFIX is used as a router. The valid values
+for <span class="ecti-1000">side </span>attribute are: <span class="ecbx-1000">Buy</span>, <span class="ecbx-1000">B </span>for buy side respectively <span class="ecbx-1000">Sell</span>, <span class="ecbx-1000">S </span>for the sell
+side.
+
+<!--l. 107--></p><p class="noindent">
+   </p><h4 class="subsectionHead"><span class="titlemark">1.3.1   </span> <a id="x1-70001.3.1"></a>TCP connection configuration</h4>
+<!--l. 109--><p class="noindent">The server or client TCP connection data required fields by the HadesFIX engine are
+the <span class="ecti-1000">host </span>and <span class="ecti-1000">port </span>attributes on the <span class="ecti-1000">tcpConnection </span>element. For a server connection if
+<span class="ecti-1000">host </span>is specified then it must be the local bind address (hosts with multiple
+addresses). The other configuration attributes are optional and have default values.
+The optional configuration parameters set at the <span class="ecti-1000">tcpConnection </span>element level
+are:
+     </p><ul class="itemize1">
+     <li class="itemize">soLinger - if greater than 0 this option sets the time in seconds the socket
+     close() method will wait for delivery of remaining packets before shutting
+     down the connection. By default the close() method returns immediately
+     and if soLinger is set to 0 all the remaining packets will be discarded.
+     Defaults to the specific platform value.
+     </li>
+     <li class="itemize">tcpNodelay - this is a flag that if set to true disables buffering at the socket
+     level ensuring that the packets are sent to the destination as sson as they
+     are delivered to the socket regardless of theri size. In the normal scenario
+     the small pachets are combined into large packets before being sent. The
+     Nagle algoritm used when tcpNodely is disabled waits for a confirmation
+     from the remote host before sending another packet. This might hamper
+     the steady transfer of data between the client and the server. Defaults to
+     false.
+     </li>
+     <li class="itemize">rxBufferSize - this sets the size of the received messages buffer. After the
+     buffer is filled the messages will be either droped or saved in a disk buffer,
+     depending of the value of the parameter TODO value. Default value is
+     500.
+     </li>
+     <li class="itemize">txBufferSize - this sets the size of the transmitted messages buffer. After
+     the buffer is filled the messages will be either droped or saved in a disk
+     buffer, depending of the value of the parameter TODO value. Default value
+     is 500.
+     </li>
+     <li class="itemize">soTimeout - used to tune how many milliseconds the read method blocks
+     waiting for data. Default value is 3 milliseconds.
+     </li>
+     <li class="itemize">soRcvbuf - size in bytes of the receive buffer. Platform specific.
+     </li>
+     <li class="itemize">soSndbuf - size in bytes of the transmission buffer. Platform specific.
+     </li>
+     <li class="itemize">sendKeepAlive - if set to true will set SO_KEEPALIVE on the socket.
+     The default value is false.
+
+     </li>
+     <li class="itemize">sslData  -  this  optional  element  is  used  in  configuring  TCP  transport
+     SSL  values.  The  values  for  <span class="ecti-1000">keyStoreLoc</span>,  <span class="ecti-1000">keyStorePasswd  </span>are  required.
+     <span class="ecti-1000">keyStoreLoc </span>is always relative to the configuration directory - the directory
+     where the instance configuration file is placed. If <span class="ecti-1000">useCliAuth </span>is set to true
+     (default to false) then the truststore locatione <span class="ecti-1000">trustStoreLoc </span>together with
+     the trustore pasword <span class="ecti-1000">trustStorePasswd </span>are required. If the key password
+     <span class="ecti-1000">keyPasswd </span>is not given it will default to <span class="ecti-1000">keyStorePasswd.</span></li></ul>
+<!--l. 153--><p class="noindent">The optional configuration parameters set at the <span class="ecti-1000">clientTcpConnection </span>element level
+are:
+     </p><ul class="itemize1">
+     <li class="itemize">numOfRetries - (used in client side only) sets the number of connection
+     retries attempted by the client for the configured connections in case the
+     connection with the server fails. After the number of attempts is exhausted
+     the connections defined in the <span class="ecti-1000">backupConnections </span>element are used to try
+     to reconnect using the same value as number of retries. Default value is 3
+     reconnection attempts. If set to 0 the number of retries will be unlimited.
+     </li>
+     <li class="itemize">retrySecondsToWait - (used in client side only) is settimng the number of
+     seconds to wait until another reconnection attempt is made on the next
+     configured connection. Default is 3 seconds.
+     </li>
+     <li class="itemize">proxyHost - proxy server host.
+     </li>
+     <li class="itemize">proxyPort - proxy server port number.
+     </li>
+     <li class="itemize">backupConnections - this element keeps a list of backup FIX connections.
+     Each connection is defined by the host, port pair. This element is optional.</li></ul>
+<!--l. 172--><p class="noindent">The configuration parameters set at the <span class="ecti-1000">serverTcpConnection </span>level are:
+     </p><ul class="itemize1">
+     <li class="itemize">name - name of the server. It must be different for each server configured
+     on the same Hades instance.
+     </li>
+     <li class="itemize">hostsRestrictedList-  comma-delimited  list  of  IP  addresses  for  allowed
+     incoming  connections.  Counterparties  trying  to  connect  from  other  IP
+     addresses than the one configured will not be allowed to logon.</li></ul>
+<!--l. 182--><p class="noindent">
+   </p><h4 class="subsectionHead"><span class="titlemark">1.3.2   </span> <a id="x1-80001.3.2"></a>Session Configuration</h4>
+
+<!--l. 185--><p class="noindent">
+   </p><h5 class="subsubsectionHead"><span class="titlemark">1.3.2.1   </span> <a id="x1-90001.3.2.1"></a>Client and Server common parameters</h5>
+     <ul class="itemize1">
+     <li class="itemize">compID - session comp ID. This field is required for any session.
+     </li>
+     <li class="itemize">subID  -  subscriber  identifier  that  might  be  used  to  identify  a  session
+     together with compID field.
+     </li>
+     <li class="itemize">locationID - location identifier that might be used to identify a session
+     together with compID and subID fields.
+     </li>
+     <li class="itemize">rxBufferSize - the incoming messages buffer size. Defaults to 1000.
+     </li>
+     <li class="itemize">txBufferSize - the outgoing messages buffer size. Defaults to 1000.
+     </li>
+     <li class="itemize">deliverToCompID - FIX message header value used to identify the firm
+     targeted to receive the message if the message is delivered by a third party.
+     </li>
+     <li class="itemize">deliverToSubID  -  FIX  message  header  value  used  to  identify  specific
+     message recipient if the message is delivered by a third party.
+     </li>
+     <li class="itemize">deliverToLocationID - FIX message header value used to identify specific
+     message recipient&#8217;s location if the message was delivered by a third party.
+     </li>
+     <li class="itemize">onBehalfOfCompID  -  FIX  message  header  value  used  to  identify  firm
+     originating message if the message was delivered by a third party.
+     </li>
+     <li class="itemize">messageEncoding - message encoding character set.
+     </li>
+     <li class="itemize">logonTimeout - in client side this value specifies the interval of time in
+     seconds for which the client waits for a Logon response from the server. If
+     this time expire the session is stopped. On the server side this parameter
+     is only used if the <span class="ecti-1000">enableLogonPassThrough </span>parameter is set to true.
+     </li>
+     <li class="itemize">heartBtInt - interval of time after which a inactive session (that didn&#8217;t
+     sent/received  any  messages)  will  send  an  Heartbeat  message  to  the
+     Counterpary.
+     </li>
+     <li class="itemize">heartBtOffset - value on top of the <span class="ecti-1000">heartBtInt </span>that is accepted as offset
+     before the session is restarted.
+
+     </li>
+     <li class="itemize">description - text description of the session configured.
+     </li>
+     <li class="itemize">disableGapDetection - disable incoming messages sequence gap detection.
+     All the incoming messages are accepted if the sequence number is greater
+     than expected sequence number. Out of sequence messages are discarded.
+     </li>
+     <li class="itemize">enableResendTimeout - this is a FIX non standard option that resets the
+     sequenece in the gap immediately after the resend response exceeds the
+     <span class="ecti-1000">resendTimeout </span>value. Default is "false".
+     </li>
+     <li class="itemize">resendTimeout - the value of the timeout interval in milliseconds for the
+     <span class="ecti-1000">enableResendTimeout </span>option. Default value is 3000 ms.
+     </li>
+     <li class="itemize">testMessageIndicator - indicates that the session is a test session. Defaults
+     to false.
+     </li>
+     <li class="itemize">connectOnStartup - the Session Coordinator will attempt to initiate a
+     connection with the counterparty when it is started. Defaults to "true".
+     </li>
+     <li class="itemize">reconnectDelay - if a session connection fails this value in milliseconds is
+     used as a delay before Session Coordinator retries again. Defaults to 10000
+     (10 seconds).
+     </li>
+     <li class="itemize">maxNumLogonRetries - when this parameter is greater than 0 it specifies
+     the maximum number of logon attempts that will be performed by the
+     FIX session. The session will be disconnected after this value is reached.
+     Default value of 0 means there is no limit on the number of logon attempts.
+     </li>
+     <li class="itemize">doNotReconnWhenSeqNumTooLow - if this parameter is set to false, the
+     client  will  stop  making  outbound  logon  attempts  if  a  logon  fails  with
+     &#8220;Sequence Numbers too low&#8221; error. Defaults to "false".
+     </li>
+     <li class="itemize">resendEndSeqNum - if specified this value will be set as the EndSeqNum
+     on the ResendRequest message. It may be set to 0 or other custom party
+     agreed value to indicate that all the messages to the current one should
+     be resent.
+     </li>
+     <li class="itemize">resetSeqAtStartup - flag indicating that session sequences will be reset at
+     startup of the session. Defaults to "true".
+     </li>
+     <li class="itemize">resetSeqAtLogon - flag indicating that session sequences will be reset at
+     each session login. Defaults to "false".
+
+     </li>
+     <li class="itemize">resetSeqAtLogout - flag indicating that session sequences will be reset at
+     each session logut received. Defaults to "false".
+     </li>
+     <li class="itemize">resetSeqAtDisconnect - flag indicating that session sequences will be reset
+     at each transport disconnection. Defaults to "false".
+     </li>
+     <li class="itemize">validateIncomingFIXML - turns the FIXML schema validation on for all
+     incomming messages. Defaults to "false".
+     </li>
+     <li class="itemize">validateOutgoingFIXML - turns the FIXML schema validation on for all
+     outgoing messages. Defaults to "false".
+     </li>
+     <li class="itemize">abortFIXMLValidationOnError - stops the validation on error and throws
+     a validation error message.</li></ul>
+<!--l. 260--><p class="noindent">
+   </p><h5 class="subsubsectionHead"><span class="titlemark">1.3.2.2   </span> <a id="x1-100001.3.2.2"></a>Server specific parameters</h5>
+     <ul class="itemize1">
+     <li class="itemize">enableLogonPassThrough - Logon messages are passed to the business
+     application which is responsible with authentication and Logon response
+     message.</li></ul>
+<!--l. 267--><p class="noindent">
+   </p><h5 class="subsubsectionHead"><span class="titlemark">1.3.2.3   </span> <a id="x1-110001.3.2.3"></a>Client specific parameters</h5>
+
+<!--l. 270--><p class="indent">
+
+<!--l. 270--></p><p class="indent">
+
+<!--l. 270--></p><p class="indent">
+
+   </p><h1 class="partHead"><span class="titlemark">Part&nbsp;III<br></span><a id="x1-12000III"></a>FIX Model Extension</h1>
+<!--l. 272--><p class="noindent">HadesFIX allows for the extension of the FIX model in order to cater for custom tags
+and custom messages. The mechanism used to extend the custom tags and messages
+is presented bellow.
+
+<!--l. 277--></p><p class="indent">
+
+   </p><h2 class="chapterHead"><span class="titlemark">Chapter&nbsp;2</span><br><a id="x1-130002"></a>Custom tags and message handling</h2>
+<!--l. 279--><p class="noindent">Custom tags are supported in two ways.
+     </p><ul class="itemize1">
+     <li class="itemize">The first method is to use the Map of custom messages that is contained in
+     the <span class="ecbx-1000">com.marvisan.hades.fix.message.FIXMsg </span>superclass. This class
+     has methods to add, retrieve and remove custom tags from the message
+     custom map. The <span class="ecti-1000">getCustomTag, addCustomTag, removeCustomTag </span>and
+     <span class="ecti-1000">clearCustomTags </span>methods (see javadoc) can be used to manage the custom
+     tags set for encoding or decoded. The limitation of this methods is that
+     all the custom tags values must be represented as a java.lang.String class.
+     </li>
+     <li class="itemize">The second method is overwriting the HadesFIX message implementation
+     and  adding  to  the  extended  message  all  the  custom  tags,  groups  and
+     components required. The overriding mechanism requires, apart of the
+     overriding class message implementation, the writing of a custom message
+     factory class which must be configured in a property file. This is also the
+     mechanism used to create custom messages. The next section describes
+     how to extend or write a new FIX message.</li></ul>
+   <h3 class="sectionHead"><span class="titlemark">2.1   </span> <a id="x1-140002.1"></a>Writing a custom message</h3>
+<!--l. 300--><p class="noindent">Writing a custom new message requires the following steps:
+<!--l. 303--></p><p class="noindent">
+   </p><h4 class="subsectionHead"><span class="titlemark">2.1.1   </span> <a id="x1-150002.1.1"></a>Create a new message class that extends com.marvisan.hades.fix.message.FIXMsg</h4>
+<!--l. 305--><p class="noindent">All HadesFIX messages are extending <span class="ecbx-1000">com.marvisan.hades.fix.message.FIXMsg</span>
+class that in its turns extends the <span class="ecbx-1000">com.marvisan.hades.fix.message.Fragment</span>
+class. The abstract interface is defined in the Fragment class (see javadoc for further
+explanations). The contracts defined by the Fragment class contains
+     </p><ul class="itemize1">
+     <li class="itemize">methods  that  return  the  FIX  tags  in  the  message/component/group
+     :   <span class="ecti-1000">getFragmentTags(),   getFragmentAllTags(),   getFragmentDataTags(),</span>
+     <span class="ecti-1000">getFragmentCompTags(), getFragmentSecuredTags()</span>
+     </li>
+     <li class="itemize">method      to      validate      a      FIX      message/component/group:
+     <span class="ecti-1000">validateRequiredTags() throws TagNotPresentException</span>
+     </li>
+     <li class="itemize">methods                  to                  set                  the                  tag
+     value when the FIX message/component/group is decoded from the byte
+     array:  <span class="ecti-1000">setFragmentTagValue(Tag  tag),  setFragmentCompTagValue(Tag</span>
+     <span class="ecti-1000">tag, ByteBuffer message), setFragmentDataTagValue(Tag tag, ByteBuffer</span>
+     <span class="ecti-1000">message)</span>
+     </li>
+     <li class="itemize">methods  to  encode  the  FIX  object  message/component/group  in  a
+     wire FIX message: <span class="ecti-1000">encodeFragmentAll(), encodeFragmentSecured(boolean</span>
+     <span class="ecti-1000">secured)</span></li></ul>
+
+<!--l. 324--><p class="noindent">When extending an existing message these methods might need to be implemented. If
+pre FIX4.4 version message encryption is used then the appropriate secured related
+methods need to be implemented too.
+<!--l. 329--></p><p class="noindent">
+   </p><h4 class="subsectionHead"><span class="titlemark">2.1.2   </span> <a id="x1-160002.1.2"></a>Create enclosed components and groups</h4>
+<!--l. 331--><p class="noindent">Component classes need to extend the abstract
+<span class="ecbx-1000">com.marvisan.hades.fix.message.component.Component </span>class. this class
+extends also the Fragment class and must satisfy the contract defined by this class.
+Further the Component class define a supplementary interface method <span class="ecti-1000">getFirstTag()</span>
+that needs to return the first tag in a repeating component/group.
+<!--l. 337--></p><p class="indent">   Repeating groups need to extend the <span class="ecbx-1000">com.marvisan.hades.fix.message.group.Group</span>
+class. Group class extends the Component class and has the same contract to be
+fulfilled. The subtle difference between the two sits only in the fact that a component
+might not be and by the FIX protocol standard allows the fields in the component to
+be &#8220;scattered&#8221; all over the message.
+<!--l. 345--></p><p class="noindent">
+   </p><h4 class="subsectionHead"><span class="titlemark">2.1.3   </span> <a id="x1-170002.1.3"></a>Create a custom factory class</h4>
+<!--l. 347--><p class="noindent">HadesFIX messages are encoded/decoded using a generic message factory
+<span class="ecbx-1000">com.marvisan.hades.fix.message.builder.FIXMsgBuilder</span>. The generic
+message factory uses message builders for each of the FIX messages. A FIX message
+builder class must extend <span class="ecbx-1000">com.marvisan.hades.fix.message.builder.MsgBuilder</span>
+class and implement the abstract interface defined by that class. The method to
+implement are <span class="ecti-1000">build(MsgVersionType msgType, byte[] message) </span>for decoding a
+message and <span class="ecti-1000">build(BeginString version, ApplVerID applVerID) </span>for building
+an empty FIX message used for encoding. Please bear in mind that the
+message builder class must be thread safe. See javadoc for supplementary
+information
+<!--l. 359--></p><p class="noindent">
+   </p><h4 class="subsectionHead"><span class="titlemark">2.1.4   </span> <a id="x1-180002.1.4"></a>Make the class visible to the FIXMsgBuilder</h4>
+<!--l. 361--><p class="noindent">FIXMsgBuilder class can be configured at runtime or using a configuration file placed
+in the root classspath named <span class="ecti-1000">HadesMsgBuilderClasses.properties. </span>An example of
+message builder configuration would be:
+   <!--l. 366-->
+   </p><div class="lstlisting" id="listing-1"><span class="label"><a id="x1-18001r1"></a></span>#&nbsp;Example&nbsp;HadesMsgBuilderClasses.properties&nbsp;file&nbsp;(see&nbsp;samples)&nbsp;<br><span class="label"><a id="x1-18002r2"></a></span>AZ=com.marvisan.hades.fix.sample.message.builder.CustomNewMessageBuilder
+   </div>
+<!--l. 372--><p class="indent">   This file contains entries made from the message type and the message builder
+implementation class that.
+<!--l. 375--></p><p class="indent">   FIXMsgBuilder can also be setup at runtime using the following methods:
+<span class="ecti-1000">addMsgBuilder(String msgType, MsgBuilder builder), addMsgBuilders(Map&lt;String,</span>
+<span class="ecti-1000">MsgBuilder&gt; builders), </span>and <span class="ecti-1000">clearMsgBuilder(String msgType). </span>See javadoc for
+further information.
+
+<!--l. 381--></p><p class="noindent">
+   </p><h4 class="subsectionHead"><span class="titlemark">2.1.5   </span> <a id="x1-190002.1.5"></a>Add JAXB annotations to the class (only if FIXML support is
+required)</h4>
+<!--l. 383--><p class="noindent">FIXML support in <span class="ecbx-1000">HadesFIX </span>is done using JAXB. The class message together with
+enclosed components and group must be annotated in order to have XML generated.
+At this point schema validation of the messages for inbound/outbound messages is
+supported. Schema validation is done using standard FIXML schema files which are
+stored in FIXMLSchema.jar. In order to be able to validate your messages you need
+to add your custom message schema data to the existing FIXML schema files. The
+sample message <span class="ecbx-1000">com.marvisan.hades.fix.sample.message.CustomNewMsg</span>
+offer a good starting point for using annotations to create custom FIXML
+messages.
+<!--l. 396--></p><p class="noindent">
+   </p><h4 class="subsectionHead"><span class="titlemark">2.1.6   </span> <a id="x1-200002.1.6"></a>Make the packages holding messages/components/groups visible to the
+FIXMLBuilder</h4>
+<!--l. 398--><p class="noindent">This is done by using a configuration file placed in the root classspath named
+<span class="ecti-1000">HadesJAXBPackages.properties. </span>The format of this file has as a key the
+<span class="ecti-1000">ApplVerID </span>number and the value is the colon separated list of packages
+containing the classes part of the FIXML message. An example file would look
+like:
+   <!--l. 405-->
+   </p><div class="lstlisting" id="listing-2"><span class="label"><a id="x1-20001r1"></a></span>#&nbsp;File&nbsp;entries&nbsp;format&nbsp;is&nbsp;ApplVerId=colon&nbsp;separated&nbsp;packages&nbsp;<br><span class="label"><a id="x1-20002r2"></a></span>6=com.marvisan.hades.fix.sample.message:com.marvisan.hades.fix.sample.message.group
+   </div>
+    
+</body></html>

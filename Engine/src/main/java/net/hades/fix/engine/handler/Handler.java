@@ -1,0 +1,40 @@
+/*
+ *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
+ *               Use is subject to license terms.
+ */
+package net.hades.fix.engine.handler;
+
+import java.util.Map;
+import java.util.concurrent.Callable;
+
+import net.hades.fix.engine.handler.task.ExecutionResult;
+import net.hades.fix.engine.handler.task.TaskStatus;
+import net.hades.fix.message.Message;
+
+/**
+ * Contract that a message handler must implement.
+ *
+ * @author <a href="mailto:support@marvisan.com">Support Team</a>
+ * @param <T> Message
+ * @param <U> ExecutionResult
+ */
+public interface Handler<T extends Message,U extends ExecutionResult> extends Callable<U> {
+
+    static final String CONS_PREFIX = "HC";
+    static final String PROD_PREFIX = "HP";
+    
+    TaskStatus getStaus();
+    String getId();
+    void write(T message);
+    void tryWrite(T message, int waitMillis);
+    void addNextHandler(String id, Handler next);
+    void setTimeoutSecs(int timeoutSecs);
+    Map<String, String> getStatistics();
+
+    /**
+     * Enables/Disable a handler. By default the handler is enabled.
+     * @param disabled action to be taken: disable/enable
+     */
+    void setDisabled(boolean disabled);
+
+}

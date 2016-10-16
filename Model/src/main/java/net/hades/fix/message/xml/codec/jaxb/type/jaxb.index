@@ -1,0 +1,14 @@
+AdvCancelReplaceType
+AdvSideType
+AdvTransTypeType
+CurrencyType
+DeliverToType
+InstrumentType
+MaturityType
+OnBehalfOfType
+PutOrCallType
+SenderType
+SingleBooleanAttrSimpleType
+SingleIntegerAttrSimpleType
+SingleStringAttrSimpleType
+TargetType

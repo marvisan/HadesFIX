@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<adminConsoleConfig xmlns="http://www.marvisan.com/schema/hades-admin-config-1-0">
+    <internalInfo nextConnInfoId="2"/>
+    <engineConnections>
+        <engineConnectionInfo id="1" host="localhost" port="33332" user="mgmtuser" authEnabled="true" sslEnabled="false" sslCliAuthEnabled="false" connectAtStartup="true" pollingInterval="0" displayCcolor="255,0,153" engineName="Buy Side" engineDescr="A sample buy side engine"/>
+        <engineConnectionInfo id="0" host="localhost" port="33333" user="mgmtuser" authEnabled="true" sslEnabled="false" sslCliAuthEnabled="false" connectAtStartup="true" pollingInterval="0" displayCcolor="0,0,204" engineName="Sell Side" engineDescr="A sample sell side engine"/>
+    </engineConnections>
+    <alertFilter filterFatal="false" filterWarning="false" filterRecoverable="false" filterInfo="false" filterTest="false" session="">
+        <components>
+            <component>--- None ---</component>
+        </components>
+    </alertFilter>
+</adminConsoleConfig>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<xs:schema elementFormDefault="qualified" version="1.0" targetNamespace="http://www.marvisan.com/schema/hades-admin-config-1-0" xmlns:tns="http://www.marvisan.com/schema/hades-admin-config-1-0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <xs:element name="adminConsoleConfig" type="tns:AdminConsoleConfigInfo"/>
+
+  <xs:element name="alertFilter" type="tns:AlertFilterInfo"/>
+
+  <xs:element name="engineConnectionInfo" type="tns:EngineConnectionInfo"/>
+
+  <xs:element name="internalInfo" type="tns:InternalInfo"/>
+
+  <xs:complexType name="AdminConsoleConfigInfo">
+    <xs:sequence>
+      <xs:element ref="tns:internalInfo" minOccurs="0"/>
+      <xs:element name="engineConnections" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="tns:engineConnectionInfo" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element ref="tns:alertFilter"/>
+    </xs:sequence>
+    <xs:attribute name="configError" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="InternalInfo">
+    <xs:sequence/>
+    <xs:attribute name="nextConnInfoId" type="xs:int" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="EngineConnectionInfo">
+    <xs:sequence/>
+    <xs:attribute name="id" type="xs:int" use="required"/>
+    <xs:attribute name="host" type="xs:string" use="required"/>
+    <xs:attribute name="port" type="xs:int" use="required"/>
+    <xs:attribute name="user" type="xs:string"/>
+    <xs:attribute name="authEnabled" type="xs:string"/>
+    <xs:attribute name="sslUser" type="xs:string"/>
+    <xs:attribute name="sslEnabled" type="xs:string"/>
+    <xs:attribute name="sslCliAuthEnabled" type="xs:string"/>
+    <xs:attribute name="keystorePath" type="xs:string"/>
+    <xs:attribute name="truststorePath" type="xs:string"/>
+    <xs:attribute name="connectAtStartup" type="xs:string"/>
+    <xs:attribute name="pollingInterval" type="xs:int"/>
+    <xs:attribute name="displayCcolor" type="xs:string" use="required"/>
+    <xs:attribute name="engineName" type="xs:string"/>
+    <xs:attribute name="engineDescr" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="AlertFilterInfo">
+    <xs:sequence>
+      <xs:element name="components" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="component" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="filterFatal" type="xs:string" use="required"/>
+    <xs:attribute name="filterWarning" type="xs:string" use="required"/>
+    <xs:attribute name="filterRecoverable" type="xs:string" use="required"/>
+    <xs:attribute name="filterInfo" type="xs:string" use="required"/>
+    <xs:attribute name="filterTest" type="xs:string" use="required"/>
+    <xs:attribute name="session" type="xs:string"/>
+  </xs:complexType>
+</xs:schema>
+

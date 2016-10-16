@@ -1,0 +1,553 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<xs:schema elementFormDefault="qualified" version="1.0" targetNamespace="http://www.marvisan.com/schema/hades-engine-config-1-0" xmlns:tns="http://www.marvisan.com/schema/hades-engine-config-1-0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <xs:element name="authInfo" type="tns:AuthenticationInfo"/>
+
+  <xs:element name="backupConnection" type="tns:BackupConnectionInfo"/>
+
+  <xs:element name="calendar" type="tns:ScheduleCalendarInfo"/>
+
+  <xs:element name="calendarRef" type="tns:CalendarRefInfo"/>
+
+  <xs:element name="clientSession" type="tns:ClientSessionInfo"/>
+
+  <xs:element name="consumerStream" type="tns:ConsumerStreamInfo"/>
+
+  <xs:element name="counterparty" type="tns:CounterpartyInfo"/>
+
+  <xs:element name="date" type="tns:ScheduleDateInfo"/>
+
+  <xs:element name="encryptAuthInfo" type="tns:EncryptedAuthenticationInfo"/>
+
+  <xs:element name="encryption" type="tns:EncryptionInfo"/>
+
+  <xs:element name="flow" type="tns:FlowInfo"/>
+
+  <xs:element name="hadesInstance" type="tns:HadesInstanceInfo"/>
+
+  <xs:element name="handler" type="tns:HandlerInfo"/>
+
+  <xs:element name="handlerDef" type="tns:HandlerDefInfo"/>
+
+  <xs:element name="listener" type="tns:ListenerInfo"/>
+
+  <xs:element name="msgType" type="tns:MsgTypeInfo"/>
+
+  <xs:element name="parameter" type="tns:HandlerParamInfo"/>
+
+  <xs:element name="producerStream" type="tns:ProducerStreamInfo"/>
+
+  <xs:element name="scheduler" type="tns:SchedulerInfo"/>
+
+  <xs:element name="securedField" type="tns:SecuredFieldInfo"/>
+
+  <xs:element name="securedMessage" type="tns:SecuredMessageInfo"/>
+
+  <xs:element name="serverSession" type="tns:ServerSessionInfo"/>
+
+  <xs:element name="sharedService" type="tns:SharedServiceInfo"/>
+
+  <xs:element name="sslData" type="tns:SSLInfo"/>
+
+  <xs:element name="task" type="tns:ScheduleTaskInfo"/>
+
+  <xs:element name="taskParam" type="tns:ScheduleTaskParamInfo"/>
+
+  <xs:element name="tcpClientConnection" type="tns:ClientTcpConnectionInfo"/>
+
+  <xs:element name="tcpServerConnection" type="tns:ServerTcpConnectionInfo"/>
+
+  <xs:complexType name="AuthenticationInfo">
+    <xs:sequence/>
+    <xs:attribute name="loginPassword" type="xs:string"/>
+    <xs:attribute name="loginUsername" type="xs:string"/>
+    <xs:attribute name="newPassword" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="BackupConnectionInfo">
+    <xs:sequence/>
+    <xs:attribute name="host" type="xs:string" use="required"/>
+    <xs:attribute name="port" type="xs:int" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="CalendarRefInfo">
+    <xs:sequence/>
+    <xs:attribute name="name" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="ClientSessionInfo">
+    <xs:complexContent>
+      <xs:extension base="tns:SessionInfo">
+        <xs:sequence/>
+        <xs:attribute name="maxNumLogonRetries" type="xs:int"/>
+        <xs:attribute name="doNotReconnWhenSeqNumTooLow" type="xs:string"/>
+        <xs:attribute name="connectOnStartup" type="xs:string"/>
+        <xs:attribute name="reconnectDelay" type="xs:int"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="SessionInfo">
+    <xs:sequence>
+      <xs:choice>
+        <xs:element ref="tns:tcpClientConnection"/>
+        <xs:element ref="tns:tcpServerConnection"/>
+      </xs:choice>
+      <xs:element ref="tns:authInfo" minOccurs="0"/>
+      <xs:element ref="tns:encryptAuthInfo" minOccurs="0"/>
+      <xs:element ref="tns:encryption" minOccurs="0"/>
+      <xs:element ref="tns:producerStream"/>
+      <xs:element ref="tns:consumerStream"/>
+      <xs:element name="msgTypes" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="tns:msgType" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="handlerDefs" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="tns:handlerDef" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="securedMessages" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="tns:securedMessage" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="schedules" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="tns:task" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="compID" type="xs:string" use="required"/>
+    <xs:attribute name="subID" type="xs:string"/>
+    <xs:attribute name="locationID" type="xs:string"/>
+    <xs:attribute name="disabled" type="xs:string"/>
+    <xs:attribute name="deliverToCompID" type="xs:string"/>
+    <xs:attribute name="deliverToSubID" type="xs:string"/>
+    <xs:attribute name="deliverToLocationID" type="xs:string"/>
+    <xs:attribute name="messageEncoding" type="xs:string"/>
+    <xs:attribute name="heartBtInt" type="xs:int"/>
+    <xs:attribute name="heartBtOffset" type="xs:int"/>
+    <xs:attribute name="description" type="xs:string"/>
+    <xs:attribute name="enableResendTimeout" type="xs:string"/>
+    <xs:attribute name="testMessageIndicator" type="xs:string"/>
+    <xs:attribute name="resendTimeout" type="xs:int"/>
+    <xs:attribute name="enableRejectResponse" type="xs:string"/>
+    <xs:attribute name="fillLastMsgSeqNum" type="xs:string"/>
+    <xs:attribute name="maxMsgLen" type="xs:int"/>
+    <xs:attribute name="logoutTimeout" type="xs:int"/>
+    <xs:attribute name="latencyCheck" type="xs:string"/>
+    <xs:attribute name="maxLatencyTreshold" type="xs:int"/>
+    <xs:attribute name="enableNextExpMsgSeqNum" type="xs:string"/>
+    <xs:attribute name="resetSeqAtStartup" type="xs:string"/>
+    <xs:attribute name="resetSeqAtLogon" type="xs:string"/>
+    <xs:attribute name="resetSeqAtLogout" type="xs:string"/>
+    <xs:attribute name="resetSeqAtDisconnect" type="xs:string"/>
+    <xs:attribute name="disableGapDetection" type="xs:string"/>
+    <xs:attribute name="printableFIXML" type="xs:string"/>
+    <xs:attribute name="validateIncomingFIXML" type="xs:string"/>
+    <xs:attribute name="validateOutgoingFIXML" type="xs:string"/>
+    <xs:attribute name="abortFIXMLValidationOnError" type="xs:string"/>
+    <xs:attribute name="enableMsgValidation" type="xs:string"/>
+    <xs:attribute name="persistence" type="xs:string"/>
+    <xs:attribute name="fixVersion" type="xs:string" use="required"/>
+    <xs:attribute name="defaultApplVerID" type="xs:string"/>
+    <xs:attribute name="defaultApplExtID" type="xs:int"/>
+    <xs:attribute name="defaultCstmApplVerID" type="xs:string"/>
+    <xs:attribute name="customApplVerID" type="xs:string"/>
+    <xs:attribute name="rxBufferSize" type="xs:int"/>
+    <xs:attribute name="txBufferSize" type="xs:int"/>
+    <xs:attribute name="resendEndSeqNum" type="xs:string"/>
+    <xs:attribute name="logonTimeout" type="xs:int"/>
+  </xs:complexType>
+
+  <xs:complexType name="ConnectionInfo" abstract="true">
+    <xs:sequence/>
+  </xs:complexType>
+
+  <xs:complexType name="EncryptedAuthenticationInfo">
+    <xs:sequence>
+      <xs:element name="encryptPasswd" type="xs:base64Binary" minOccurs="0"/>
+      <xs:element name="encryptNewPasswd" type="xs:base64Binary" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="encryptPasswdMethod" type="xs:int"/>
+  </xs:complexType>
+
+  <xs:complexType name="EncryptionInfo">
+    <xs:sequence/>
+    <xs:attribute name="encryptImplClass" type="xs:string"/>
+    <xs:attribute name="encryptionKeyRing" type="xs:string"/>
+    <xs:attribute name="encryptionPrvtKey" type="xs:string"/>
+    <xs:attribute name="encryptionPubKey" type="xs:string"/>
+    <xs:attribute name="encryptionSymKey" type="xs:string"/>
+    <xs:attribute name="encryptionType" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="ProducerStreamInfo">
+    <xs:complexContent>
+      <xs:extension base="tns:StreamInfo">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="StreamInfo" abstract="true">
+    <xs:sequence>
+      <xs:element name="flows" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="tns:flow" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="FlowInfo">
+    <xs:sequence>
+      <xs:element ref="tns:handler"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:string"/>
+    <xs:attribute name="msgFilter" type="xs:string"/>
+    <xs:attribute name="msgFilterClass" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="HandlerInfo">
+    <xs:sequence>
+      <xs:element ref="tns:handler" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:string"/>
+    <xs:attribute name="name" type="xs:string" use="required"/>
+    <xs:attribute name="singleton" type="xs:string"/>
+    <xs:attribute name="disabled" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="ConsumerStreamInfo">
+    <xs:complexContent>
+      <xs:extension base="tns:StreamInfo">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="MsgTypeInfo">
+    <xs:sequence/>
+    <xs:attribute name="defaultVerIndicator" type="xs:string"/>
+    <xs:attribute name="msgDirection" type="xs:string"/>
+    <xs:attribute name="refApplExtID" type="xs:int"/>
+    <xs:attribute name="refApplVerID" type="xs:string"/>
+    <xs:attribute name="refCstmApplVerID" type="xs:string"/>
+    <xs:attribute name="refMsgType" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="HandlerDefInfo">
+    <xs:sequence>
+      <xs:element name="parameters" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="tns:parameter" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="implClass" type="xs:string" use="required"/>
+    <xs:attribute name="name" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="HandlerParamInfo">
+    <xs:sequence/>
+    <xs:attribute name="name" type="xs:string" use="required"/>
+    <xs:attribute name="value" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="SecuredMessageInfo">
+    <xs:sequence>
+      <xs:element name="securedFields" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="tns:securedField" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="type" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="SecuredFieldInfo">
+    <xs:sequence/>
+    <xs:attribute name="tagNum" type="xs:int"/>
+  </xs:complexType>
+
+  <xs:complexType name="ScheduleTaskInfo">
+    <xs:sequence>
+      <xs:element ref="tns:date"/>
+      <xs:element name="taskParams" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="tns:taskParam" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="calendars" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="tns:calendarRef" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="name" type="xs:string" use="required"/>
+    <xs:attribute name="taskType" type="tns:scheduleTaskType" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="ScheduleDateInfo">
+    <xs:sequence/>
+    <xs:attribute name="hour" type="xs:string"/>
+    <xs:attribute name="minute" type="xs:string"/>
+    <xs:attribute name="dayOfWeek" type="xs:string"/>
+    <xs:attribute name="dayOfMonth" type="xs:string"/>
+    <xs:attribute name="month" type="xs:string"/>
+    <xs:attribute name="year" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="ScheduleTaskParamInfo">
+    <xs:sequence/>
+    <xs:attribute name="name" type="tns:scheduleFieldName" use="required"/>
+    <xs:attribute name="value" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="ClientTcpConnectionInfo">
+    <xs:complexContent>
+      <xs:extension base="tns:TcpConnectionInfo">
+        <xs:sequence>
+          <xs:element name="backupConnections" minOccurs="0">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element ref="tns:backupConnection" minOccurs="0" maxOccurs="unbounded"/>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+        <xs:attribute name="numOfRetries" type="xs:int"/>
+        <xs:attribute name="retrySecondsToWait" type="xs:int"/>
+        <xs:attribute name="proxyHost" type="xs:string"/>
+        <xs:attribute name="proxyPort" type="xs:int"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="TcpConnectionInfo" abstract="true">
+    <xs:complexContent>
+      <xs:extension base="tns:ConnectionInfo">
+        <xs:sequence>
+          <xs:element ref="tns:sslData" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="host" type="xs:string"/>
+        <xs:attribute name="port" type="xs:int" use="required"/>
+        <xs:attribute name="rxBufferSize" type="xs:int"/>
+        <xs:attribute name="txBufferSize" type="xs:int"/>
+        <xs:attribute name="soLinger" type="xs:int"/>
+        <xs:attribute name="tcpNodelay" type="xs:string"/>
+        <xs:attribute name="soTimeout" type="xs:int"/>
+        <xs:attribute name="soRcvbuf" type="xs:int"/>
+        <xs:attribute name="soSndbuf" type="xs:int"/>
+        <xs:attribute name="sendKeepAlive" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="SSLInfo">
+    <xs:sequence/>
+    <xs:attribute name="keyStoreLoc" type="xs:string" use="required"/>
+    <xs:attribute name="keyStorePasswd" type="xs:string" use="required"/>
+    <xs:attribute name="keyPasswd" type="xs:string"/>
+    <xs:attribute name="trustStoreLoc" type="xs:string"/>
+    <xs:attribute name="trustStorePasswd" type="xs:string"/>
+    <xs:attribute name="useCliAuth" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="CounterpartyInfo">
+    <xs:sequence>
+      <xs:element name="sessions" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+              <xs:element ref="tns:clientSession"/>
+              <xs:element ref="tns:serverSession"/>
+            </xs:choice>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="handlerDefs" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="tns:handlerDef" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="securedMessages" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="tns:securedMessage" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="compID" type="xs:string" use="required"/>
+    <xs:attribute name="locationID" type="xs:string"/>
+    <xs:attribute name="side" type="xs:string"/>
+    <xs:attribute name="subID" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="HadesInstanceInfo">
+    <xs:sequence>
+      <xs:element name="counterparties" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="tns:counterparty" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="handlerDefs" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="tns:handlerDef" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="securedMessages" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="tns:securedMessage" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="alertListeners" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="tns:listener" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="lifeCycleListeners" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="tns:listener" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="messageListeners" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="tns:listener" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element ref="tns:scheduler" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="name" type="xs:string" use="required"/>
+    <xs:attribute name="description" type="xs:string"/>
+    <xs:attribute name="mgmtHost" type="xs:string"/>
+    <xs:attribute name="mgmtPort" type="xs:int"/>
+    <xs:attribute name="mgmtUseSSL" type="xs:string"/>
+    <xs:attribute name="mgmtUseSSLCliAuth" type="xs:string"/>
+    <xs:attribute name="mgmtUseAuth" type="xs:string"/>
+    <xs:attribute name="mgmtKeystoreFile" type="xs:string"/>
+    <xs:attribute name="mgmtKeystorePasswd" type="xs:string"/>
+    <xs:attribute name="mgmtTruststoreFile" type="xs:string"/>
+    <xs:attribute name="mgmtTruststorePasswd" type="xs:string"/>
+    <xs:attribute name="clustered" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="ListenerInfo">
+    <xs:sequence/>
+    <xs:attribute name="className" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="SchedulerInfo">
+    <xs:sequence>
+      <xs:element name="calendars" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="tns:calendar" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="tasks" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="tns:task" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="ScheduleCalendarInfo">
+    <xs:sequence>
+      <xs:element name="excludes" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="tns:date" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="name" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="ServerSessionInfo">
+    <xs:complexContent>
+      <xs:extension base="tns:SessionInfo">
+        <xs:sequence/>
+        <xs:attribute name="enableLogonPassThrough" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="ServerTcpConnectionInfo">
+    <xs:complexContent>
+      <xs:extension base="tns:TcpConnectionInfo">
+        <xs:sequence/>
+        <xs:attribute name="name" type="xs:string" use="required"/>
+        <xs:attribute name="restrHostsIPAddresses" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="SharedServiceInfo">
+    <xs:sequence/>
+  </xs:complexType>
+
+  <xs:simpleType name="scheduleFieldName">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="cptyAddress"/>
+      <xs:enumeration value="sessAddress"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="scheduleTaskType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="thaw"/>
+      <xs:enumeration value="start"/>
+      <xs:enumeration value="disconnect"/>
+      <xs:enumeration value="stop"/>
+      <xs:enumeration value="reset"/>
+      <xs:enumeration value="connect"/>
+      <xs:enumeration value="freeze"/>
+      <xs:enumeration value="shutdown"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>
+

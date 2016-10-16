@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Revision: 1.2.0
+  Date:  25 Aug 2000
+  FIX Protocol Base.dtd 
+  Copyright 2000 FIX Protocol Limited.  All rights reserved.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+  <xs:complexType name="NewsContent">
+    <xs:sequence>
+      <xs:element minOccurs="0" ref="OrigTime"/>
+      <xs:element minOccurs="0" ref="Urgency"/>
+      <xs:element ref="Headline"/>
+      <xs:element minOccurs="0" ref="InstrumentList"/>
+      <xs:element ref="LinesOfText"/>
+      <xs:element minOccurs="0" ref="URLLink"/>
+      <xs:element minOccurs="0" ref="RawData"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="News">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="NewsContent">
+          <xs:attribute name="FIXTag" default="35">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="35"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="DataType" default="char">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="char"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="Value" default="B">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="B"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  <!--
+    FIX News uses the tag, RelatedSym instead of Symbol to reference Securities 
+    FIX Requires NoRelatedSym to be specified.  This corresponds to the number of elements in InstrumentList.
+  -->
+  <xs:element name="Headline">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="148">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="148"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Urgency">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="61">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="61"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="0"/>
+            <xs:enumeration value="1"/>
+            <xs:enumeration value="2"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="SDValue">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="Normal"/>
+            <xs:enumeration value="Flash"/>
+            <xs:enumeration value="Background"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

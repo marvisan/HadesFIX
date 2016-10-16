@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Revision: 1.2.0
+  Date:  25 Aug 2000
+  FIX Protocol Base.dtd 
+  Copyright 2000 FIX Protocol Limited.  All rights reserved.
+-->
+<!-- *** Quote Request -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+  <xs:complexType name="QuoteReqContent">
+    <xs:sequence>
+      <xs:element ref="QuoteReqID"/>
+      <xs:element ref="Instrument"/>
+      <xs:element minOccurs="0" ref="Side"/>
+      <xs:element minOccurs="0" ref="PrevClosePx"/>
+      <xs:element minOccurs="0" ref="OrderQty"/>
+      <xs:element minOccurs="0" ref="OrderType"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="QuoteReq">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="QuoteReqContent">
+          <xs:attribute name="FIXTag" default="35">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="35"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="DataType" default="char">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="char"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="Value" default="R">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="R"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  <!-- Note: Are all Sides valid for quotes ? -->
+  <xs:element name="QuoteReqID">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="131">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="131"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <!-- Quote Request *** -->
+  <!-- *** Quote -->
+  <xs:complexType name="QuoteContent">
+    <xs:sequence>
+      <xs:element minOccurs="0" ref="QuoteReqID"/>
+      <xs:element ref="QuoteID"/>
+      <xs:element ref="Instrument"/>
+      <xs:element minOccurs="0" ref="BidPx"/>
+      <xs:element minOccurs="0" ref="OfferPx"/>
+      <xs:element minOccurs="0" ref="BidSize"/>
+      <xs:element minOccurs="0" ref="OfferSize"/>
+      <xs:element minOccurs="0" ref="ValidUntilTime"/>
+      <xs:element minOccurs="0" ref="BidSpotRate"/>
+      <xs:element minOccurs="0" ref="OfferSpotRate"/>
+      <xs:element minOccurs="0" ref="BidForwardPoints"/>
+      <xs:element minOccurs="0" ref="OfferForwardPoints"/>
+      <xs:element minOccurs="0" ref="TransactTime"/>
+      <xs:element minOccurs="0" ref="OrderType"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="Quote">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="QuoteContent">
+          <xs:attribute name="FIXTag" default="35">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="35"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="DataType" default="char">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="char"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="Value" default="S">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="S"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="BidPx">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="132">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="132"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="float">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="float"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Min" default="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="0"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Max" default="99999999.9999">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="99999999.9999"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="OfferPx">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="133">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="133"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="float">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="float"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Min" default="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="0"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Max" default="99999999.9999">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="99999999.9999"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="BidSize">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="134">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="134"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="int">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="int"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Min" default="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="0"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Max" default="1000000000">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="1000000000"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="OfferSize">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="135">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="135"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="int">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="int"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Min" default="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="0"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Max" default="1000000000">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="1000000000"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="BidSpotRate">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="188">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="188"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="float">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="float"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Min" default="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="0"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Max" default="99999999.9999">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="99999999.9999"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="BidForwardPoints">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="189">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="189"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="float">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="float"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="OfferSpotRate">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="190">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="190"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="float">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="float"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Min" default="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="0"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Max" default="99999999.9999">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="99999999.9999"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="OfferForwardPoints">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="191">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="191"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="float">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="float"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
+<!-- Quote *** -->

@@ -1,0 +1,8 @@
+keytool -genkeypair -keystore server.keystore // password test123
+keytool -genkeypair -keystore client.keystore // password test123
+
+keytool -exportcert -keystore server.keystore -file server.cert
+keytool -exportcert -keystore client.keystore -file client.cert
+
+keytool -importcert -keystore server.truststore -file client.cert // password test123
+keytool -importcert -keystore client.truststore -file server.cert // password test123
