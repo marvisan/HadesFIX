@@ -7,8 +7,8 @@ package net.hades.fix.engine.handler;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import net.hades.fix.engine.handler.task.ExecutionResult;
-import net.hades.fix.engine.handler.task.TaskStatus;
+import net.hades.fix.engine.process.ExecutionResult;
+import net.hades.fix.engine.process.TaskStatus;
 import net.hades.fix.message.Message;
 
 /**

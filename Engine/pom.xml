@@ -19,23 +19,53 @@
 		<executions>
 		    <execution>
 			<id>schemagen</id>
+			<phase>generate-sources</phase>
 			<goals>
 			    <goal>schemagen</goal>
 			</goals>
 		    </execution>
 		</executions>
 		<configuration>
-		    <packageName>net.hades.fix.config.model</packageName>
-		    <schemaSourceExcludeFilters>
-			<noJaxbIndex implementation="org.codehaus.mojo.jaxb2.shared.filters.pattern.PatternFileFilter">
-			    <patterns>
-				<pattern>jaxb\.index</pattern>
-			    </patterns>
-			</noJaxbIndex>
-			
-		    </schemaSourceExcludeFilters>
+		    <outputDirectory>${project.build.directory}/generated-sources/schemas/xsd/engine</outputDirectory>
+		    <sources>
+			<source>src/main/java/net/hades/fix/engine/config/model</source>
+			<schemaSourceExcludeFilters>
+			    <noJaxbIndex implementation="org.codehaus.mojo.jaxb2.shared.filters.pattern.PatternFileFilter">
+				<patterns>
+				    <pattern>jaxb\.index</pattern>
+				</patterns>
+			    </noJaxbIndex>
+			</schemaSourceExcludeFilters>
+		    </sources>
 		</configuration>
 	    </plugin>
+	    <plugin>
+		<groupId>com.coderplus.maven.plugins</groupId>
+		<artifactId>copy-rename-maven-plugin</artifactId>
+		<version>1.0</version>
+		<executions>
+		    <execution>
+			<id>copy-schema</id>
+			<phase>generate-sources</phase>
+			<goals>
+			    <goal>copy</goal>
+			</goals>
+			<configuration>
+			    <fileSets>
+				<fileSet>
+				    <sourceFile>${project.build.directory}/generated-sources/schemas/xsd/engine/schema1.xsd</sourceFile>
+				    <destinationFile>${project.build.directory}/classes/schemas/HadesEngineConfig.xsd</destinationFile>
+				</fileSet>
+				<fileSet>
+				    <sourceFile>${project.build.directory}/generated-sources/schemas/xsd/engine/schema1.xsd</sourceFile>
+				    <destinationFile>${project.build.directory}/test-classes/schemas/HadesEngineConfig.xsd</destinationFile>
+				</fileSet>
+			    </fileSets>
+			</configuration>
+		    </execution>
+		</executions>
+	    </plugin>
+
 	</plugins>
     </build>
     

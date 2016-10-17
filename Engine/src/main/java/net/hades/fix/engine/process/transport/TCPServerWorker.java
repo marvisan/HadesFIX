@@ -72,7 +72,7 @@ public class TCPServerWorker extends Thread implements Transport {
     private static final int DEFAULT_SO_LINGER                          = -1;
     private static final int DEFAULT_SO_TIMEOUT                         = 10000; // 10 seconds
 
-    private TCPServer tcpServer;
+    private TCPServerOld tcpServer;
 
     private Socket socket;
 
@@ -100,7 +100,7 @@ public class TCPServerWorker extends Thread implements Transport {
 
     private MessageSender messageSender;
 
-    public TCPServerWorker(TCPServer tcpServer, Socket socket) {
+    public TCPServerWorker(TCPServerOld tcpServer, Socket socket) {
         super(((InetSocketAddress) socket.getRemoteSocketAddress()).getAddress().getHostAddress() + ":" +
                 ((InetSocketAddress) socket.getRemoteSocketAddress()).getPort() + "_" + COMP_NAME);
         this.tcpServer = tcpServer;

@@ -2,12 +2,6 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
-/*
- * Configurator.java
- *
- * $Id: Configurator.java,v 1.9 2010-08-25 05:30:58 vrotaru Exp $
- */
 package net.hades.fix.engine.config;
 
 import net.hades.fix.engine.config.model.HadesInstanceInfo;
@@ -33,7 +27,6 @@ import java.util.logging.Logger;
  * It also validates missing configuration.
  * 
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
- * @version $Revision: 1.9 $
  */
 public class Configurator {
 
@@ -42,7 +35,7 @@ public class Configurator {
     public static final String CONFIG_FILE_ENV_PROP_NAME = "hades.engine.config.file";
 
     private static final String CONFIG_CLASSES_PACKAGE = "net.hades.fix.engine.config.model";
-    private static final String CONFIG_SCHEMA_LOCATION = "xsd/engine/HadesEngineConfig.xsd";
+    private static final String CONFIG_SCHEMA_LOCATION = "schemas/HadesEngineConfig.xsd";
 
     private static String configDir;
 

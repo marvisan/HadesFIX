@@ -45,14 +45,13 @@ public class ServerTcpConnectionInfo extends TcpConnectionInfo implements Compos
     static {
         try {
             COMPOSITE_DATA_ITEMS = new String[]{"host", "port", "rxBufferSize", "txBufferSize", "soLinger", "tcpNodelay",
-                    "soTimeout", "soRcvbuf", "soSndbuf", "sendKeepAlive", "name", "restrHostsIPAddresses"};
+                    "soTimeout", "soRcvbuf", "soSndbuf", "sendKeepAlive", "restrHostsIPAddresses"};
             COMPOSITE_DATA_ITEMS_DESCRIPTION = new String[]{"Sell side host", "Sell side port", "Msg Rx Buffer Size",
                     "Msg Tx Buffer Size", "Socket SO_LINGER Value", "Socket TCP_NODELAY Value", "Socket SO_TIMEOUT Value",
-                    "Socket Rx Buffer Size", "Socket Tx Buffer Size", "Socket SEND_ALIVE Value", "TCP Server Name",
-                    "Restricted Hosts List"};
+                    "Socket Rx Buffer Size", "Socket Tx Buffer Size", "Socket SEND_ALIVE Value", "Restricted Hosts List"};
             COMPOSITE_DATA_OPEN_TYPES = new OpenType<?>[]{SimpleType.STRING, SimpleType.INTEGER, SimpleType.INTEGER, SimpleType.INTEGER,
                     SimpleType.INTEGER, SimpleType.BOOLEAN, SimpleType.INTEGER, SimpleType.INTEGER, SimpleType.INTEGER, SimpleType.BOOLEAN,
-                    SimpleType.STRING, SimpleType.STRING};
+                    SimpleType.STRING};
 
             DataType = new CompositeType("ServerTcpConnectionInfo", "Server TCP Connection Data", COMPOSITE_DATA_ITEMS,
                     COMPOSITE_DATA_ITEMS_DESCRIPTION, COMPOSITE_DATA_OPEN_TYPES);
@@ -65,21 +64,10 @@ public class ServerTcpConnectionInfo extends TcpConnectionInfo implements Compos
         }
     }
 
-    @XmlAttribute(name = "name", required = true)
-    protected String name;
-
     @XmlAttribute(name = "restrHostsIPAddresses")
     protected String restrHostsIPAddresses;
 
     public ServerTcpConnectionInfo() {
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getRestrHostsIPAddresses() {
@@ -109,7 +97,7 @@ public class ServerTcpConnectionInfo extends TcpConnectionInfo implements Compos
                     itemDescriptions.toArray(new String[itemDescriptions.size()]),
                     itemTypes.toArray(new OpenType<?>[itemTypes.size()]));
             CompositeData cd = new CompositeDataSupport(xct, COMPOSITE_DATA_ITEMS, new Object[]{host, port, rxBufferSize, txBufferSize,
-                    socketLingerTimeout, tcpNodelay, socketTimeout, socketRcvbuf, socketSndbuf, sendKeepAlive, name, restrHostsIPAddresses});
+                    socketLingerTimeout, tcpNodelay, socketTimeout, socketRcvbuf, socketSndbuf, sendKeepAlive, restrHostsIPAddresses});
             assert ct.isValue(cd);
             return cd;
         } catch (Exception e) {
@@ -121,7 +109,6 @@ public class ServerTcpConnectionInfo extends TcpConnectionInfo implements Compos
     public String toString() {
         StringBuilder sb = new StringBuilder("{ServerTcpConnectionInfo[");
         sb.append(super.toString());
-        sb.append(",").append("name=").append(name);
         if (restrHostsIPAddresses != null) {
             sb.append(",").append("restrHostsIPAddresses=").append(restrHostsIPAddresses);
         }

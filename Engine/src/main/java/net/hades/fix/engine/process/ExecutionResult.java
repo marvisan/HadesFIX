@@ -3,7 +3,9 @@
  *              Use is subject to license terms.
  */
 
-package net.hades.fix.engine.handler.task;
+package net.hades.fix.engine.process;
+
+import net.hades.fix.engine.process.TaskStatus;
 
 /**
  * The result of a Callable task executed by engine.

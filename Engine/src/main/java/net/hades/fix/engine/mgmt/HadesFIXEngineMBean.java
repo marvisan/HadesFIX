@@ -729,8 +729,8 @@ public class HadesFIXEngineMBean extends NotificationBroadcasterSupport implemen
             int expSeqNo = sessionCoordinator.getProtocol().getRxSeqNo() + 1;
             if (newSeqNum < expSeqNo) {
                 result = new OutcomeData(false);
-                result.setErrMsg("Could not reset session [" + sessionCoordinator.getName() + "] sequence number to [" + newSeqNum
-                        + "] that is smaller than current expected sequence [" + expSeqNo + "]");
+//                result.setErrMsg("Could not reset session [" + sessionCoordinator.getName() + "] sequence number to [" + newSeqNum
+//                        + "] that is smaller than current expected sequence [" + expSeqNo + "]");
             } else {
                 try {
                     sessionCoordinator.sendResetSequenceMessage(newSeqNum);

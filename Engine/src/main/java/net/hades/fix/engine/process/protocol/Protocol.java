@@ -383,7 +383,7 @@ public abstract class Protocol extends Thread implements Reportable, Manageable,
     }
 
     public Coordinable getSessionCoordinator() {
-        return sessionCoordinator;
+        return (Coordinable) sessionCoordinator;
     }
 
     public boolean isRoutingMode() {
@@ -684,10 +684,10 @@ public abstract class Protocol extends Thread implements Reportable, Manageable,
         File sessConfigDirFile = new File(sessConfigDir);
         if (!sessConfigDirFile.exists()) {
             if (!sessConfigDirFile.mkdir()) {
-                String errMsg = "Could not create session config dir [" + sessConfigDirFile.getPath() + "] for session ["
-                        + sessionCoordinator.getName() + "].";
-                LOGGER.severe(errMsg);
-                throw new ConfigurationException(errMsg);
+//                String errMsg = "Could not create session config dir [" + sessConfigDirFile.getPath() + "] for session ["
+//                        + sessionCoordinator.getName() + "].";
+//                LOGGER.severe(errMsg);
+//                throw new ConfigurationException(errMsg);
             }
         }
         sessConfigDir = configDir + File.separator + SESSIONS_DATA_DIR + File.separator +
@@ -696,10 +696,10 @@ public abstract class Protocol extends Thread implements Reportable, Manageable,
         sessConfigDirFile = new File(sessConfigDir);
         if (!sessConfigDirFile.exists()) {
             if (!sessConfigDirFile.mkdir()) {
-                String errMsg = "Could not create session config dir [" + sessConfigDirFile.getPath() + "] for session ["
-                        + sessionCoordinator.getName() + "].";
-                LOGGER.severe(errMsg);
-                throw new ConfigurationException(errMsg);
+//                String errMsg = "Could not create session config dir [" + sessConfigDirFile.getPath() + "] for session ["
+//                        + sessionCoordinator.getName() + "].";
+//                LOGGER.severe(errMsg);
+//                throw new ConfigurationException(errMsg);
             }
         }
     }

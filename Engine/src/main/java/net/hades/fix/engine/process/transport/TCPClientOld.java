@@ -6,7 +6,7 @@
 /*
  * TCPClientProcess.java
  *
- * $Id: TCPClient.java,v 1.52 2011-04-30 04:39:45 vrotaru Exp $
+ * $Id: TCPClientOld.java,v 1.52 2011-04-30 04:39:45 vrotaru Exp $
  */
 package net.hades.fix.engine.process.transport;
 
@@ -68,9 +68,9 @@ import java.util.logging.Logger;
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
  * @version $Revision: 1.52 $
  */
-public final class TCPClient extends Thread implements Transport {
+public final class TCPClientOld extends Thread implements Transport {
 
-    private static final Logger LOGGER = Logger.getLogger(TCPClient.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(TCPClientOld.class.getName());
 
     private static final String COMPONENT_NAME = "TCPCLI";
 
@@ -114,7 +114,7 @@ public final class TCPClient extends Thread implements Transport {
     private FIXMessageStreamReader messageStreamReader;
     private MessageSender messageSender;
 
-    public TCPClient(ClientSessionCoordinator sessionCoordinator, ClientTcpConnectionInfo configuration) throws ConfigurationException {
+    public TCPClientOld(ClientSessionCoordinator sessionCoordinator, ClientTcpConnectionInfo configuration) throws ConfigurationException {
         super(sessionCoordinator.getName() + "_" + COMPONENT_NAME);
         this.sessionCoordinator = sessionCoordinator;
         this.configuration = configuration;
@@ -1041,7 +1041,7 @@ public final class TCPClient extends Thread implements Transport {
                 } catch (SocketTimeoutException ex) {
                     LOGGER.log(Level.SEVERE, "Socket timed out waiting for the first message : {0}", ExceptionUtil.getStackTrace(ex));
 
-                    TCPClient.this.block();
+                    TCPClientOld.this.block();
                     while (!ProcessStatus.INACTIVE.equals(getProcessStatus())) {
                         if (!ThreadUtil.sleep(1)) {
                             break;
@@ -1067,7 +1067,7 @@ public final class TCPClient extends Thread implements Transport {
                 } catch (Exception ex) {
                     LOGGER.log(Level.SEVERE, "Communication error: {0}", ExceptionUtil.getStackTrace(ex));
 
-                    TCPClient.this.block();
+                    TCPClientOld.this.block();
                     while (!ProcessStatus.INACTIVE.equals(getProcessStatus())) {
                         if (!ThreadUtil.sleep(1)) {
                             break;
@@ -1159,7 +1159,7 @@ public final class TCPClient extends Thread implements Transport {
                 } catch (Exception ex) {
                     LOGGER.log(Level.SEVERE, "Communication error: {0}", ExceptionUtil.getStackTrace(ex));
 
-                    TCPClient.this.block();
+                    TCPClientOld.this.block();
                     while (!ProcessStatus.INACTIVE.equals(getProcessStatus())) {
                         if (!ThreadUtil.sleep(1)) {
                             break;

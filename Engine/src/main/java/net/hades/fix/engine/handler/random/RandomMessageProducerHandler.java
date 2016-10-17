@@ -18,7 +18,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.hades.fix.engine.handler.AbstractHandler;
-import net.hades.fix.engine.handler.task.TaskStatus;
+import net.hades.fix.engine.process.TaskStatus;
 import net.hades.fix.message.*;
 import net.hades.fix.message.builder.FIXMsgBuilder;
 import net.hades.fix.message.config.SessionContext;

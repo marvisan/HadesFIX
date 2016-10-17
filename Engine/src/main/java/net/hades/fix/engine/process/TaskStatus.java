@@ -3,7 +3,7 @@
  *              Use is subject to license terms.
  */
 
-package net.hades.fix.engine.handler.task;
+package net.hades.fix.engine.process;
 
 /**
  * Status of the task thread run.
@@ -12,5 +12,4 @@ package net.hades.fix.engine.handler.task;
  */
 public enum TaskStatus {
     New, Running, Exiting, TimedOut, Completed;
-
 }

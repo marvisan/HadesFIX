@@ -13,8 +13,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
-import net.hades.fix.engine.handler.task.ExecutionResult;
-import net.hades.fix.engine.handler.task.TaskStatus;
+import net.hades.fix.engine.process.ExecutionResult;
+import net.hades.fix.engine.process.TaskStatus;
 import net.hades.fix.message.Message;
 
 /**
@@ -27,7 +27,7 @@ public abstract class AbstractHandler implements Handler  {
     private final Logger Log = Logger.getLogger(this.getClass().getSimpleName());
 	
     private static final int DEFAULT_TIMEOUT_SECS = 30;
-    private static final int DEFAULT_SLEEP_MILLIS = 5;
+    private static final int DEFAULT_SLEEP_MILLIS = 1;
 
     private Duration timeout;
     

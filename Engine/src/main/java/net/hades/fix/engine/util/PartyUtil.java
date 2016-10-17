@@ -12,7 +12,7 @@ import net.hades.fix.engine.process.transport.TCPServerWorker;
 import net.hades.fix.engine.config.model.CounterpartyInfo;
 import net.hades.fix.engine.model.CounterpartyAddress;
 import net.hades.fix.engine.process.Manageable;
-import net.hades.fix.engine.process.transport.TCPClient;
+import net.hades.fix.engine.process.transport.TCPClientOld;
 
 /**
  * Utility class used to return different data required for a party.
@@ -122,8 +122,8 @@ public class PartyUtil {
             sb.append(((Handler)component).retrieveSessionAddress());
         } else if (component instanceof Status) {
             sb.append(((Status)component).retrieveSessionAddress());
-        } else if (component instanceof TCPClient) {
-            sb.append(((TCPClient)component).retrieveSessionAddress());
+        } else if (component instanceof TCPClientOld) {
+            sb.append(((TCPClientOld)component).retrieveSessionAddress());
         } else if (component instanceof TCPServerWorker) {
             sb.append(((TCPServerWorker)component).retrieveSessionAddress());
         } else if (component instanceof EngineTimerTask) {

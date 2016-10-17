@@ -8,6 +8,7 @@
  */
 package net.hades.fix.engine.process.session;
 
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -99,6 +100,13 @@ public abstract class SessionCoordinator implements Handler {
         stats = new AtomicReference<>(new SessionStats());
         commandQueue = new LinkedBlockingQueue<>(MAX_NUM_COMMANDS);
     }
+    
+    /**
+     * Runs the stream handlers upon the TCP connection success.
+     * @param clientSocket TCP connection
+     */
+    public abstract void startStreamHandlers(Socket clientSocket);
+
 
     /**
      * Initialise the structures of the session coordinator.

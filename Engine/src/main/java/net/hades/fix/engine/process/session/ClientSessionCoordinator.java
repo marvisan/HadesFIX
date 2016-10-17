@@ -24,7 +24,7 @@ import net.hades.fix.engine.process.event.GenericEventProcessor;
 import net.hades.fix.engine.process.protocol.client.FIXClient;
 import net.hades.fix.engine.process.stream.ConsumerStream;
 import net.hades.fix.engine.process.stream.ProducerStream;
-import net.hades.fix.engine.process.transport.TCPClient;
+import net.hades.fix.engine.process.transport.TCPClientOld;
 import net.hades.fix.engine.util.UIDGen;
 
 import java.util.Date;
@@ -91,10 +91,10 @@ public final class ClientSessionCoordinator extends SessionCoordinator {
         // event processor
         eventProcessor = new GenericEventProcessor(getName());
         // initialise transport
-        transport = new TCPClient(this, (ClientTcpConnectionInfo) configuration.getConnection());
+        transport = new TCPClientOld(this, (ClientTcpConnectionInfo) configuration.getConnection());
         transport.initialise();
 
-        LOGGER.log(Level.INFO, "Client transport [{0}] initialised.", ((TCPClient) transport).getName());
+        LOGGER.log(Level.INFO, "Client transport [{0}] initialised.", ((TCPClientOld) transport).getName());
         // initialise FIX client
         protocol = new FIXClient(this, (ClientSessionInfo) configuration);
         protocol.initialise();
@@ -139,8 +139,8 @@ public final class ClientSessionCoordinator extends SessionCoordinator {
             addLifeCycleListener(hadesInstance.getEventProcessor());
             addMessageListener(hadesInstance.getEventProcessor());
 
-            ((TCPClient) transport).start();
-            ThreadUtil.blockUntilAlive((TCPClient) transport);
+            ((TCPClientOld) transport).start();
+            ThreadUtil.blockUntilAlive((TCPClientOld) transport);
             transport.execute(new Command(CommandType.Startup));
             while (!ProcessStatus.INACTIVE.equals(transport.getProcessStatus())) {
                 if (!ThreadUtil.sleep(1)) {

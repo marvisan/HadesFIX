@@ -4,9 +4,9 @@
  */
 
 /*
- * TCPServer.java
+ * TCPServerOld.java
  *
- * $Id: TCPServer.java,v 1.24 2011-04-30 04:39:44 vrotaru Exp $
+ * $Id: TCPServerOld.java,v 1.24 2011-04-30 04:39:44 vrotaru Exp $
  */
 package net.hades.fix.engine.process.transport;
 
@@ -60,9 +60,9 @@ import java.util.logging.Logger;
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
  * @version $Revision: 1.24 $
  */
-public final class TCPServer extends Thread implements ManagedProcess {
+public final class TCPServerOld extends Thread implements ManagedProcess {
 
-    private static final Logger LOGGER = Logger.getLogger(TCPServer.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(TCPServerOld.class.getName());
 
     private static final String COMPONENT_NAME = "TCPSRV";
     private static final int DEFAULT_BACKLOG_VALUE = 0;
@@ -94,7 +94,7 @@ public final class TCPServer extends Thread implements ManagedProcess {
     private EventProcessor eventProcessor;
     private TCPListener tcpListener;
 
-    public TCPServer(HadesInstance hadesInstance, ServerTcpConnectionInfo configuration) throws ConfigurationException {
+    public TCPServerOld(HadesInstance hadesInstance, ServerTcpConnectionInfo configuration) throws ConfigurationException {
         super(configuration.getName() + "_" + COMPONENT_NAME);
         this.hadesInstance = hadesInstance;
         this.configuration = configuration;

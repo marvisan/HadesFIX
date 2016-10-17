@@ -2,12 +2,48 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
-/*
- * HadesInstance.java
- */
 package net.hades.fix.engine;
 
+
+import javax.management.openmbean.OpenDataException;
+import javax.management.remote.JMXServiceURL;
+import javax.management.remote.jmxmp.JMXMPConnectorServer;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.Security;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.MBeanServerFactory;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
+
+import net.hades.fix.commons.exception.ExceptionUtil;
+import net.hades.fix.commons.security.PasswordBank;
+import net.hades.fix.commons.thread.ThreadUtil;
+import net.hades.fix.message.util.format.DateFormatter;
 import net.hades.fix.engine.config.ConfigurationValidator;
 import net.hades.fix.engine.config.Configurator;
 import net.hades.fix.engine.config.model.*;
@@ -23,7 +59,6 @@ import net.hades.fix.engine.mgmt.data.ProcessStatus;
 import net.hades.fix.engine.mgmt.security.HadesServerProvider;
 import net.hades.fix.engine.model.CounterpartyAddress;
 import net.hades.fix.engine.model.SessionAddress;
-import net.hades.fix.engine.process.Commandable;
 import net.hades.fix.engine.process.Reportable;
 import net.hades.fix.engine.process.command.Command;
 import net.hades.fix.engine.process.command.CommandType;
@@ -34,45 +69,17 @@ import net.hades.fix.engine.process.listener.AlertListener;
 import net.hades.fix.engine.process.listener.LifeCycleListener;
 import net.hades.fix.engine.process.listener.MessageListener;
 import net.hades.fix.engine.process.session.ClientSessionCoordinator;
-import net.hades.fix.engine.process.session.Coordinable;
 import net.hades.fix.engine.process.session.ServerSessionCoordinator;
 import net.hades.fix.engine.process.session.SessionCoordinator;
-import net.hades.fix.engine.process.transport.TCPServer;
+import net.hades.fix.engine.process.transport.TCPServerOld;
 import net.hades.fix.engine.scheduler.Scheduler;
-
-import javax.management.*;
-import javax.management.openmbean.OpenDataException;
-import javax.management.remote.JMXServiceURL;
-import javax.management.remote.jmxmp.JMXMPConnectorServer;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManagerFactory;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.security.*;
-import java.security.cert.CertificateException;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import net.hades.fix.commons.exception.ExceptionUtil;
-import net.hades.fix.commons.security.PasswordBank;
-import net.hades.fix.commons.thread.ThreadUtil;
-import net.hades.fix.message.util.format.DateFormatter;
 
 /**
  * Main starting class of the Hades FIX engine.
  *
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
  */
-public class HadesInstance implements Engine, Reportable, Commandable {
+public class HadesInstance implements Reportable {
 
     private static final Logger LOGGER = Logger.getLogger(HadesInstance.class.getName());
 
@@ -82,9 +89,8 @@ public class HadesInstance implements Engine, Reportable, Commandable {
     private static MBeanServer server;
 
     private final HadesInstanceInfo configuration;
-
     private ConcurrentMap<SessionAddress, SessionCoordinator> sessions;
-    private ConcurrentMap<String, TCPServer> tcpServers;
+    private ConcurrentMap<String, TCPServerOld> tcpServers;
 
     private Scheduler scheduler;
 
@@ -127,8 +133,7 @@ public class HadesInstance implements Engine, Reportable, Commandable {
         } catch (ConnectionException ex) {
             LOGGER.log(Level.SEVERE, "FATAL : Could not start JMXMP server. Error was : {0}", ExceptionUtil.getStackTrace(ex));
         } catch (InstanceAlreadyExistsException ex) {
-            LOGGER.log(Level.SEVERE, "FATAL : An instance of the Management server exists already. Error was : {0}",
-                    ExceptionUtil.getStackTrace(ex));
+            LOGGER.log(Level.SEVERE, "FATAL : An instance of the Management server exists already. Error was : {0}", ExceptionUtil.getStackTrace(ex));
         } catch (MBeanRegistrationException ex) {
             LOGGER.log(Level.SEVERE, "FATAL : Could not register the Mgmt object. Error was : {0}", ExceptionUtil.getStackTrace(ex));
         } catch (NotCompliantMBeanException ex) {
@@ -173,29 +178,19 @@ public class HadesInstance implements Engine, Reportable, Commandable {
         return eventProcessor;
     }
 
-    @Override
-    public void execute(Command command) {
-        commandQueue.add(command);
-    }
-
     public void startEngine() {
         startConfiguredSessions();
         startInstanceScheduledTasks();
     }
 
     public void initialise() throws ConfigurationException {
-        LOGGER.info("HadesFIX engine initialising.");
+        LOGGER.info("HadesFIX engine initialising...");
 
-        commandQueue = new LinkedBlockingQueue<Command>();
-        sessions = new ConcurrentHashMap<SessionAddress, SessionCoordinator>();
+        sessions = new ConcurrentHashMap<>();
         aggregateEngineConfiguration(getConfiguration());
         startEventProcessor();
         setConfiguredListeners();
-
-        createTCPServers();
         createSessionCoordinators();
-        startTCPServers();
-
         createScheduler();
 
         LOGGER.info("HadesFIX engine initialised successfully.");
@@ -206,10 +201,7 @@ public class HadesInstance implements Engine, Reportable, Commandable {
 
         while (!shutdown) {
             try {
-                Command command = commandQueue.take();
-                if (command.getCommandType().equals(CommandType.Shutdown) || command.getCommandType().equals(CommandType.ShutdownNow)) {
-                    shutdown = true;
-                }
+		Thread.sleep(5);
             } catch (InterruptedException ex) {
                 String error = "Thread interrupted unexpectedly.";
                 LOGGER.log(Level.SEVERE, "{0} Error was : {1}", new Object[]{error, ExceptionUtil.getStackTrace(ex)});
@@ -238,11 +230,6 @@ public class HadesInstance implements Engine, Reportable, Commandable {
         eventProcessor.addMessageListener(listener);
     }
 
-    @Override
-    public List<Coordinable> getSessionCoordinators() {
-        return new ArrayList<Coordinable>(sessions.values());
-    }
-
     /**
      * Returns a session coordinator.
      * @param cptyAddr remote counterparty ID
@@ -258,7 +245,6 @@ public class HadesInstance implements Engine, Reportable, Commandable {
                 break;
             }
         }
-
         return sessionCoordinator;
     }
 
@@ -271,25 +257,6 @@ public class HadesInstance implements Engine, Reportable, Commandable {
             }
         }
     }
-
-//    public void reconfigure() throws ConfigurationException {
-//        HadesInstanceInfo newConfig = Configurator.readConfiguration();
-//        configuration.reconfigure(newConfig);
-//        if (configuration.getHandlerDefs() != null && configuration.getHandlerDefs().length > 0) {
-//            aggregateHandlerDefInfo(configuration);
-//        }
-//        for (SessionCoordinator coordinator : sessions.values()) {
-//            coordinator.aggregateHandlers();
-//        }
-//        for (SessionCoordinator coordinator : sessions.values()) {
-//            for (Flow flow : coordinator.getConsumerStream().getFlows()) {
-//                for (Iterator<Handler> iterator = flow.getHandlers().iterator(); iterator.hasNext(); ) {
-//                    Handler handler = iterator.next();
-//                    handler.setParameters(coordinator.getHandlerParameters(handler.getName()));
-//                }
-//            }
-//        }
-//    }
 
     public void startSession(String cptyAddr, String sessAddr) throws ConfigurationException {
         if (!isSessionStopped(cptyAddr, sessAddr)) {
@@ -313,7 +280,6 @@ public class HadesInstance implements Engine, Reportable, Commandable {
                         } else {
                             coordinator = new ServerSessionCoordinator(this, sessionInfo, cptyInfo, address);
                             coordinator.initialise();
-                            setSessionCoordinatorInServer(address, (ServerSessionCoordinator) coordinator);
                         }
                         startSessionCoordinator(coordinator);
                         sessions.put(address, coordinator);
@@ -368,7 +334,7 @@ public class HadesInstance implements Engine, Reportable, Commandable {
             LOGGER.log(Level.INFO, "Session [{0}] shut down gracefully.", address.toString());
         }
         sessions.clear();
-        for (TCPServer tcpServer : tcpServers.values()) {
+        for (TCPServerOld tcpServer : tcpServers.values()) {
             tcpServer.execute(new Command(CommandType.Shutdown));
             while (!ProcessStatus.SHUTDOWN.equals(tcpServer.getProcessStatus())) {
                 if (!ThreadUtil.sleep(1)) {
@@ -379,8 +345,7 @@ public class HadesInstance implements Engine, Reportable, Commandable {
         tcpServers.clear();
 
         LOGGER.log(Level.INFO, "HadesFIX engine [{0}] shutdown successfully.", configuration.getName());
-
-        execute(new Command(CommandType.Shutdown));
+	shutdown = true;
     }
 
     public void shutdownImmediateEngine() {
@@ -401,81 +366,18 @@ public class HadesInstance implements Engine, Reportable, Commandable {
             LOGGER.log(Level.INFO, "Session [{0}] shut down immediate.", address.toString());
         }
         sessions.clear();
-        for (TCPServer tcpServer : tcpServers.values()) {
+        for (TCPServerOld tcpServer : tcpServers.values()) {
             tcpServer.execute(new Command(CommandType.ShutdownNow));
         }
         tcpServers.clear();
 
         LOGGER.log(Level.INFO, "HadesFIX engine [{0}] shutdown successfully.", configuration.getName());
 
-        execute(new Command(CommandType.ShutdownNow));
+        shutdown = true;
     }
 
     public Scheduler getScheduler() {
         return scheduler;
-    }
-
-    private void createTCPServers() throws ConfigurationException {
-        if (LOGGER.isLoggable(Level.FINER)) {
-            LOGGER.finer("Searching for TCP server configurations.");
-        }
-        tcpServers = new ConcurrentHashMap<String, TCPServer>();
-        for (CounterpartyInfo cptyInfo : configuration.getCounterparties()) {
-            CounterpartyAddress remoteAddr = new CounterpartyAddress(cptyInfo.getCompID(), cptyInfo.getSubID(), cptyInfo.getLocationID());
-            for (SessionInfo sessionInfo : cptyInfo.getSessions()) {
-                CounterpartyAddress localAddr = new CounterpartyAddress(sessionInfo.getCompID(), sessionInfo.getSubID(), sessionInfo.getLocationID());
-                SessionAddress address = new SessionAddress(remoteAddr, localAddr);
-                if (sessionInfo instanceof ServerSessionInfo) {
-                    ServerSessionInfo srvrSessionInfo = (ServerSessionInfo) sessionInfo;
-                    ServerTcpConnectionInfo srvrTcpConnInfo = (ServerTcpConnectionInfo) srvrSessionInfo.getConnection();
-                    TCPServer tcpServer = findExistingTCPServer(srvrTcpConnInfo.getName(), srvrTcpConnInfo.getPort());
-                    if (tcpServer == null) {
-                        // none existing - creating a new server
-                        tcpServer = new TCPServer(this, srvrTcpConnInfo);
-                        tcpServer.initialise();
-                        tcpServer.addServerSessionCoordinator(address, null);
-                        tcpServers.putIfAbsent(srvrTcpConnInfo.getName(), tcpServer);
-                        LOGGER.log(Level.INFO, "Created server [{0}] on port [{1}] for session [{2}].",
-                                new Object[]{srvrTcpConnInfo.getName(), srvrTcpConnInfo.getPort(), address.toString()});
-                    } else {
-                        tcpServer.addServerSessionCoordinator(address, null);
-                        LOGGER.log(Level.INFO, "Added session to server [{0}] on port [{1}] for session [{2}].",
-                                new Object[]{srvrTcpConnInfo.getName(), srvrTcpConnInfo.getPort(), address.toString()});
-                    }
-                }
-            }
-        }
-
-        LOGGER.log(Level.INFO, "Created [{0}] TCP server(s).", tcpServers.size());
-    }
-
-    private void startTCPServers() {
-        if (tcpServers.size() > 0) {
-            // we have TCP servers configured, lets start them
-            for (TCPServer tcpServer : tcpServers.values()) {
-                tcpServer.start();
-                tcpServer.execute(new Command(CommandType.Startup));
-                LOGGER.log(Level.INFO, "Started TCP server [{0}].", tcpServers.toString());
-            }
-        }
-    }
-
-    private TCPServer findExistingTCPServer(String name, int port) {
-        TCPServer result = null;
-        if (tcpServers.size() > 0) {
-            result = tcpServers.get(name);
-            if (result == null) {
-                // try matching the port number
-                for (TCPServer tcpServer : tcpServers.values()) {
-                    if (tcpServer.getServerPort() == port) {
-                        // found a server with the same port but different name... that would do it
-                        result = tcpServer;
-                        break;
-                    }
-                }
-            }
-        }
-        return result;
     }
 
     private void createSessionCoordinators() throws ConfigurationException {
@@ -503,23 +405,8 @@ public class HadesInstance implements Engine, Reportable, Commandable {
         } else {
             coordinator = new ServerSessionCoordinator(this, sessionInfo, cptyInfo, address);
             coordinator.initialise();
-            setSessionCoordinatorInServer(address, (ServerSessionCoordinator) coordinator);
         }
         sessions.put(address, coordinator);
-    }
-
-    private void setSessionCoordinatorInServer(SessionAddress address, ServerSessionCoordinator coordinator) throws ConfigurationException {
-        boolean found = false;
-        for (TCPServer tcpServer : tcpServers.values()) {
-            if (tcpServer.hasServerSessionCoordinator(address)) {
-                tcpServer.setServerSessionCoordinator(address, coordinator);
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            throw new ConfigurationException("Session [" + address.toString() + "] has not been configured on any of the TCP servers.");
-        }
     }
 
     private boolean isSessionStopped(String cptyAddress, String localAddress) {
@@ -540,7 +427,6 @@ public class HadesInstance implements Engine, Reportable, Commandable {
     }
 
     private void startSessionCoordinator(SessionCoordinator session) {
-        session.start();
         session.execute(new Command(CommandType.Startup));
     }
 
@@ -586,7 +472,6 @@ public class HadesInstance implements Engine, Reportable, Commandable {
             LOGGER.log(Level.SEVERE, "{0} Error was : {1}", new Object[]{errMsg, ex.toString()});
             throw new ConfigurationException(errMsg, ex);
         }
-
         return alertListener;
     }
 
@@ -608,7 +493,6 @@ public class HadesInstance implements Engine, Reportable, Commandable {
             LOGGER.log(Level.SEVERE, "{0} Error was : {1}", new Object[]{errMsg, ex.toString()});
             throw new ConfigurationException(errMsg, ex);
         }
-
         return messageListener;
     }
 
@@ -630,7 +514,6 @@ public class HadesInstance implements Engine, Reportable, Commandable {
             LOGGER.log(Level.SEVERE, "{0} Error was : {1}", new Object[]{errMsg, ex.toString()});
             throw new ConfigurationException(errMsg, ex);
         }
-
         return lifeCycleListener;
     }
 
@@ -656,7 +539,7 @@ public class HadesInstance implements Engine, Reportable, Commandable {
         }
 
         for (CounterpartyInfo partyInfo : hadesInstanceInfo.getCounterparties()) {
-            Map<String, HandlerDefInfo> handlers = new HashMap<String, HandlerDefInfo>();
+            Map<String, HandlerDefInfo> handlers = new HashMap<>();
             for (HandlerDefInfo handler : hadesInstanceInfo.getHandlerDefs()) {
                 handlers.put(handler.getName(), handler);
             }
@@ -677,7 +560,7 @@ public class HadesInstance implements Engine, Reportable, Commandable {
         }
 
         for (CounterpartyInfo partyInfo : hadesInstanceInfo.getCounterparties()) {
-            Map<String, SecuredMessageInfo> securedMessages = new HashMap<String, SecuredMessageInfo>();
+            Map<String, SecuredMessageInfo> securedMessages = new HashMap<>();
             for (SecuredMessageInfo securedMessage : hadesInstanceInfo.getSecuredMessages()) {
                 securedMessages.put(securedMessage.getType(), securedMessage);
             }
@@ -691,7 +574,7 @@ public class HadesInstance implements Engine, Reportable, Commandable {
     }
 
     private void setupRemoteJMXServer(MBeanServer server) throws ConnectionException, ConfigurationException {
-        Map<String, Object> env = new HashMap<String, Object>();
+        Map<String, Object> env = new HashMap<>();
         JMXServiceURL url = null;
         try {
             if (configuration.getMgmtHost() == null || configuration.getMgmtHost().trim().isEmpty()) {
@@ -745,12 +628,15 @@ public class HadesInstance implements Engine, Reportable, Commandable {
 
             TrustManagerFactory tmf = null;
             KeyStore ts = null;
-            if (configuration.getMgmtTruststoreFile() != null && !configuration.getMgmtTruststoreFile().trim().isEmpty()) {
-                tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-                String truststoreName = configuration.getMgmtTruststoreFile();
-                String trustPasswdEntry = configuration.getMgmtTruststorePasswd();
-                char[] trustPasswd = PasswordBank.getInstance().getEntryValue(trustPasswdEntry);
-                ts = readKeystore(Configurator.getConfigDir() + "/" + truststoreName, trustPasswd);
+	    if (configuration.getMgmtTruststoreFile() != null && !configuration.getMgmtTruststoreFile().trim().isEmpty()) {
+		tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+		String truststoreName = configuration.getMgmtTruststoreFile();
+		String trustPasswdEntry = configuration.getMgmtTruststorePasswd();
+		char[] trustPasswd = PasswordBank.getInstance().getEntryValue(trustPasswdEntry);
+		ts = readKeystore(Configurator.getConfigDir() + "/" + truststoreName, trustPasswd);
+		if (ts != null) {
+		    tmf.init(ts);
+		}
             }
             if (configuration.getMgmtUseAuth() != null && configuration.getMgmtUseAuth()) {
                 env.put("jmx.remote.profiles", HadesServerProvider.REMOTE_PROFILE_SASL_WITH_SSL);
@@ -762,9 +648,7 @@ public class HadesInstance implements Engine, Reportable, Commandable {
             } else {
                 env.put("jmx.remote.tls.need.client.authentication", Boolean.FALSE.toString());
             }
-            if (ts != null) {
-                tmf.init(ts);
-            }
+            
             SSLContext sslCtx = SSLContext.getInstance("TLS");
             sslCtx.init(kmf.getKeyManagers(), tmf != null ? tmf.getTrustManagers() : null, null);
             SSLSocketFactory ssf = sslCtx.getSocketFactory();
@@ -829,15 +713,14 @@ public class HadesInstance implements Engine, Reportable, Commandable {
                 }
             }
         }
-
         return ks;
     }
 
     private static void printConfigurationErrors(Map<String, String> errors) {
         LOGGER.log(Level.SEVERE, "FATAL : Could not start HadesFIX engine because of the following configuration errors:");
-        for (String code : errors.keySet()) {
-            LOGGER.log(Level.SEVERE, "{0} - {1}", new Object[]{code, errors.get(code)});
-        }
+	errors.keySet().stream().forEach((code) -> {
+	    LOGGER.log(Level.SEVERE, "{0} - {1}", new Object[]{code, errors.get(code)});
+	});
     }
 
     private void createScheduler() {
@@ -849,9 +732,9 @@ public class HadesInstance implements Engine, Reportable, Commandable {
     }
 
     private void startConfiguredSessions() {
-        for (SessionCoordinator session : sessions.values()) {
-            startSessionCoordinator(session);
-        }
+	sessions.values().stream().forEach((session) -> {
+	    startSessionCoordinator(session);
+	});
     }
 
     private void startInstanceScheduledTasks() {
