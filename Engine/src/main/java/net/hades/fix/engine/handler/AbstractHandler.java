@@ -5,17 +5,20 @@
 package net.hades.fix.engine.handler;
 
 import java.time.Duration;
-import java.util.EventListener;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import net.hades.fix.engine.process.ExecutionResult;
 import net.hades.fix.engine.process.TaskStatus;
+import net.hades.fix.engine.process.session.ContextParamKey;
 import net.hades.fix.message.Message;
+import net.hades.fix.message.config.SessionContext;
 
 /**
  * Main class to inherit from when implementing a handler.
@@ -26,11 +29,12 @@ public abstract class AbstractHandler implements Handler  {
 
     private final Logger Log = Logger.getLogger(this.getClass().getSimpleName());
 	
-    private static final int DEFAULT_TIMEOUT_SECS = 30;
-    private static final int DEFAULT_SLEEP_MILLIS = 1;
+    private static final int DEFAULT_SHUTDOWN_TIMEOUT_SECS = 30;
+    private static final int DEFAULT_SLEEP_MILLIS = 5;
 
     private Duration timeout;
-    
+    protected long shutdownTimeoutSecs;
+    protected SessionContext sessionContext;
     protected String id;
     protected volatile TaskStatus status;
     protected final SynchronousQueue<Message> inQueue;
@@ -44,7 +48,8 @@ public abstract class AbstractHandler implements Handler  {
 	inQueue = new SynchronousQueue<>();
 	nextHandlers = new ConcurrentHashMap<>();
 	status = TaskStatus.New;
-	timeout = Duration.ofSeconds(DEFAULT_TIMEOUT_SECS, 1);
+	populateHandlerParams();
+	timeout = Duration.ofSeconds(shutdownTimeoutSecs, 1);
     }
 
     public AbstractHandler(String id, Map<String, String> parameters) {
@@ -71,7 +76,7 @@ public abstract class AbstractHandler implements Handler  {
 	Log.info(String.format("Handler [%s] : [%s]", id, status));
 	while (status.equals(TaskStatus.Running)) {
 	    try {
-		Message message = inQueue.take();
+		Message message = inQueue.poll(1, TimeUnit.SECONDS);
 		if (message != null) {
 		    process(message);
 		}
@@ -83,7 +88,8 @@ public abstract class AbstractHandler implements Handler  {
 	while (!inQueue.isEmpty()) {
 	    // wait for the queue to get drained
 	    Thread.sleep(DEFAULT_SLEEP_MILLIS);
-	    if (timeout.minusMillis(DEFAULT_SLEEP_MILLIS).isNegative()) {
+	    timeout = timeout.minusMillis(DEFAULT_SLEEP_MILLIS);
+	    if (timeout.isNegative()) {
 		status = TaskStatus.TimedOut;
 		Log.info(String.format("Handler [%s] timedout call() : [%s]", id, status));
 		return new ExecutionResult(TaskStatus.TimedOut);
@@ -107,7 +113,10 @@ public abstract class AbstractHandler implements Handler  {
     @Override
     public void tryWrite(Message message, int waitMillis) {
 	try {
-	    inQueue.offer(message, waitMillis, TimeUnit.MILLISECONDS);
+	    boolean exit = false;
+	    while (!exit) {
+		exit = inQueue.offer(message, waitMillis, TimeUnit.MILLISECONDS);
+	    };
 	} catch (InterruptedException ex) {
 	    status = TaskStatus.Exiting;
 	    Log.info(String.format("Handler [%s] Interrupted tryWrite() : [%s]", id, status));
@@ -117,11 +126,6 @@ public abstract class AbstractHandler implements Handler  {
     @Override
     public void addNextHandler(String id, Handler next) {
 	nextHandlers.putIfAbsent(id, next);
-    }
-
-    @Override
-    public void setTimeoutSecs(int timeoutSecs) {
-	timeout = Duration.ofSeconds(timeoutSecs, 1);
     }
 
     @Override
@@ -138,4 +142,34 @@ public abstract class AbstractHandler implements Handler  {
     public void setDisabled(boolean disabled) {
 	this.disabled = disabled;
     }
+    
+    @Override
+    public void shutdown() {
+	
+    }
+
+    @Override
+    public void shutdownImmediate() {
+    }
+
+    private void populateHandlerParams() {
+	shutdownTimeoutSecs = DEFAULT_SHUTDOWN_TIMEOUT_SECS;
+	if (parameters != null && !parameters.isEmpty()) {
+	    if (parameters.containsKey(HandlerParamKey.HadesFIX_ShutdownTimeoutSecs.name())) {
+		try {
+		    shutdownTimeoutSecs = Long.valueOf(parameters.get(HandlerParamKey.HadesFIX_ShutdownTimeoutSecs.name()));
+		} catch (NumberFormatException ex) {
+		    Log.log(Level.WARNING, "Handler invalid parameter [{0}] value [{1}] - not a number", new Object[]{
+			HandlerParamKey.HadesFIX_ShutdownTimeoutSecs.name(),
+			parameters.get(HandlerParamKey.HadesFIX_ShutdownTimeoutSecs.name())});
+		}
+	    }
+	}
+	if (context != null && !context.isEmpty()) {
+	    if (context.containsKey(ContextParamKey.HadesFIX_SessionContext.name())) {
+		sessionContext = (SessionContext) context.get(ContextParamKey.HadesFIX_SessionContext.name());
+	    }
+	}
+    }
+
 }

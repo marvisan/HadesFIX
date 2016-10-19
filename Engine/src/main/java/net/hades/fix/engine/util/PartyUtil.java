@@ -8,7 +8,7 @@ import net.hades.fix.engine.config.model.SessionInfo;
 import net.hades.fix.engine.handler.Handler;
 import net.hades.fix.engine.process.protocol.state.Status;
 import net.hades.fix.engine.process.protocol.timer.EngineTimerTask;
-import net.hades.fix.engine.process.transport.TCPServerWorker;
+import net.hades.fix.engine.process.transport.TCPServerWorkerOld;
 import net.hades.fix.engine.config.model.CounterpartyInfo;
 import net.hades.fix.engine.model.CounterpartyAddress;
 import net.hades.fix.engine.process.Manageable;
@@ -124,8 +124,8 @@ public class PartyUtil {
             sb.append(((Status)component).retrieveSessionAddress());
         } else if (component instanceof TCPClientOld) {
             sb.append(((TCPClientOld)component).retrieveSessionAddress());
-        } else if (component instanceof TCPServerWorker) {
-            sb.append(((TCPServerWorker)component).retrieveSessionAddress());
+        } else if (component instanceof TCPServerWorkerOld) {
+            sb.append(((TCPServerWorkerOld)component).retrieveSessionAddress());
         } else if (component instanceof EngineTimerTask) {
             sb.append(((EngineTimerTask)component).getStateProcessor().getProtocol().getSessionCoordinator().getSessionAddress());
         } else if (component instanceof Manageable) {

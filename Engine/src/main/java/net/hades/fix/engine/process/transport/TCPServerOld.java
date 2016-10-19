@@ -78,7 +78,7 @@ public final class TCPServerOld extends Thread implements ManagedProcess {
     private SSLContext sslCtx;
 
     private List<String> restrictedHosts;
-    private final Map<SessionAddress, TCPServerWorker> sessionWorkers;
+    private final Map<SessionAddress, TCPServerWorkerOld> sessionWorkers;
     private final Map<SessionAddress, ServerSessionCoordinator> sessionCoordinators;
 
     private final AtomicReference<ProcessStatus> processStatus;
@@ -106,7 +106,7 @@ public final class TCPServerOld extends Thread implements ManagedProcess {
         stats = new AtomicReference<>(new TransportStats());
 
         commandQueue = new LinkedBlockingQueue<>();
-        sessionWorkers = Collections.synchronizedMap(new HashMap<SessionAddress, TCPServerWorker>());
+        sessionWorkers = Collections.synchronizedMap(new HashMap<SessionAddress, TCPServerWorkerOld>());
         sessionCoordinators = Collections.synchronizedMap(new HashMap<SessionAddress, ServerSessionCoordinator>());
     }
 
@@ -126,14 +126,14 @@ public final class TCPServerOld extends Thread implements ManagedProcess {
             getMgmtData().setStatus(ProcessStatus.INACTIVE);
             eventProcessor.onAlertEvent(new AlertEvent(this,
                     Alert.createAlert(getName(), ComponentType.TCPServer.toString(),
-                    BaseSeverityType.FATAL, AlertCode.TRANSP_ABORT, "I/O error starting TCP listener.", ex)));
+                    BaseSeverityType.FATAL, AlertCode.TRANSPORT_ERROR, "I/O error starting TCP listener.", ex)));
             shutdown = true;
         } catch (UnrecoverableException ex) {
             setProcessStatus(ProcessStatus.INACTIVE);
             getMgmtData().setStatus(ProcessStatus.INACTIVE);
             eventProcessor.onAlertEvent(new AlertEvent(this,
                     Alert.createAlert(getName(), ComponentType.TCPServer.toString(),
-                    BaseSeverityType.FATAL, AlertCode.TRANSP_ABORT, ex.getMessage(), ex)));
+                    BaseSeverityType.FATAL, AlertCode.TRANSPORT_ERROR, ex.getMessage(), ex)));
             shutdown = true;
         }
         while (!shutdown) {
@@ -259,7 +259,7 @@ public final class TCPServerOld extends Thread implements ManagedProcess {
 
             case TransportConnected:
                 transportConnected((SessionAddress) command.getParameter(Command.PARAM_SESSION_ADDRESS),
-                        (TCPServerWorker) command.getParameter(Command.PARAM_SERVER_TRANSPORT_WORKER));
+                        (TCPServerWorkerOld) command.getParameter(Command.PARAM_SERVER_TRANSPORT_WORKER));
                 break;
 
             case Shutdown:
@@ -272,7 +272,7 @@ public final class TCPServerOld extends Thread implements ManagedProcess {
 
             case SetServerSessionTransport:
                 setSessionWorker((SessionAddress) command.getParameter(Command.PARAM_SESSION_ADDRESS),
-                        (TCPServerWorker) command.getParameter(Command.PARAM_SERVER_TRANSPORT_WORKER));
+                        (TCPServerWorkerOld) command.getParameter(Command.PARAM_SERVER_TRANSPORT_WORKER));
                 break;
 
             default:
@@ -400,7 +400,7 @@ public final class TCPServerOld extends Thread implements ManagedProcess {
         shutdown = true;
     }
      
-    private void transportConnected(SessionAddress sessionAddress, TCPServerWorker worker) {
+    private void transportConnected(SessionAddress sessionAddress, TCPServerWorkerOld worker) {
         LOGGER.log(Level.INFO, "Transport connected [{0}]", sessionAddress.toString());
             
         SessionCoordinator sc = sessionCoordinators.get(sessionAddress);
@@ -423,7 +423,7 @@ public final class TCPServerOld extends Thread implements ManagedProcess {
     private void transportDisconnected(SessionAddress sessionAddress) {
         LOGGER.log(Level.INFO, "Transport disconnected [{0}]", sessionAddress.toString());
         
-        TCPServerWorker worker = sessionWorkers.get(sessionAddress);
+        TCPServerWorkerOld worker = sessionWorkers.get(sessionAddress);
         
         SessionCoordinator sc = sessionCoordinators.get(sessionAddress);
         sc.execute(new Command(CommandType.DisconnectTransport));
@@ -443,7 +443,7 @@ public final class TCPServerOld extends Thread implements ManagedProcess {
 
     private void shutdownSessionCoordinators() {
         for (SessionAddress sessionAddress : sessionWorkers.keySet()) {
-            TCPServerWorker sw = sessionWorkers.get(sessionAddress);
+            TCPServerWorkerOld sw = sessionWorkers.get(sessionAddress);
             if (sw != null) {
                 sw.execute(new Command(CommandType.Shutdown));
             }
@@ -456,7 +456,7 @@ public final class TCPServerOld extends Thread implements ManagedProcess {
     
     private void shutdownNowSessionCoordinators() {
         for (SessionAddress sa : sessionWorkers.keySet()) {
-            TCPServerWorker sw = sessionWorkers.get(sa);
+            TCPServerWorkerOld sw = sessionWorkers.get(sa);
             if (sw != null) {
                 sw.execute(new Command(CommandType.ShutdownNow));
             }
@@ -565,7 +565,7 @@ public final class TCPServerOld extends Thread implements ManagedProcess {
     }
 
     private void createConnectionWorker(Socket clientSocket) throws ConfigurationException {
-        TCPServerWorker worker = new TCPServerWorker(this, clientSocket);
+        TCPServerWorkerOld worker = new TCPServerWorkerOld(this, clientSocket);
         worker.initialise();
         worker.start();
         worker.execute(new Command(CommandType.Startup));
@@ -580,7 +580,7 @@ public final class TCPServerOld extends Thread implements ManagedProcess {
         server.bind(serverAddress, totalNumConnections);
     }
 
-    private boolean setSessionWorker(SessionAddress address, TCPServerWorker worker) {
+    private boolean setSessionWorker(SessionAddress address, TCPServerWorkerOld worker) {
         boolean found = false;
         try {
             checkWorkerExistsForAddress(address);
@@ -832,7 +832,7 @@ public final class TCPServerOld extends Thread implements ManagedProcess {
                     listenerBlocked = true;
                     eventProcessor.onAlertEvent(new AlertEvent(this,
                             Alert.createAlert(getName(), ComponentType.TCPServer.toString(),
-                            BaseSeverityType.FATAL, AlertCode.TRANSP_ABORT, "I/O error.", ex)));
+                            BaseSeverityType.FATAL, AlertCode.TRANSPORT_ERROR, "I/O error.", ex)));
                     eventProcessor.onLifeCycleEvent(new LifeCycleEvent(this,
                             LifeCycleType.SERVER_TCP_CONN.name(),
                             LifeCycleCode.LISTENER_SHUTDOWN.name()));
@@ -841,7 +841,7 @@ public final class TCPServerOld extends Thread implements ManagedProcess {
                     LOGGER.log(Level.SEVERE, "Unrecoverable unexpected error : {0}", ExceptionUtil.getStackTrace(ex));
                     listenerBlocked = true;
                     eventProcessor.onAlertEvent(new AlertEvent(this, Alert.createAlert(getName(), ComponentType.TCPServer.toString(),
-                            BaseSeverityType.FATAL, AlertCode.TRANSP_ABORT, "Unexpected error.", ex)));
+                            BaseSeverityType.FATAL, AlertCode.TRANSPORT_ERROR, "Unexpected error.", ex)));
                     eventProcessor.onLifeCycleEvent(new LifeCycleEvent(this,
                             LifeCycleType.SERVER_TCP_CONN.name(),
                             LifeCycleCode.LISTENER_SHUTDOWN.name()));

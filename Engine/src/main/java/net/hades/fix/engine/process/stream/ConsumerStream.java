@@ -15,7 +15,7 @@ import net.hades.fix.commons.thread.ThreadUtil;
 import net.hades.fix.engine.config.model.ConsumerStreamInfo;
 import net.hades.fix.engine.config.model.FlowInfo;
 import net.hades.fix.engine.exception.ConfigurationException;
-import net.hades.fix.engine.exception.HandlerException;
+import net.hades.fix.engine.handler.HandlerException;
 import net.hades.fix.engine.mgmt.alert.Alert;
 import net.hades.fix.engine.mgmt.alert.AlertCode;
 import net.hades.fix.engine.mgmt.alert.BaseSeverityType;

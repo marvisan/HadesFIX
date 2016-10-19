@@ -28,8 +28,9 @@ public interface Handler<T extends Message,U extends ExecutionResult> extends Ca
     void write(T message);
     void tryWrite(T message, int waitMillis);
     void addNextHandler(String id, Handler next);
-    void setTimeoutSecs(int timeoutSecs);
     Map<String, String> getStatistics();
+    void shutdown();
+    void shutdownImmediate();
 
     /**
      * Enables/Disable a handler. By default the handler is enabled.

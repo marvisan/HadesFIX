@@ -178,7 +178,7 @@ public final class TCPClientOld extends Thread implements Transport {
                 block();
                 eventProcessor.onAlertEvent(new AlertEvent(this,
                         Alert.createAlert(getName(), ComponentType.TCPClient.toString(),
-                                BaseSeverityType.FATAL, AlertCode.TRANSP_ABORT, "Unexpected error.", ex)
+                                BaseSeverityType.FATAL, AlertCode.TRANSPORT_ERROR, "Unexpected error.", ex)
                 ));
                 eventProcessor.onLifeCycleEvent(new LifeCycleEvent(this,
                         LifeCycleType.CLIENT_TCP_CONN.name(),
@@ -840,7 +840,7 @@ public final class TCPClientOld extends Thread implements Transport {
         if (currentConnData == null) {
             eventProcessor.onAlertEvent(new AlertEvent(this,
                     Alert.createAlert(getName(), ComponentType.TCPClient.toString(),
-                            BaseSeverityType.FATAL, AlertCode.TRANSP_ABORT, "No available connection data found.", null)
+                            BaseSeverityType.FATAL, AlertCode.TRANSPORT_ERROR, "No available connection data found.", null)
             ));
             eventProcessor.onLifeCycleEvent(new LifeCycleEvent(this,
                     LifeCycleType.CLIENT_TCP_CONN.name(),

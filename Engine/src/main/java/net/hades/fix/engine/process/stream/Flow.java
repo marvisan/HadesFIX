@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 import net.hades.fix.engine.config.model.FlowInfo;
 import net.hades.fix.engine.config.model.HandlerInfo;
 import net.hades.fix.engine.config.model.HandlerParamInfo;
-import net.hades.fix.engine.exception.HandlerException;
+import net.hades.fix.engine.handler.HandlerException;
 import net.hades.fix.engine.handler.ConsumerProducerHandler;
 import net.hades.fix.engine.util.UIDGen;
 import net.hades.fix.message.Message;

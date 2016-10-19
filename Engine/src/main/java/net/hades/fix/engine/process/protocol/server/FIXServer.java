@@ -28,7 +28,7 @@ import net.hades.fix.engine.process.protocol.*;
 import net.hades.fix.engine.process.protocol.router.MessageRouter;
 import net.hades.fix.engine.process.session.ServerSessionCoordinator;
 import net.hades.fix.engine.process.session.SessionType;
-import net.hades.fix.engine.process.transport.TCPServerWorker;
+import net.hades.fix.engine.process.transport.TCPServerWorkerOld;
 import net.hades.fix.message.FIXMsg;
 import net.hades.fix.message.LogoutMsg;
 import net.hades.fix.message.Message;
@@ -251,7 +251,7 @@ public final class FIXServer extends Protocol {
         }
         switch (command.getCommandType()) {
             case Startup:
-                TCPServerWorker worker = (TCPServerWorker) command.getParameter(Command.PARAM_SERVER_TRANSPORT_WORKER);
+                TCPServerWorkerOld worker = (TCPServerWorkerOld) command.getParameter(Command.PARAM_SERVER_TRANSPORT_WORKER);
                 startup(worker);
                 break;
 
@@ -297,7 +297,7 @@ public final class FIXServer extends Protocol {
         }
     }
 
-    private void startup(TCPServerWorker worker) {
+    private void startup(TCPServerWorkerOld worker) {
         LOGGER.log(Level.INFO, "Starting up FIX server [{0}].", getName());
 
         transport = worker;

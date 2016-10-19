@@ -2,12 +2,6 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
-/*
- * SessionAddress.java
- *
- * $Id: SessionAddress.java,v 1.4 2010-10-08 08:43:14 vrotaru Exp $
- */
 package net.hades.fix.engine.model;
 
 import java.io.Serializable;
@@ -16,14 +10,12 @@ import java.io.Serializable;
  * Defines the session address.
  * 
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
- * @version $Revision: 1.4 $
  */
 public class SessionAddress implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private CounterpartyAddress remoteAddress;
-
     private CounterpartyAddress localAddress;
 
     public SessionAddress() {

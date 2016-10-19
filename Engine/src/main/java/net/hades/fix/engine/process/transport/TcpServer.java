@@ -42,7 +42,11 @@ import net.hades.fix.engine.config.model.ServerTcpConnectionInfo;
 import net.hades.fix.engine.exception.ConfigurationException;
 import net.hades.fix.engine.exception.ConnectionException;
 import net.hades.fix.engine.exception.UnrecoverableException;
+import net.hades.fix.engine.mgmt.alert.Alert;
+import net.hades.fix.engine.mgmt.alert.AlertCode;
+import net.hades.fix.engine.mgmt.alert.BaseSeverityType;
 import net.hades.fix.engine.process.ExecutionResult;
+import net.hades.fix.engine.process.event.AlertEvent;
 import net.hades.fix.engine.process.session.ServerSessionCoordinator;
 import net.hades.fix.engine.process.session.SessionCoordinator;
 
@@ -59,7 +63,6 @@ public class TcpServer implements ManagedTask {
     private static final int DEFAULT_SO_LINGER = -1;
     private static final int DEFAULT_SO_TIMEOUT = 0; // infinity
     private static final int DEFAULT_TIMEOUT_SECS = 30;
-    private static final int DEFAULT_SLEEP_MILLIS = 5;
 
     private final ServerTcpConnectionInfo configuration;
     private final SessionCoordinator coordinator;
@@ -78,12 +81,14 @@ public class TcpServer implements ManagedTask {
     private int totalNumConnections;
     private int rcvBuffSize;
 
-    public TcpServer(ServerSessionCoordinator coordinator, ServerTcpConnectionInfo configuration) {
+    public TcpServer(ServerSessionCoordinator coordinator, ServerTcpConnectionInfo configuration) throws ConfigurationException {
 	this.configuration = configuration;
 	this.coordinator = coordinator;
-	totalNumConnections = 0;
+	totalNumConnections = 1;
 	id = COMPONENT_NAME + "_" + configuration.getHost() + ":" + String.valueOf(configuration.getPort());
 	timeout = Duration.ofSeconds(DEFAULT_TIMEOUT_SECS, 1);
+	setServerAddress();
+	setServerParameters();
 	status = TaskStatus.New;
     }
 
@@ -91,29 +96,49 @@ public class TcpServer implements ManagedTask {
     public ExecutionResult call() throws Exception {
 	LOGGER.log(Level.INFO, "Tcp Server thread [{0}] running.", id);
 	hasSSL = checkSSLEnabled(configuration.getSslData());
-	setServerAddress();
-	setServerParameters();
 	status = TaskStatus.Running;
 	try {
 	    createServerSocket();
 	} catch (IOException | UnrecoverableException ex) {
-	    LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
-	    shutdown = true;
+	    status = TaskStatus.Error;
+	    coordinator.onAlertEvent(new AlertEvent(this, 
+		    Alert.createAlert(id, TcpServer.class.getSimpleName(), BaseSeverityType.FATAL, AlertCode.TRANSP_DISCONNECT, ex.getMessage(), ex)));
+	    return new ExecutionResult(TaskStatus.Error, ex);
 	}
+	Socket clientSocket;
 	while (!shutdown) {
-	    Socket clientSocket = server.accept();
+	    try {
+		clientSocket = server.accept();
+	    } catch (SocketException ex) {
+		status = TaskStatus.Completed;
+		coordinator.onAlertEvent(new AlertEvent(this, 
+			Alert.createAlert(id, TcpServer.class.getSimpleName(), BaseSeverityType.INFO, AlertCode.TRANSP_DISCONNECT, ex.getMessage(), ex)));
+		return new ExecutionResult(TaskStatus.Completed, ex);
+	    }
+	    if (clientSocket == null) {
+		continue;
+	    }
+
 	    totalNumConnections++;
 	    if (totalNumConnections > 1) {
-		LOGGER.log(Level.WARNING, String.format("Only one connection allowed for a FIX server. Attempt connect from : %s", clientSocket.getRemoteSocketAddress().toString()));
+		String msg = String.format("Only one connection allowed for a FIX server. Attempt connect from : %s", clientSocket.getRemoteSocketAddress().toString());
+		coordinator.onAlertEvent(new AlertEvent(this, 
+			Alert.createAlert(id, TcpServer.class.getSimpleName(), BaseSeverityType.WARNING, AlertCode.TRANSP_DISCONNECT, null, null)));
 		continue;
 	    }
 	    // received a connection
-	    validateConnection(clientSocket);
+	    try {
+		validateConnection(clientSocket);
+	    } catch (ConnectionException ex) {
+		status = TaskStatus.Error;
+		coordinator.onAlertEvent(new AlertEvent(this, 
+			Alert.createAlert(id, TcpServer.class.getSimpleName(), BaseSeverityType.FATAL, AlertCode.TRANSP_DISCONNECT, ex.getMessage(), ex)));
+		return new ExecutionResult(TaskStatus.Error, ex);
+	    }
 	    configureSocket(clientSocket);
 	    coordinator.startStreamHandlers(clientSocket);
 	}
 	status = TaskStatus.Completed;
-	LOGGER.log(Level.INFO, "TCP Server thread [{0}] terminated.", id);
 	return new ExecutionResult(status);
     }
 
@@ -136,16 +161,6 @@ public class TcpServer implements ManagedTask {
 		} catch (IOException ex) {
 		    LOGGER.log(Level.WARNING, "Could not close server socket", ex);
 		    break;
-		}
-		try {
-		    Thread.sleep(DEFAULT_SLEEP_MILLIS);
-		} catch (InterruptedException ex) {
-		    LOGGER.log(Level.WARNING, "Thread [{0}] interrupted", id);
-		    break;
-		}
-		if (timeout.minusMillis(DEFAULT_SLEEP_MILLIS).isNegative()) {
-		    status = TaskStatus.TimedOut;
-		    LOGGER.info(String.format("Tcp Server [%s] timedout shutdownImmediate() : [%s]", id, status));
 		}
 	    }
 	}

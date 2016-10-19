@@ -2,12 +2,6 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
-/*
- * Alert.java
- *
- * $Id: Alert.java,v 1.4 2010-08-22 09:00:01 vrotaru Exp $
- */
 package net.hades.fix.engine.mgmt.alert;
 
 import java.io.Serializable;
@@ -19,8 +13,6 @@ import net.hades.fix.message.util.format.DateFormatter;
  * Model class for a published alert message.
  * 
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
- * @version $Revision: 1.4 $
- * @created 07/07/2009, 3:29:29 PM
  */
 public class Alert implements Serializable {
 

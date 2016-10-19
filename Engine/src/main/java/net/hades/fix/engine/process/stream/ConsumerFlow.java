@@ -13,7 +13,7 @@ package net.hades.fix.engine.process.stream;
     import net.hades.fix.commons.exception.ExceptionUtil;
     import net.hades.fix.engine.config.model.FlowInfo;
     import net.hades.fix.engine.exception.ConfigurationException;
-    import net.hades.fix.engine.exception.HandlerException;
+    import net.hades.fix.engine.handler.HandlerException;
     import net.hades.fix.engine.handler.ConsumerHandler;
     import net.hades.fix.engine.handler.ConsumerProducerHandler;
     import net.hades.fix.engine.handler.Handler;

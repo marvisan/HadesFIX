@@ -144,7 +144,6 @@ public class ServerSessionInfo extends SessionInfo implements CompositeDataView,
                     consumerStreamInfo != null ? consumerStreamInfo.toCompositeData(StreamInfo.DataType) : null,
                     TABULAR_HANDLER_DEFS, enableLogonPassThrough});
             assert ct.isValue(cd);
-
             return cd;
         } catch (Exception e) {
             throw new RuntimeException(e);

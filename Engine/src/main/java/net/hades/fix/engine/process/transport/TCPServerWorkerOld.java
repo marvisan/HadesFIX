@@ -4,9 +4,9 @@
  */
 
 /*
- * TCPServerWorker.java
+ * TCPServerWorkerOld.java
  *
- * $Id: TCPServerWorker.java,v 1.30 2011-04-30 04:39:45 vrotaru Exp $
+ * $Id: TCPServerWorkerOld.java,v 1.30 2011-04-30 04:39:45 vrotaru Exp $
  */
 package net.hades.fix.engine.process.transport;
 
@@ -61,9 +61,9 @@ import java.util.logging.Logger;
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
  * @version $Revision: 1.30 $
  */
-public class TCPServerWorker extends Thread implements Transport {
+public class TCPServerWorkerOld extends Thread implements Transport {
 
-    private static final Logger LOGGER = Logger.getLogger(TCPServerWorker.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(TCPServerWorkerOld.class.getName());
 
     private static final String COMP_NAME = "WRKR";
 
@@ -100,7 +100,7 @@ public class TCPServerWorker extends Thread implements Transport {
 
     private MessageSender messageSender;
 
-    public TCPServerWorker(TCPServerOld tcpServer, Socket socket) {
+    public TCPServerWorkerOld(TCPServerOld tcpServer, Socket socket) {
         super(((InetSocketAddress) socket.getRemoteSocketAddress()).getAddress().getHostAddress() + ":" +
                 ((InetSocketAddress) socket.getRemoteSocketAddress()).getPort() + "_" + COMP_NAME);
         this.tcpServer = tcpServer;
@@ -146,7 +146,7 @@ public class TCPServerWorker extends Thread implements Transport {
                         LifeCycleCode.TRANSP_DISCONNECT.name()));
                 eventProcessor.onAlertEvent(new AlertEvent(this,
                         Alert.createAlert(getName(), ComponentType.TCPServerWorker.toString(),
-                        BaseSeverityType.FATAL, AlertCode.TRANSP_ABORT, "Unexpected error.", ex)));
+                        BaseSeverityType.FATAL, AlertCode.TRANSPORT_ERROR, "Unexpected error.", ex)));
                 tcpServer.execute(new Command(CommandType.DisconnectTransport, Command.PARAM_SESSION_ADDRESS, sessionAddress));
                 shutdownNow();
             } catch (ConnectionException ex) {
@@ -836,7 +836,7 @@ public class TCPServerWorker extends Thread implements Transport {
                     LOGGER.log(Level.SEVERE, "Socket timeout waiting for the first message : {0}", ExceptionUtil.getStackTrace(ex));
 
                     block();
-                    eventProcessor.onAlertEvent(new AlertEvent(TCPServerWorker.this,
+                    eventProcessor.onAlertEvent(new AlertEvent(TCPServerWorkerOld.this,
                             Alert.createAlert(getName(), ComponentType.TCPServerWorker.toString(),
                             BaseSeverityType.FATAL, AlertCode.TRANSP_DISCONNECT, "Socket timeout waiting for the first message.", ex)));
 
@@ -849,7 +849,7 @@ public class TCPServerWorker extends Thread implements Transport {
                     LOGGER.log(Level.SEVERE, "IO error : {0}", ExceptionUtil.getStackTrace(ex));
 
                     block();
-                    eventProcessor.onAlertEvent(new AlertEvent(TCPServerWorker.this,
+                    eventProcessor.onAlertEvent(new AlertEvent(TCPServerWorkerOld.this,
                             Alert.createAlert(getName(), ComponentType.TCPServerWorker.toString(),
                             BaseSeverityType.FATAL, AlertCode.TRANSP_DISCONNECT, "I/O error in socket stream writer.", ex)));
                     if (sessionAddress != null) {
@@ -861,7 +861,7 @@ public class TCPServerWorker extends Thread implements Transport {
                     LOGGER.log(Level.SEVERE, "Unrecoverable error : {0}", ExceptionUtil.getStackTrace(ex));
 
                     block();
-                    eventProcessor.onAlertEvent(new AlertEvent(TCPServerWorker.this,
+                    eventProcessor.onAlertEvent(new AlertEvent(TCPServerWorkerOld.this,
                             Alert.createAlert(getName(), ComponentType.TCPServerWorker.toString(),
                             BaseSeverityType.FATAL, AlertCode.TRANSP_DISCONNECT, "Unrecoverable error.", ex)));
                     if (sessionAddress != null) {
@@ -873,7 +873,7 @@ public class TCPServerWorker extends Thread implements Transport {
                     LOGGER.log(Level.SEVERE, "Connection error : {0}", ExceptionUtil.getStackTrace(ex));
 
                     block();
-                    eventProcessor.onAlertEvent(new AlertEvent(TCPServerWorker.this,
+                    eventProcessor.onAlertEvent(new AlertEvent(TCPServerWorkerOld.this,
                             Alert.createAlert(getName(), ComponentType.TCPServerWorker.toString(),
                             BaseSeverityType.FATAL, AlertCode.TRANSP_DISCONNECT, "Connection error.", ex)));
                     if (sessionAddress != null) {
@@ -885,7 +885,7 @@ public class TCPServerWorker extends Thread implements Transport {
                     LOGGER.log(Level.SEVERE, "Unexpected error : {0}", ExceptionUtil.getStackTrace(ex));
 
                     block();
-                    eventProcessor.onAlertEvent(new AlertEvent(TCPServerWorker.this,
+                    eventProcessor.onAlertEvent(new AlertEvent(TCPServerWorkerOld.this,
                             Alert.createAlert(getName(), ComponentType.TCPServerWorker.toString(),
                             BaseSeverityType.FATAL, AlertCode.TRANSP_DISCONNECT, "Unexpected error.", ex)));
                     if (sessionAddress != null) {
@@ -926,7 +926,7 @@ public class TCPServerWorker extends Thread implements Transport {
                     sessionAddress = checkMessageAddress(fixMsg);
 
                     Command command = new Command(CommandType.TransportConnected, Command.PARAM_SESSION_ADDRESS, sessionAddress);
-                    command.addParameter(Command.PARAM_SERVER_TRANSPORT_WORKER, TCPServerWorker.this);
+                    command.addParameter(Command.PARAM_SERVER_TRANSPORT_WORKER, TCPServerWorkerOld.this);
                     tcpServer.execute(command);
                     while (!ProcessStatus.ACTIVE.equals(tcpServer.getProcessStatus())) {
                         if (!ThreadUtil.sleep(1)) {
@@ -1029,7 +1029,7 @@ public class TCPServerWorker extends Thread implements Transport {
 
                     LOGGER.log(Level.SEVERE, "IO error : {0}", ExceptionUtil.getStackTrace(ex));
 
-                    eventProcessor.onAlertEvent(new AlertEvent(TCPServerWorker.this,
+                    eventProcessor.onAlertEvent(new AlertEvent(TCPServerWorkerOld.this,
                             Alert.createAlert(getName(), ComponentType.TCPServerWorker.toString(),
                             BaseSeverityType.FATAL, AlertCode.TRANSP_DISCONNECT, "I/O error in socket stream writer.", ex)));
                     tcpServer.execute(new Command(CommandType.DisconnectTransport, Command.PARAM_SESSION_ADDRESS, sessionAddress));
@@ -1039,7 +1039,7 @@ public class TCPServerWorker extends Thread implements Transport {
 
                     LOGGER.log(Level.SEVERE, "Unexpected error : {0}", ExceptionUtil.getStackTrace(ex));
 
-                    eventProcessor.onAlertEvent(new AlertEvent(TCPServerWorker.this,
+                    eventProcessor.onAlertEvent(new AlertEvent(TCPServerWorkerOld.this,
                             Alert.createAlert(getName(), ComponentType.TCPServerWorker.toString(),
                             BaseSeverityType.FATAL, AlertCode.TRANSP_DISCONNECT, "Unexpected error.", ex)));
                     tcpServer.execute(new Command(CommandType.DisconnectTransport, Command.PARAM_SESSION_ADDRESS, sessionAddress));

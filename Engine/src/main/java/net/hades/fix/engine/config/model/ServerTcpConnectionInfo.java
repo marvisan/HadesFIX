@@ -44,17 +44,17 @@ public class ServerTcpConnectionInfo extends TcpConnectionInfo implements Compos
 
     static {
         try {
-            COMPOSITE_DATA_ITEMS = new String[]{"host", "port", "rxBufferSize", "txBufferSize", "soLinger", "tcpNodelay",
-                    "soTimeout", "soRcvbuf", "soSndbuf", "sendKeepAlive", "restrHostsIPAddresses"};
-            COMPOSITE_DATA_ITEMS_DESCRIPTION = new String[]{"Sell side host", "Sell side port", "Msg Rx Buffer Size",
-                    "Msg Tx Buffer Size", "Socket SO_LINGER Value", "Socket TCP_NODELAY Value", "Socket SO_TIMEOUT Value",
-                    "Socket Rx Buffer Size", "Socket Tx Buffer Size", "Socket SEND_ALIVE Value", "Restricted Hosts List"};
-            COMPOSITE_DATA_OPEN_TYPES = new OpenType<?>[]{SimpleType.STRING, SimpleType.INTEGER, SimpleType.INTEGER, SimpleType.INTEGER,
-                    SimpleType.INTEGER, SimpleType.BOOLEAN, SimpleType.INTEGER, SimpleType.INTEGER, SimpleType.INTEGER, SimpleType.BOOLEAN,
-                    SimpleType.STRING};
+	    COMPOSITE_DATA_ITEMS = new String[]{"host", "port", "soLinger", "tcpNodelay",
+		"soTimeout", "soRcvbuf", "soSndbuf", "sendKeepAlive", "restrHostsIPAddresses"};
+	    COMPOSITE_DATA_ITEMS_DESCRIPTION = new String[]{"Sell side host", "Sell side port",
+		"Socket SO_LINGER Value", "Socket TCP_NODELAY Value", "Socket SO_TIMEOUT Value",
+		"Socket Rx Buffer Size", "Socket Tx Buffer Size", "Socket SEND_ALIVE Value", "Restricted Hosts List"};
+	    COMPOSITE_DATA_OPEN_TYPES = new OpenType<?>[]{SimpleType.STRING, SimpleType.INTEGER, SimpleType.INTEGER, 
+		SimpleType.BOOLEAN, SimpleType.INTEGER, SimpleType.INTEGER, SimpleType.INTEGER, SimpleType.BOOLEAN,
+		SimpleType.STRING};
 
-            DataType = new CompositeType("ServerTcpConnectionInfo", "Server TCP Connection Data", COMPOSITE_DATA_ITEMS,
-                    COMPOSITE_DATA_ITEMS_DESCRIPTION, COMPOSITE_DATA_OPEN_TYPES);
+	    DataType = new CompositeType("ServerTcpConnectionInfo", "Server TCP Connection Data", COMPOSITE_DATA_ITEMS,
+		    COMPOSITE_DATA_ITEMS_DESCRIPTION, COMPOSITE_DATA_OPEN_TYPES);
         } catch (OpenDataException e) {
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
             PrintWriter pout = new PrintWriter(bout);
@@ -96,8 +96,8 @@ public class ServerTcpConnectionInfo extends TcpConnectionInfo implements Compos
                     itemNames.toArray(new String[itemNames.size()]),
                     itemDescriptions.toArray(new String[itemDescriptions.size()]),
                     itemTypes.toArray(new OpenType<?>[itemTypes.size()]));
-            CompositeData cd = new CompositeDataSupport(xct, COMPOSITE_DATA_ITEMS, new Object[]{host, port, rxBufferSize, txBufferSize,
-                    socketLingerTimeout, tcpNodelay, socketTimeout, socketRcvbuf, socketSndbuf, sendKeepAlive, restrHostsIPAddresses});
+            CompositeData cd = new CompositeDataSupport(xct, COMPOSITE_DATA_ITEMS, new Object[]{host, port, socketLingerTimeout, 
+		tcpNodelay, socketTimeout, socketRcvbuf, socketSndbuf, sendKeepAlive, restrHostsIPAddresses});
             assert ct.isValue(cd);
             return cd;
         } catch (Exception e) {

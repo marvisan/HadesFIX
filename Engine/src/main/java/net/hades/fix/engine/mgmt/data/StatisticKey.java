@@ -3,13 +3,17 @@
  *              Use is subject to license terms.
  */
 
-package net.hades.fix.engine.process;
+package net.hades.fix.engine.mgmt.data;
 
 /**
- * Status of the task thread run.
+ * Key in reported statistic Map.
  * 
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
  */
-public enum TaskStatus {
-    New, Running, Exiting, TimedOut, Completed, Error;
+public enum StatisticKey {
+    StartTime,
+    BytesIn,
+    BytesOut,
+    MsgIn, 
+    MsgOut
 }

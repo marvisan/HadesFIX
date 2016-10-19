@@ -2,12 +2,6 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
-/*
- * AlertEvent.java
- *
- * $Id: AlertEvent.java,v 1.2 2010-08-22 09:00:00 vrotaru Exp $
- */
 package net.hades.fix.engine.process.event;
 
 import java.util.EventObject;
@@ -24,7 +18,6 @@ import net.hades.fix.engine.util.PartyUtil;
  * Alert event raised by any component.
  * 
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
- * @version $Revision: 1.2 $
  */
 public class AlertEvent extends EventObject {
 
@@ -82,7 +75,7 @@ public class AlertEvent extends EventObject {
     }
 
     private Object populateUserData() {
-        Map<String, String> userData = new HashMap<String, String>();
+        Map<String, String> userData = new HashMap<>();
         userData.put("session", session);
         userData.put("code", alert.getCode());
         userData.put("message", alert.getMessage());
