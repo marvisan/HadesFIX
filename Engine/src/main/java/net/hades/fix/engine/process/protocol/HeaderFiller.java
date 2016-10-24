@@ -2,12 +2,6 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
-/*
- * HeaderFiller.java
- *
- * $Id: HeaderFiller.java,v 1.10 2011-04-07 02:02:38 vrotaru Exp $
- */
 package net.hades.fix.engine.process.protocol;
 
 import net.hades.fix.message.Header;
@@ -25,7 +19,6 @@ import java.util.logging.Logger;
  * Fills the header with configured data.
  * 
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
- * @version $Revision: 1.10 $
  */
 public class HeaderFiller {
 
@@ -65,11 +58,9 @@ public class HeaderFiller {
                 header.setMessageEncoding(Charset.forName(protocol.getConfiguration().getMessageEncoding()));
             }
         }
-
         if (LOGGER.isLoggable(Level.FINEST)) {
             LOGGER.log(Level.FINEST, "Filled header : {0}", header.toString());
         }
-
         return header;
     }
 

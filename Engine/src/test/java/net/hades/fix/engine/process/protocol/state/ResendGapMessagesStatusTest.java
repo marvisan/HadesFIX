@@ -20,7 +20,7 @@ import net.hades.fix.engine.model.CounterpartyAddress;
 import net.hades.fix.engine.model.SessionAddress;
 import net.hades.fix.engine.process.protocol.MessageHistoryCache;
 import net.hades.fix.engine.process.protocol.Protocol;
-import net.hades.fix.engine.process.protocol.server.FIXServer;
+import net.hades.fix.engine.process.protocol.server.FixServer;
 import net.hades.fix.engine.process.session.ServerSessionCoordinator;
 import net.hades.fix.message.FIXMsg;
 import net.hades.fix.message.builder.FIXMsgBuilder;
@@ -62,7 +62,7 @@ public class ResendGapMessagesStatusTest {
         address.setRemoteAddress(new CounterpartyAddress("SERVER", null, null));
         ServerSessionCoordinator coordinator = new ServerSessionCoordinator(null, null, null, address);
         coordinator.setName("SESS");
-        Protocol protocol = new FIXServer(coordinator, null);
+        Protocol protocol = new FixServer(coordinator, null);
         ResendGapMessagesStatus instance = new ResendGapMessagesStatus(protocol.getStateProcessor());
         addTestMessages(protocol.getHistoryCache());
 

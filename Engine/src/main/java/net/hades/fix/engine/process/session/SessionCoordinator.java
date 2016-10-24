@@ -8,9 +8,7 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,7 +18,6 @@ import net.hades.fix.engine.config.model.*;
 import net.hades.fix.engine.exception.ConfigurationException;
 import net.hades.fix.engine.handler.HandlerException;
 import net.hades.fix.engine.exception.ProtocolException;
-import net.hades.fix.engine.exception.ProtocolStatusException;
 import net.hades.fix.engine.handler.Handler;
 import net.hades.fix.engine.mgmt.alert.Alert;
 import net.hades.fix.engine.mgmt.alert.AlertCode;
@@ -31,7 +28,6 @@ import net.hades.fix.engine.model.SessionAddress;
 import net.hades.fix.engine.process.Advisable;
 import net.hades.fix.engine.process.ManagedTask;
 import net.hades.fix.engine.process.TaskStatus;
-import net.hades.fix.engine.process.command.Command;
 import net.hades.fix.engine.process.event.AlertEvent;
 import net.hades.fix.engine.process.event.EventProcessor;
 import net.hades.fix.engine.process.protocol.MessageFiller;
@@ -40,7 +36,6 @@ import net.hades.fix.engine.process.protocol.Protocol;
 import net.hades.fix.engine.process.protocol.ProtocolVersion;
 import net.hades.fix.engine.process.stream.ConsumerStream;
 import net.hades.fix.engine.process.stream.ProducerStream;
-import net.hades.fix.engine.process.transport.Transport;
 import net.hades.fix.message.*;
 import net.hades.fix.message.exception.InvalidMsgException;
 import net.hades.fix.message.type.BeginString;
@@ -172,6 +167,10 @@ public abstract class SessionCoordinator implements ManagedTask, Advisable {
 
     public String getLocalID() {
         return sessionAddress.getLocalAddress().getID();
+    }
+    
+    public ExecutorService getExecutorService() {
+	return hadesInstance.getExecutorService();
     }
 
     protected Handler getConfiguredHandler(String name, HandlerDefInfo[] handlerDefs) throws ConfigurationException {

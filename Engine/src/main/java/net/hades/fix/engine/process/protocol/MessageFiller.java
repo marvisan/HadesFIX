@@ -2,13 +2,11 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
-/*
- * MessageFiller.java
- *
- * $Id: MessageFiller.java,v 1.14 2011-04-04 05:41:34 vrotaru Exp $
- */
 package net.hades.fix.engine.process.protocol;
+
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 import net.hades.fix.commons.security.PasswordBank;
 import net.hades.fix.message.*;
@@ -24,15 +22,10 @@ import net.hades.fix.message.type.*;
 import net.hades.fix.message.util.MsgUtil;
 import net.hades.fix.message.util.codec.HexCodec;
 
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-
 /**
  * Fills a FIX protocol message with data.
  *
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
- * @version $Revision: 1.14 $
  */
 public class MessageFiller {
 
@@ -286,7 +279,6 @@ public class MessageFiller {
 
     private static void fillHeader(Protocol protocol, FIXMsg message) {
         message.setHeader(HeaderFiller.fillHeader(protocol, message.getHeader()));
-        message.getHeader().setMsgSeqNum(protocol.getNextTxSeqNo());
         Date now = new Date();
         message.getHeader().setOrigSendingTime(now);
         message.getHeader().setSendingTime(now);
@@ -294,7 +286,6 @@ public class MessageFiller {
 
     private static void fillHeader(Protocol protocol, FIXMsg message, int seqNum) {
         message.setHeader(HeaderFiller.fillHeader(protocol, message.getHeader()));
-        message.getHeader().setMsgSeqNum(seqNum);
         Date now = new Date();
         message.getHeader().setOrigSendingTime(now);
         message.getHeader().setSendingTime(now);

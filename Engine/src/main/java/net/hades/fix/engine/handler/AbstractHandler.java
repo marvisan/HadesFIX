@@ -129,7 +129,7 @@ public abstract class AbstractHandler implements Handler  {
     }
 
     @Override
-    public TaskStatus getStaus() {
+    public TaskStatus getStatus() {
 	return status;
     }
 

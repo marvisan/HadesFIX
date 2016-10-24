@@ -23,10 +23,10 @@ public interface Handler<T extends Message,U extends ExecutionResult> extends Ca
     static final String CONS_PREFIX = "HC";
     static final String PROD_PREFIX = "HP";
     
-    TaskStatus getStaus();
+    TaskStatus getStatus();
     String getId();
     void write(T message);
-    void tryWrite(T message, int waitMillis);
+    boolean tryWrite(T message, int waitMillis);
     void addNextHandler(String id, Handler next);
     Map<String, String> getStatistics();
     void shutdown();

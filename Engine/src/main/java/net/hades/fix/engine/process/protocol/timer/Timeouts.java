@@ -2,32 +2,20 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
-/*
- * Timeouts.java
- *
- * $Id: Timeouts.java,v 1.1 2011-04-03 08:00:06 vrotaru Exp $
- */
 package net.hades.fix.engine.process.protocol.timer;
 
 /**
  * Holder of timeout data.
  * 
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
- * @version $Revision: 1.1 $
  */
 public class Timeouts {
 
     private int htbtTimeout;
-
     private int htbtOffset;
-
     private int resendTimeout;
-
     private int testRequestTimeout;
-
     private int logonTimeout;
-
     private int logoutTimeout;
 
     private boolean enableResendTimeout;

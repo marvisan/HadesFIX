@@ -19,8 +19,8 @@ import net.hades.fix.engine.model.CounterpartyAddress;
 import net.hades.fix.engine.process.event.AlertEvent;
 import net.hades.fix.engine.process.protocol.MessageFiller;
 import net.hades.fix.engine.process.protocol.ProcessingStage;
-import net.hades.fix.engine.process.protocol.client.FIXClient;
-import net.hades.fix.engine.process.protocol.server.FIXServer;
+import net.hades.fix.engine.process.protocol.client.FIXClientOld;
+import net.hades.fix.engine.process.protocol.server.FixServer;
 import net.hades.fix.engine.process.session.ClientSessionCoordinator;
 import net.hades.fix.engine.process.session.Coordinable;
 import net.hades.fix.engine.util.MessageUtil;
@@ -51,9 +51,9 @@ public class MessageRouter extends Thread {
 
     private static final Logger LOGGER = Logger.getLogger(MessageRouter.class.getName());
 
-    private FIXServer server;
+    private FixServer server;
 
-    private Map<CounterpartyAddress, FIXClient> clients;
+    private Map<CounterpartyAddress, FIXClientOld> clients;
 
     private LinkedBlockingQueue<FIXMsg> inboundQueue;
 
@@ -67,10 +67,10 @@ public class MessageRouter extends Thread {
 
     private CountDownLatch exitSignal = new CountDownLatch(1);
 
-    public MessageRouter(FIXServer server, String routerName) {
+    public MessageRouter(FixServer server, String routerName) {
         super(routerName);
         this.server = server;
-        clients = new ConcurrentHashMap<CounterpartyAddress, FIXClient>();
+        clients = new ConcurrentHashMap<CounterpartyAddress, FIXClientOld>();
         inboundQueue = new LinkedBlockingQueue<FIXMsg>();
         outboundQueue = new LinkedBlockingQueue<FIXMsg>();
 
@@ -180,7 +180,7 @@ public class MessageRouter extends Thread {
                     new Alert(new Date(),
                             getName(),
                             BaseSeverityType.FATAL,
-                            FIXServer.COMPONENT_NAME,
+                            FixServer.COMPONENT_NAME,
                             "Could not build Reject for message" + (message != null ? new String(message.getRawMessage()) : "null"),
                             ex)));
         }
@@ -235,7 +235,7 @@ public class MessageRouter extends Thread {
 
         private void sendMessageToDestination(FIXMsg message) throws InvalidMsgException, BadFormatMsgException, InterruptedException {
             CounterpartyAddress destination = MessageUtil.getDeliverToAddress(message);
-            FIXClient clientSession;
+            FIXClientOld clientSession;
             if (clients.containsKey(destination)) {
                 clientSession = clients.get(destination);
                 if (clientSession != null) {
@@ -274,14 +274,14 @@ public class MessageRouter extends Thread {
             }
         }
 
-        private FIXClient searchForClientSession(CounterpartyAddress dest) {
-            FIXClient client = null;
+        private FIXClientOld searchForClientSession(CounterpartyAddress dest) {
+            FIXClientOld client = null;
             List<Coordinable> coordinators = server.getSessionCoordinator().getEngine().getSessionCoordinators();
             if (coordinators != null && !coordinators.isEmpty()) {
                 for (Coordinable coordinator : coordinators) {
                     if (coordinator instanceof ClientSessionCoordinator) {
                         if (dest.equals(coordinator.getSessionAddress().getRemoteAddress())) {
-                            client = (FIXClient) coordinator.getProtocol();
+                            client = (FIXClientOld) coordinator.getProtocol();
                             client.setMessageRouter(getMessageRouter());
                             break;
                         }

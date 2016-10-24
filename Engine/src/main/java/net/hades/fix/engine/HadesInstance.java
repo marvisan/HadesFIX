@@ -29,6 +29,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -59,6 +62,7 @@ import net.hades.fix.engine.mgmt.data.ProcessStatus;
 import net.hades.fix.engine.mgmt.security.HadesServerProvider;
 import net.hades.fix.engine.model.CounterpartyAddress;
 import net.hades.fix.engine.model.SessionAddress;
+import net.hades.fix.engine.process.PriorityNamedThreadFactory;
 import net.hades.fix.engine.process.Reportable;
 import net.hades.fix.engine.process.command.Command;
 import net.hades.fix.engine.process.command.CommandType;
@@ -97,6 +101,7 @@ public class HadesInstance implements Reportable {
     private static volatile boolean shutdown;
 
     private EventProcessor eventProcessor;
+    private ExecutorService exeuctorService;
 
     private static HadesFIXEngineMBean openMBean = null;
     private static ObjectName openMBeanObjectName = null;
@@ -106,6 +111,7 @@ public class HadesInstance implements Reportable {
 
         configuration = Configurator.readConfiguration();
         ConfigurationValidator.validateConfiguration(configuration);
+	exeuctorService = Executors.newCachedThreadPool(new PriorityNamedThreadFactory());
     }
 
     // MAIN
@@ -168,6 +174,10 @@ public class HadesInstance implements Reportable {
 
     public HadesInstanceInfo getConfiguration() {
         return configuration;
+    }
+
+    public ExecutorService getExecutorService() {
+	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     public static HadesFIXEngineMBean getOpenMBean() {

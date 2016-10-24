@@ -19,7 +19,7 @@ import net.hades.fix.engine.mgmt.alert.BaseSeverityType;
 import net.hades.fix.engine.mgmt.data.ProcessStatus;
 import net.hades.fix.engine.model.SessionAddress;
 import net.hades.fix.engine.process.event.AlertEvent;
-import net.hades.fix.engine.process.protocol.server.FIXServer;
+import net.hades.fix.engine.process.protocol.server.FixServer;
 import net.hades.fix.engine.process.stream.ConsumerStream;
 import net.hades.fix.engine.process.stream.ProducerStream;
 import net.hades.fix.engine.util.UIDGen;
@@ -82,7 +82,7 @@ public final class ServerSessionCoordinator extends SessionCoordinator {
 
         aggregateSessionConfiguration(cptyConfiguration);
 
-        protocol = new FIXServer(this, (ServerSessionInfo) configuration);
+        protocol = new FixServer(this, (ServerSessionInfo) configuration);
 
         LOGGER.log(Level.INFO, "Server FIX protocol [{0}] initialised.", protocol.getName());
 

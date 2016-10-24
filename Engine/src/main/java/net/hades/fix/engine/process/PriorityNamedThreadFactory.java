@@ -19,7 +19,7 @@ public class PriorityNamedThreadFactory implements ThreadFactory {
     private final AtomicInteger threadNumber = new AtomicInteger(1);
     private final String namePrefix;
 
-    PriorityNamedThreadFactory() {
+    public PriorityNamedThreadFactory() {
 	SecurityManager s = System.getSecurityManager();
 	group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
 	namePrefix = "pool-" + POOL_NUMBER.getAndIncrement() + "-thread-";
