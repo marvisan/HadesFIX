@@ -22,23 +22,10 @@ import java.util.function.BiFunction;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import net.hades.fix.engine.exception.UnrecoverableException;
 import net.hades.fix.engine.handler.Handler;
-import net.hades.fix.engine.mgmt.alert.Alert;
-import net.hades.fix.engine.mgmt.alert.AlertCode;
-import net.hades.fix.engine.mgmt.alert.BaseSeverityType;
 import net.hades.fix.engine.process.TaskStatus;
-import net.hades.fix.engine.process.event.AlertEvent;
-import net.hades.fix.engine.process.event.LifeCycleEvent;
-import net.hades.fix.engine.process.event.MessageEvent;
-import net.hades.fix.engine.process.event.type.LifeCycleCode;
-import net.hades.fix.engine.process.event.type.LifeCycleType;
-import net.hades.fix.engine.process.protocol.server.FixServer;
 import net.hades.fix.engine.process.protocol.timer.Timeouts;
-import net.hades.fix.engine.util.MessageUtil;
 import net.hades.fix.message.Message;
-import net.hades.fix.message.builder.FIXMsgBuilder;
-import net.hades.fix.message.type.SessionRejectReason;
 import net.hades.fix.commons.exception.ExceptionUtil;
 import net.hades.fix.engine.config.Configurator;
 import net.hades.fix.engine.config.model.MsgTypeInfo;
@@ -52,8 +39,6 @@ import net.hades.fix.engine.process.session.persist.MemSessSeqPersister;
 import net.hades.fix.engine.process.session.persist.SessSeqPersister;
 import net.hades.fix.message.FIXMsg;
 import net.hades.fix.message.HeartbeatMsg;
-import net.hades.fix.message.ResendRequestMsg;
-import net.hades.fix.message.TestRequestMsg;
 import net.hades.fix.message.exception.BadFormatMsgException;
 import net.hades.fix.message.exception.InvalidMsgException;
 import net.hades.fix.message.exception.TagNotPresentException;
@@ -116,9 +101,8 @@ public abstract class Protocol implements Handler {
     protected final ConcurrentMap<String, Integer> lastSentSeqNo;
 
     protected BlockingQueue<Message> rxQueue;
-    protected MessageHistoryCache historyCache;
+    protected MessageCache historyCache;
     protected SeqGap gap;
-    protected ResendRequestMsg gapRequestMessage;
 
     protected volatile boolean shutdown;
 
@@ -137,9 +121,8 @@ public abstract class Protocol implements Handler {
     protected MessageRouter messageRouter;
 
     protected Handler transportOut;
-    protected MessageHistoryCache resequencingBuffer;
 
-    private final BiFunction<String, String, String> sumStats = (String old, String cur) -> {
+    protected final BiFunction<String, String, String> sumStats = (String old, String cur) -> {
 	return String.valueOf(Integer.valueOf(old) + Integer.valueOf(cur));
     };
 
@@ -147,18 +130,16 @@ public abstract class Protocol implements Handler {
 	this.coordinator = coordinator;
 	this.configuration = configuration;
 	nextHandlers = new ConcurrentHashMap<>();
-	historyCache = new MessageHistoryCache();
+	historyCache = new MessageCache(this);
 	statistics = new ConcurrentHashMap<>();
 	lastSentSeqNo = new ConcurrentHashMap<>();
-	resequencingBuffer = new MessageHistoryCache();
 	processingStage = ProcessingStage.INITIALISED;
 	status = TaskStatus.New;
     }
 
     /**
      * Writes a message (Binary or FIX) to the transport. If FIX then writes the message header Seq and Date.
-     *
-     * @param msg
+     * @param msg message to send to transport
      * @throws net.hades.fix.message.exception.TagNotPresentException
      * @throws net.hades.fix.message.exception.BadFormatMsgException
      * @throws java.lang.InterruptedException
@@ -244,12 +225,12 @@ public abstract class Protocol implements Handler {
 	return processingStage;
     }
 
-    public TimersHolder getTimers() {
-	return timers;
+    public void setProcessingStage(ProcessingStage processingStage) {
+	this.processingStage = processingStage;
     }
 
-    public MessageHistoryCache getResequencingBuffer() {
-	return resequencingBuffer;
+    public TimersHolder getTimers() {
+	return timers;
     }
 
     public SeqGap getGap() {
@@ -268,40 +249,13 @@ public abstract class Protocol implements Handler {
 	return lastSentSeqNo.getOrDefault(msgType, 0);
     }
 
+    public long getMaxMsgSize() {
+	return maxMsgSize;
+    }
+
     public void resetSequences() {
 	setRxSeqNo(0);
 	setTxSeqNo(0);
-    }
-
-    /**
-     * Validates the incoming FIX message address.
-     *
-     * @param message FIX message
-     * @throws InvalidMsgException in case the address is invalid
-     */
-    public void validateIncomingMessageAddress(FIXMsg message) throws InvalidMsgException {
-	if (message != null) {
-	    if (!targetCompID.equals(message.getHeader().getSenderCompID())) {
-		String errMsg = "SenderCompID [" + message.getHeader().getSenderCompID() + "] does not matches the session configured ["
-			+ getTargetCompID() + "]";
-		Log.severe(errMsg);
-		throw new InvalidMsgException(errMsg);
-	    }
-	    if (targetSubID != null && (message.getHeader().getSenderSubID() == null
-		    || !targetSubID.equals(message.getHeader().getSenderSubID()))) {
-		String errMsg = "SenderSubID [" + message.getHeader().getSenderSubID() + "] does not matches the session configured ["
-			+ getTargetSubID() + "]";
-		Log.severe(errMsg);
-		throw new InvalidMsgException(errMsg);
-	    }
-	    if (targetLocationID != null && (message.getHeader().getSenderLocationID() == null
-		    || !targetLocationID.equals(message.getHeader().getSenderLocationID()))) {
-		String errMsg = "SenderLocationID [" + message.getHeader().getSenderLocationID() + "] does not matches the session configured ["
-			+ getTargetLocationID() + "]";
-		Log.severe(errMsg);
-		throw new InvalidMsgException(errMsg);
-	    }
-	}
     }
 
     /**
@@ -406,7 +360,7 @@ public abstract class Protocol implements Handler {
      *
      * @return cache with messages sent
      */
-    public MessageHistoryCache getHistoryCache() {
+    public MessageCache getHistoryCache() {
 	return historyCache;
     }
 
@@ -498,71 +452,6 @@ public abstract class Protocol implements Handler {
     protected void updateLastSentSeqNo(FIXMsg fixMsg) {
 	if (fixMsg instanceof HeartbeatMsg) {
 	    lastSentSeqNo.put(MsgType.Heartbeat.getValue(), fixMsg.getHeader().getMsgSeqNum());
-	}
-    }
-
-    protected FIXMsg decodeAndValidate(byte[] byteFixMsg) throws UnrecoverableException, RejectMessageException {
-	FIXMsg msg = null;
-	try {
-	    if (byteFixMsg != null && byteFixMsg.length > 0) {
-		statistics.merge("MSG_IN", "1", sumStats);
-		if (maxMsgSize > 0 && byteFixMsg.length > maxMsgSize) {
-		    // discard messages larger than maxMsgSize
-		    Log.log(Level.WARNING, "Discarded message with size [{0}].", byteFixMsg.length);
-		    statistics.merge("MSG_REJ", "1", sumStats);
-		    return null;
-		}
-		msg = FIXMsgBuilder.build(byteFixMsg);
-
-		if (MessageUtil.isAdminMessage(msg)) {
-		    if (Log.isLoggable(Level.INFO)) {
-			Log.info(buildInboundLogMessage(msg));
-		    }
-		} else if (Log.isLoggable(Level.FINE)) {
-		    Log.log(Level.FINE, "Sequences : RX ({0}) , TX ({1})", new Object[]{getRxSeqNo() + 1, getTxSeqNo() + 1});
-		    Log.fine(buildInboundLogMessage(msg));
-		}
-		try {
-		    validateIncomingMessageAddress(msg);
-		} catch (InvalidMsgException ex) {
-		    // at this stage we reject
-		    coordinator.onAlertEvent(new AlertEvent(this,
-			    Alert.createAlert(id, FixServer.class.getSimpleName(),
-				    BaseSeverityType.FATAL, AlertCode.PROTOCOL_ERROR, ex.getMessage(), null)));
-
-		    coordinator.onLifeCycleEvent(new LifeCycleEvent(this, LifeCycleType.PROTOCOL_SERVER.name(),
-			    LifeCycleCode.FIX_SESSION_SHUTDOWN.name()));
-		    throw new UnrecoverableException("Bad message address", ex);
-		}
-		if (!isMsgSendTimeValid(msg)) {
-		    String errMsg = "SendingTime accuracy problem.";
-		    Log.severe(errMsg);
-
-		    statistics.merge("MSG_REJ", "1", sumStats);
-		    coordinator.onMessageEvent(new MessageEvent(this, msg));
-		    throw new RejectMessageException(msg, SessionRejectReason.SendingTimeAccuracyProblem);
-		}
-		setNeedsRouting(msg);
-	    }
-	    return msg;
-	} catch (InvalidMsgException ex) {
-	    String errMsg = "Invalid message : " + ExceptionUtil.getStackTrace(ex) + ". Received message : " + new String(byteFixMsg);
-	    Log.severe(errMsg);
-	    statistics.merge("MSG_REJ", "1", sumStats);
-	    coordinator.onMessageEvent(new MessageEvent(this, msg));
-	    throw new RejectMessageException(msg, SessionRejectReason.Other);
-	} catch (TagNotPresentException ex) {
-	    String errMsg = "Tag not found in message : " + ExceptionUtil.getStackTrace(ex) + ". Received message : " + new String(byteFixMsg);
-	    Log.severe(errMsg);
-	    statistics.merge("MSG_REJ", "1", sumStats);
-	    coordinator.onMessageEvent(new MessageEvent(this, msg));
-	    throw new RejectMessageException(msg, SessionRejectReason.UndefinedTag);
-	} catch (BadFormatMsgException ex) {
-	    String errMsg = "Message is in bad format : " + ExceptionUtil.getStackTrace(ex) + ". Received message : " + new String(byteFixMsg);
-	    Log.severe(errMsg);
-	    statistics.merge("MSG_REJ", "1", sumStats);
-	    coordinator.onMessageEvent(new MessageEvent(this, msg));
-	    throw new RejectMessageException(msg, ex.getRejectReason() != null ? ex.getRejectReason() : SessionRejectReason.Other);
 	}
     }
 

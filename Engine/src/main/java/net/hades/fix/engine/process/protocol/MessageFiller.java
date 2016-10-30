@@ -249,7 +249,23 @@ public class MessageFiller {
                 message.setRefApplExtID(0);
             }
         }
-
+        return message;
+    }
+    
+    public static RejectMsg buildRejectMsg(Protocol protocol, Integer seqNum, SessionRejectReason sessionRejectReason, Integer refTagId, String error) throws InvalidMsgException {
+        RejectMsg message = (RejectMsg) FIXMsgBuilder.build(MsgType.Reject.getValue(),
+                protocol.getVersion().getBeginString(),
+                getDefaultApplVerID(protocol, MsgType.Logon, MsgDirection.Send));
+        fillHeader(protocol, message);
+        message.setText(error);
+	message.setRefSeqNo(seqNum);
+	ApplVerID ver = getApplVerID(protocol, message);
+	if (MsgUtil.compare(ver, ApplVerID.FIX42) >= 0) {
+	    if (refTagId != null) {
+		message.setRefTagID(refTagId);
+	    }
+	    message.setSessionRejectReason(sessionRejectReason);
+	}
         return message;
     }
 

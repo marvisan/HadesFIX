@@ -5,6 +5,7 @@
 package net.hades.fix.engine.process.protocol.client;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -23,6 +24,7 @@ import net.hades.fix.engine.mgmt.alert.BaseSeverityType;
 import net.hades.fix.engine.process.ExecutionResult;
 import net.hades.fix.engine.process.TaskStatus;
 import net.hades.fix.engine.process.event.AlertEvent;
+import net.hades.fix.engine.process.protocol.DisconnectSessionException;
 import net.hades.fix.engine.process.protocol.MessagePriorityComparator;
 import net.hades.fix.engine.process.protocol.Protocol;
 import net.hades.fix.engine.process.protocol.ProtocolState;
@@ -42,7 +44,6 @@ import net.hades.fix.message.util.MsgUtil;
 import static net.hades.fix.engine.process.protocol.ProcessingStage.INITIALISED;
 import static net.hades.fix.engine.process.protocol.ProcessingStage.LOGGEDON;
 import static net.hades.fix.engine.process.protocol.ProcessingStage.LOGGEDOUT;
-import static net.hades.fix.engine.process.protocol.ProtocolState.LOGON_SEND;
 
 /**
  * Client side of a FIX engine protocol process.
@@ -81,12 +82,20 @@ public final class FixClient extends Protocol {
 	ClientSessionMessageProcessor processor = new ClientSessionMessageProcessor(this);
 
 	try {
-	    FIXMsg reqMsg = processor.processLogonRequest();
-	    FIXMsg respMsg = null;
+	    // generate first Login request
+	    FIXMsg loginMsg = processor.processLoginSend();
+	    if (loginMsg == null) {
+		Log.log(Level.SEVERE, "Could not build first login message. Shutdown session");
+		coordinator.onAlertEvent(new AlertEvent(this, 
+			Alert.createAlert(id, FixClient.class.getSimpleName(), BaseSeverityType.FATAL, AlertCode.SESSION_DESTROYED, null, null)));
+		status = TaskStatus.Error;
+		return new ExecutionResult(status);
+	    }
+	    
+	    List<FIXMsg> response = null;
 	    //send Logon
-	    writeToTransport(reqMsg);
+	    writeToTransport(loginMsg);
 	    timers.startLogonTimerTask();
-	    protocolState = ProtocolState.LOGON_SEND;
 	    while (!shutdown) {
 		Message message = rxQueue.peek();
 		if (message == null) {
@@ -96,32 +105,42 @@ public final class FixClient extends Protocol {
 		switch (processingStage) {
 
 		    case INITIALISED:
-			switch (protocolState) {
-			    case LOGON_SEND:
-				// accept only counterparty messages for Login
-				if (message instanceof BinaryMessage) {
-				    respMsg = processor.processLogonResponse(reqMsg, (BinaryMessage) rxQueue.take());
-
-				} else {
-				    // ignore
-				    continue;
+			// accept only counterparty Login message
+			if (message instanceof BinaryMessage) {
+			    response = processor.processLoginRcvd((BinaryMessage) rxQueue.take());
+			    if (!response.isEmpty()) {
+				for (Message send : response) {
+				    writeToTransport(send);
 				}
-
-			    default:
-			    // ignore
+			    }
 			}
 
 		    case LOGGEDON:
+			if (message instanceof BinaryMessage) {
+			    response = processor.processMessageRcvd((BinaryMessage) rxQueue.take());
+			    if (!response.isEmpty()) {
+				for (Message send : response) {
+				    writeToTransport(send);
+				}
+			    }
+			} else {
+			    writeToTransport(rxQueue.take());
+			}
 
 		    case LOGGEDOUT:
+			// only accept Logout and ResendRequest
+			if (message instanceof BinaryMessage) {
+			    
+			}
 		}
 
 	    }
-	} catch (InvalidMsgException | InterruptedException ex) {
+	} catch (InvalidMsgException | InterruptedException | DisconnectSessionException ex) {
 	    Log.log(Level.SEVERE, "Unexpected exception raised by Fix Client", ex);
 	    coordinator.onAlertEvent(new AlertEvent(this, Alert.createAlert(id, FixClient.class.getSimpleName(),
 		    BaseSeverityType.FATAL, AlertCode.SESSION_DESTROYED, ex.getMessage(), ex)));
-	    coordinator.shutdown();
+	    status = TaskStatus.Error;
+	    return new ExecutionResult(status);
 	}
 	status = TaskStatus.Completed;
 	return new ExecutionResult(status);
@@ -158,11 +177,15 @@ public final class FixClient extends Protocol {
 	    msgToSend = msg;
 	}
 	if (msg instanceof FIXMsg) {
-	    ((FIXMsg) msg).getHeader().setMsgSeqNum(getNextTxSeqNo());
-	    Date now = new Date();
-	    ((FIXMsg) msg).getHeader().setOrigSendingTime(now);
-	    ((FIXMsg) msg).getHeader().setSendingTime(now);
-	    updateLastSentSeqNo((FIXMsg) msg);
+	    if (!((FIXMsg) msg).getHeader().getPossDupFlag()) {
+		((FIXMsg) msg).getHeader().setMsgSeqNum(getNextTxSeqNo());
+		Date now = new Date();
+		((FIXMsg) msg).getHeader().setOrigSendingTime(now);
+		((FIXMsg) msg).getHeader().setSendingTime(now);
+		timers.startHeartbeatTimeoutTask();
+		updateLastSentSeqNo((FIXMsg) msg);
+		historyCache.addMessage((FIXMsg) msg);
+	    }
 	    msgToSend = new BinaryMessage(((FIXMsg) msg).encode());
 	}
 	if (msgToSend != null) {
@@ -274,6 +297,7 @@ public final class FixClient extends Protocol {
     }
 
     //---------------------------------------------------------------------------------------------------------------
+    
     private void initialise() throws ConfigurationException {
 	setSessionProtocolVersion();
 	setSupportedMsgTypes();
@@ -313,6 +337,11 @@ public final class FixClient extends Protocol {
 
     @Override
     public void shutdownImmediate() {
+	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void setDisabled(boolean disabled) {
 	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

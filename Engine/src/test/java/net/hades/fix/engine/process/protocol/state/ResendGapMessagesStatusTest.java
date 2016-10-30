@@ -18,7 +18,7 @@ import org.junit.Test;
 
 import net.hades.fix.engine.model.CounterpartyAddress;
 import net.hades.fix.engine.model.SessionAddress;
-import net.hades.fix.engine.process.protocol.MessageHistoryCache;
+import net.hades.fix.engine.process.protocol.MessageCache;
 import net.hades.fix.engine.process.protocol.Protocol;
 import net.hades.fix.engine.process.protocol.server.FixServer;
 import net.hades.fix.engine.process.session.ServerSessionCoordinator;
@@ -69,7 +69,7 @@ public class ResendGapMessagesStatusTest {
         Status result = instance.process();
     }
 
-    private void addTestMessages(MessageHistoryCache messageHistoryCache) throws Exception {
+    private void addTestMessages(MessageCache messageHistoryCache) throws Exception {
         for (int i = 5; i < 30; i++) {
             FIXMsg msg = FIXMsgBuilder.build(MsgType.OrderStatusRequest.getValue(), BeginString.FIX_4_0);
             msg.getHeader().setMsgSeqNum(i);

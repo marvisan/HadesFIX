@@ -4,17 +4,21 @@
  */
 package net.hades.fix.engine.process.protocol;
 
+
 /**
- * State of the protocol client/server.
+ * Immediately disconnects the FIX session.
  *
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
  */
-public enum ProcessingStage {
-
-    INITIALISED,
-    LOGGEDON,
-    LOGGEDOUT;
+public class DisconnectSessionException extends Exception {
 
     private static final long serialVersionUID = 1L;
+    
+    public DisconnectSessionException(String message) {
+        super(message);
+    }
 
+    public DisconnectSessionException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

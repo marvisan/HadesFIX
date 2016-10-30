@@ -68,7 +68,7 @@ public abstract class StateProcessor extends Thread {
 
     protected AtomicReference<ProcessingStage> processingStage;
 
-    protected MessageHistoryCache resequencingBuffer;
+    protected MessageCache resequencingBuffer;
 
     protected final ReentrantLock lock =  new ReentrantLock();
 
@@ -78,7 +78,7 @@ public abstract class StateProcessor extends Thread {
         this.transport = transport;
         heartbeatTimestamp = new HeartbeatTimestamp();
         statePool = Collections.synchronizedMap(new EnumMap<ProtocolState, Status>(ProtocolState.class));
-        resequencingBuffer = new MessageHistoryCache();
+        resequencingBuffer = new MessageCache();
         processingStage = new AtomicReference<ProcessingStage>();
         status = getStatus(ProtocolState.IDLE);
         blocked = true;
@@ -176,7 +176,7 @@ public abstract class StateProcessor extends Thread {
         resequencingBuffer.clear();
     }
 
-    public MessageHistoryCache getResequencingBuffer() {
+    public MessageCache getResequencingBuffer() {
         return resequencingBuffer;
     }
 
