@@ -13,7 +13,7 @@ import net.hades.fix.engine.process.event.AlertEvent;
 import net.hades.fix.engine.process.event.LifeCycleEvent;
 import net.hades.fix.engine.process.event.type.LifeCycleCode;
 import net.hades.fix.engine.process.event.type.LifeCycleType;
-import net.hades.fix.engine.process.protocol.ProcessingStage;
+import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.Protocol;
 import net.hades.fix.engine.process.protocol.client.FixClient;
 import net.hades.fix.engine.process.protocol.server.FixServer;
@@ -33,7 +33,7 @@ public class InputTimeoutTimerTask extends EngineTimerTask {
 
     @Override
     public void run() {
-	if (ProcessingStage.LOGGEDON.equals(protocol.getProcessingStage())) {
+	if (ProtocolState.LOGGEDON.equals(protocol.getProcessingState())) {
 	    String logMsg = "Input queue timer expired. Killing the session.";
 	    Log.severe(logMsg);
 

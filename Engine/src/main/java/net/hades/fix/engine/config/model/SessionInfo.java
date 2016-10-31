@@ -171,7 +171,7 @@ public class SessionInfo implements Serializable {
     protected Integer txBufferSize;
 
     @XmlAttribute(name = "resendEndSeqNum")
-    protected String resendEndSeqNum;
+    protected Integer resendEndSeqNum;
 
     @XmlAttribute(name = "logonTimeout")
     protected Integer logonTimeout;
@@ -610,11 +610,11 @@ public class SessionInfo implements Serializable {
         this.disableGapDetection = disableGapDetection;
     }
 
-    public String getResendEndSeqNum() {
+    public Integer getResendEndSeqNum() {
         return resendEndSeqNum;
     }
 
-    public void setResendEndSeqNum(String resendEndSeqNum) {
+    public void setResendEndSeqNum(Integer resendEndSeqNum) {
         this.resendEndSeqNum = resendEndSeqNum;
     }
 

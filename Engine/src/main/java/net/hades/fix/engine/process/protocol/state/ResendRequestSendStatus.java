@@ -17,7 +17,7 @@ import net.hades.fix.engine.mgmt.alert.BaseSeverityType;
 import net.hades.fix.engine.mgmt.alert.ComponentType;
 import net.hades.fix.engine.process.event.AlertEvent;
 import net.hades.fix.engine.process.protocol.MessageFiller;
-import net.hades.fix.engine.process.protocol.ProcessingStage;
+import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.session.SessionType;
 import net.hades.fix.message.ResendRequestMsg;
@@ -87,7 +87,7 @@ public class ResendRequestSendStatus extends Status {
                 // start the resend timeout timer
                 stateProcessor.getTimers().startResendTimerTask();
             }
-            stateProcessor.setProcessingStage(ProcessingStage.LOGGEDON);
+            stateProcessor.setProcessingStage(ProtocolState.LOGGEDON);
         } else {
             throw new InvalidMsgException("Sequence gap numbers have not been set.");
         }

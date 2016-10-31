@@ -66,7 +66,7 @@ public abstract class StateProcessor extends Thread {
     
     protected int maxMsgSize;
 
-    protected AtomicReference<ProcessingStage> processingStage;
+    protected AtomicReference<ProtocolState> processingStage;
 
     protected MessageCache resequencingBuffer;
 
@@ -79,7 +79,7 @@ public abstract class StateProcessor extends Thread {
         heartbeatTimestamp = new HeartbeatTimestamp();
         statePool = Collections.synchronizedMap(new EnumMap<ProtocolState, Status>(ProtocolState.class));
         resequencingBuffer = new MessageCache();
-        processingStage = new AtomicReference<ProcessingStage>();
+        processingStage = new AtomicReference<ProtocolState>();
         status = getStatus(ProtocolState.IDLE);
         blocked = true;
     }
@@ -187,7 +187,7 @@ public abstract class StateProcessor extends Thread {
      * Getter for status of the protocol (logged in or not).
      * @return current processing stage
      */
-    public ProcessingStage getProcessingStage() {
+    public ProtocolState getProcessingStage() {
         return processingStage.get();
     }
 
@@ -195,7 +195,7 @@ public abstract class StateProcessor extends Thread {
      * Setter for status of the protocol (logged in or not).
      * @param processingStage status
      */
-    public void setProcessingStage(ProcessingStage processingStage) {
+    public void setProcessingStage(ProtocolState processingStage) {
         this.processingStage.set(processingStage);
     }
 

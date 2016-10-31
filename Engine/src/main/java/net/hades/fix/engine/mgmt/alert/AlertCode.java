@@ -35,7 +35,8 @@ public enum AlertCode {
     SESSION_RECONNECT_DISABLED,
     SESSION_DESTROYED,
     THREAD_INTERRUPTED,
-    CONFIGURATION_ERROR,;
+    CONFIGURATION_ERROR,
+    SEQ_PERSISTENCE_ERROR;
     
     private static final long serialVersionUID = 1L;
 }

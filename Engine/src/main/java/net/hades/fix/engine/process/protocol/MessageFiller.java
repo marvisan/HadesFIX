@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.List;
 
 import net.hades.fix.commons.security.PasswordBank;
+import net.hades.fix.engine.util.MessageUtil;
 import net.hades.fix.message.*;
 import net.hades.fix.message.builder.FIXMsgBuilder;
 import net.hades.fix.message.exception.BadFormatMsgException;
@@ -99,7 +100,7 @@ public class MessageFiller {
         }
         if (MsgUtil.compare(ver, ApplVerID.FIX44) >= 0) {
             if (protocol.getConfiguration().getEnableNextExpMsgSeqNum() != null && protocol.getConfiguration().getEnableNextExpMsgSeqNum()) {
-                message.setNextExpectedMsgSeqNum(protocol.getRxSeqNo() + 1);
+                message.setNextExpectedMsgSeqNum(protocol.getRxSeqNo());
             }
         }
         if (MsgUtil.compare(ver, ApplVerID.FIX50) >= 0) {
@@ -142,7 +143,6 @@ public class MessageFiller {
                 }
             }
         }
-
         return message;
     }
 
@@ -158,16 +158,29 @@ public class MessageFiller {
         }
         message.setHeartBtInt(protocol.getConfiguration().getHeartBtInt());
         message.setResetSeqNumFlag(Boolean.TRUE);
-
         return message;
     }
-
-    public static LogoutMsg buildLogoutMsg(Protocol protocol) throws InvalidMsgException {
+    
+    public static LogoutMsg buildLogoutMsg(Protocol protocol, String text) throws InvalidMsgException {
         LogoutMsg logoutMsg = (LogoutMsg) FIXMsgBuilder.build(MsgType.Logout.getValue(),
                 protocol.getVersion().getBeginString(),
                 getDefaultApplVerID(protocol, MsgType.Logout, MsgDirection.Send));
         fillHeader(protocol, logoutMsg);
+	logoutMsg.setText(text);
+        return logoutMsg;
+    }
 
+    public static LogoutMsg buildLogoutMsg(Protocol protocol, SessionStatus status) throws InvalidMsgException {
+        LogoutMsg logoutMsg = (LogoutMsg) FIXMsgBuilder.build(MsgType.Logout.getValue(),
+                protocol.getVersion().getBeginString(),
+                getDefaultApplVerID(protocol, MsgType.Logout, MsgDirection.Send));
+        fillHeader(protocol, logoutMsg);
+	if (MsgUtil.compare(logoutMsg.getHeader().getBeginString(), BeginString.FIXT_1_1) >= 0 && logoutMsg.getHeader().getApplVerID() != null) {
+	    if (MsgUtil.compare(logoutMsg.getHeader().getApplVerID(), ApplVerID.FIX50SP1) >= 0) {
+		logoutMsg.setSessionStatus(status);
+	    }
+	}
+	logoutMsg.setText(status.name());
         return logoutMsg;
     }
 
@@ -176,7 +189,6 @@ public class MessageFiller {
                 protocol.getVersion().getBeginString(),
                 getDefaultApplVerID(protocol, MsgType.ResendRequest, MsgDirection.Send));
         fillHeader(protocol, resendRequestMsg);
-
         return resendRequestMsg;
     }
 
@@ -185,7 +197,6 @@ public class MessageFiller {
                 protocol.getVersion().getBeginString(),
                 getDefaultApplVerID(protocol, MsgType.ResendRequest, MsgDirection.Send));
         fillHeader(protocol, resendRequestMsg, 0);
-
         return resendRequestMsg;
     }
 
@@ -194,8 +205,7 @@ public class MessageFiller {
                 protocol.getVersion().getBeginString(),
                 getDefaultApplVerID(protocol, MsgType.TestRequest, MsgDirection.Send));
         fillHeader(protocol, message);
-        message.setTestReqID(String.valueOf(System.currentTimeMillis()));
-
+        message.setTestReqID(MessageUtil.generateTestReqID());
         return message;
     }
 
@@ -204,7 +214,15 @@ public class MessageFiller {
                 protocol.getVersion().getBeginString(),
                 getDefaultApplVerID(protocol, MsgType.Heartbeat, MsgDirection.Send));
         fillHeader(protocol, message);
+        return message;
+    }
 
+    public static HeartbeatMsg buildHeartbeatMsg(Protocol protocol, String testReqID) throws InvalidMsgException {
+        HeartbeatMsg message = (HeartbeatMsg) FIXMsgBuilder.build(MsgType.Heartbeat.getValue(),
+                protocol.getVersion().getBeginString(),
+                getDefaultApplVerID(protocol, MsgType.Heartbeat, MsgDirection.Send));
+        fillHeader(protocol, message);
+	message.setTestReqID(testReqID);
         return message;
     }
 
@@ -213,7 +231,6 @@ public class MessageFiller {
                 protocol.getVersion().getBeginString(),
                 getDefaultApplVerID(protocol, MsgType.SequenceReset, MsgDirection.Send));
         fillHeader(protocol, message);
-
         return message;
     }
 
@@ -222,7 +239,6 @@ public class MessageFiller {
                 protocol.getVersion().getBeginString(),
                 getDefaultApplVerID(protocol, MsgType.SequenceReset, MsgDirection.Send));
         fillHeader(protocol, message, seqNum);
-
         return message;
     }
 
@@ -293,6 +309,8 @@ public class MessageFiller {
         }
     }
 
+    //---------------------------------------------------------------------------------------------------
+    
     private static void fillHeader(Protocol protocol, FIXMsg message) {
         message.setHeader(HeaderFiller.fillHeader(protocol, message.getHeader()));
         Date now = new Date();

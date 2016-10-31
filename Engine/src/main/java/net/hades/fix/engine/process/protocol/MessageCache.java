@@ -10,7 +10,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.Date;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -42,8 +41,7 @@ public class MessageCache {
     public MessageCache(Protocol protocol) {
 	this.protocol = protocol;
 	CACHE = new ConcurrentSkipListMap<>();
-	// TODO get session folder and load cached messages
-	cacheFolder = null;
+	cacheFolder = protocol.getSessConfigDir();
 	loadCachedMessages();
     }
 
@@ -175,8 +173,9 @@ public class MessageCache {
     }
 
     //----------------------------------------------------------------------------------------------------
+    
     private void addReplaceAdminMessages(FIXMsg message) {
-	message.getHeader().setOrigSendingTime(new Date());
+	message.getHeader().setPossDupFlag(Boolean.TRUE);
 	if (MsgType.Heartbeat.getValue().equals(message.getHeader().getMsgType())
 		|| MsgType.Logon.getValue().equals(message.getHeader().getMsgType())
 		|| MsgType.Logout.getValue().equals(message.getHeader().getMsgType())
@@ -200,7 +199,6 @@ public class MessageCache {
 	    SequenceResetMsg gapFillMsg = MessageFiller.buildSequenceResetMsg(protocol, seqNum);
 	    gapFillMsg.setGapFillFlag(Boolean.TRUE);
 	    gapFillMsg.getHeader().setPossDupFlag(Boolean.TRUE);
-	    gapFillMsg.getHeader().setSendingTime(new Date());
 	    gapFillMsg.setNewSeqNo(seqNum);
 	    return gapFillMsg;
 	} catch (InvalidMsgException ex) {

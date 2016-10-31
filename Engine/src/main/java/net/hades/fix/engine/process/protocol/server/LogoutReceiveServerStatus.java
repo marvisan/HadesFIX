@@ -24,7 +24,7 @@ import net.hades.fix.engine.process.command.Command;
 import net.hades.fix.engine.process.event.LifeCycleEvent;
 import net.hades.fix.engine.process.event.type.LifeCycleCode;
 import net.hades.fix.engine.process.event.type.LifeCycleType;
-import net.hades.fix.engine.process.protocol.ProcessingStage;
+import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.state.StateProcessor;
 import net.hades.fix.engine.process.protocol.state.Status;
@@ -68,7 +68,7 @@ public class LogoutReceiveServerStatus extends Status {
         if (expected) {
             status = stateProcessor.getStatus(ProtocolState.IDLE);
             stateProcessor.getTimers().resetLogoutTimeoutTask();
-            if (ProcessingStage.INITIALISED.equals(processingStage)) {
+            if (ProtocolState.INITIALISED.equals(processingStage)) {
                 stateProcessor.getTimers().getLogoutTimeoutTask().setInitial(true);
             }
             if (stateProcessor.getProtocol().getConfiguration().getResetSeqAtLogout()) {
@@ -89,7 +89,7 @@ public class LogoutReceiveServerStatus extends Status {
                         LifeCycleCode.FIX_SESSION_RESTART.name()));
                 stateProcessor.getProtocol().getSessionCoordinator().execute(new Command(CommandType.SessionRestarted));
             }
-            stateProcessor.setProcessingStage(ProcessingStage.LOGGEDOUT);
+            stateProcessor.setProcessingStage(ProtocolState.LOGGEDOUT);
             recycle();
         } else {
             if (msg.getText() != null && !msg.getText().isEmpty()) {

@@ -26,7 +26,7 @@ import net.hades.fix.engine.process.event.MessageEvent;
 import net.hades.fix.engine.process.event.type.LifeCycleCode;
 import net.hades.fix.engine.process.event.type.LifeCycleType;
 import net.hades.fix.engine.process.protocol.MessageFiller;
-import net.hades.fix.engine.process.protocol.ProcessingStage;
+import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.SeqGap;
 import net.hades.fix.engine.process.protocol.state.StateProcessor;
@@ -73,20 +73,20 @@ public class LogonReceiveServerStatus extends Status {
 
         Status status = stateProcessor.getStatus(ProtocolState.PROCESSING);
         try {
-            if (ProcessingStage.RESET.equals(processingStage)) {
+            if (ProtocolState.RESET.equals(processingStage)) {
                 if (MsgUtil.compare(stateProcessor.getProtocol().getVersion().getBeginString(), BeginString.FIX_4_1) >= 0) {
                     if (((LogonMsg) message).getResetSeqNumFlag() != null && ((LogonMsg) message).getResetSeqNumFlag()) {
                         stateProcessor.getProtocol().setRxSeqNo(message.getHeader().getMsgSeqNum());
                         stateProcessor.getProtocol().getHistoryCache().clear();
-                        stateProcessor.setProcessingStage(ProcessingStage.LOGGEDON);
+                        stateProcessor.setProcessingStage(ProtocolState.LOGGEDON);
                         stateProcessor.getTimers().resetLogonTimeoutTask();
                         return status;
                     }
                 }
-            } else if (ProcessingStage.LOGGEDON.equals(processingStage)) {
+            } else if (ProtocolState.LOGGEDON.equals(processingStage)) {
                 if (MsgUtil.compare(stateProcessor.getProtocol().getVersion().getBeginString(), BeginString.FIX_4_1) >= 0) {
                     if (((LogonMsg) message).getResetSeqNumFlag() != null && ((LogonMsg) message).getResetSeqNumFlag()) {
-                        stateProcessor.setProcessingStage(ProcessingStage.RESET);
+                        stateProcessor.setProcessingStage(ProtocolState.RESET);
                         stateProcessor.getProtocol().setTxSeqNo(message.getHeader().getMsgSeqNum() - 1);
                         stateProcessor.getProtocol().setRxSeqNo(message.getHeader().getMsgSeqNum());
                         status = stateProcessor.getStatus(ProtocolState.LOGON_SEND);
@@ -135,7 +135,7 @@ public class LogonReceiveServerStatus extends Status {
             String logMsg = "Invalid message : " + ex.getMessage() + ". Reconnecting transport.";
             LOGGER.severe(logMsg);
 
-            stateProcessor.setProcessingStage(ProcessingStage.LOGGEDOUT);
+            stateProcessor.setProcessingStage(ProtocolState.LOGGEDOUT);
             sendRejectMsg(ex, SessionRejectReason.InvalidMessageType);
             sendLogoutMsg(ex);
             stateProcessor.getProtocol().getEventProcessor().onAlertEvent(new AlertEvent(this,
@@ -149,7 +149,7 @@ public class LogonReceiveServerStatus extends Status {
             String logMsg = "Logon message is in bad format : " + ex.getMessage() + ". Reconnecting transport.";
             LOGGER.severe(logMsg);
 
-            stateProcessor.setProcessingStage(ProcessingStage.LOGGEDOUT);
+            stateProcessor.setProcessingStage(ProtocolState.LOGGEDOUT);
             sendRejectMsg(ex, SessionRejectReason.InvalidMessageType);
             sendLogoutMsg(ex);
             stateProcessor.getProtocol().getEventProcessor().onAlertEvent(new AlertEvent(this,
@@ -392,7 +392,7 @@ public class LogonReceiveServerStatus extends Status {
 
     private void closeSession(String logMsg) {
         LOGGER.severe(logMsg);
-        stateProcessor.setProcessingStage(ProcessingStage.LOGGEDOUT);
+        stateProcessor.setProcessingStage(ProtocolState.LOGGEDOUT);
         stateProcessor.getProtocol().getEventProcessor().onAlertEvent(new AlertEvent(this,
                 Alert.createAlert(getName(), ComponentType.FIXServer.toString(),
                 BaseSeverityType.FATAL, AlertCode.PROTOCOL_ERROR, logMsg, null)));

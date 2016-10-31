@@ -22,7 +22,7 @@ import net.hades.fix.engine.process.event.LifeCycleEvent;
 import net.hades.fix.engine.process.event.type.LifeCycleCode;
 import net.hades.fix.engine.process.event.type.LifeCycleType;
 import net.hades.fix.engine.process.protocol.MessageFiller;
-import net.hades.fix.engine.process.protocol.ProcessingStage;
+import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.SeqSet;
 import net.hades.fix.engine.process.protocol.state.StateProcessor;
@@ -57,11 +57,11 @@ public class LogonSendClientStatus extends Status {
     public Status process() throws UnrecoverableException, InterruptedException {
         Status status;
         try {
-            if (ProcessingStage.RESET.equals(stateProcessor.getProcessingStage())) {
+            if (ProtocolState.RESET.equals(stateProcessor.getProcessingStage())) {
                 stateProcessor.getProtocol().setTxSeqNo(0);
                 status = sendLogonResetSeqNumMsg();
-                stateProcessor.setProcessingStage(ProcessingStage.LOGGEDON);
-                stateProcessor.setProcessingStage(ProcessingStage.LOGGEDON);
+                stateProcessor.setProcessingStage(ProtocolState.LOGGEDON);
+                stateProcessor.setProcessingStage(ProtocolState.LOGGEDON);
             } else {
                 status = sendLogonMsg();
             }
@@ -88,7 +88,7 @@ public class LogonSendClientStatus extends Status {
     }
 
     private Status sendLogonMsg() throws InvalidMsgException, InterruptedException {
-        if (ProcessingStage.INITIALISED.equals(stateProcessor.getProcessingStage())) {
+        if (ProtocolState.INITIALISED.equals(stateProcessor.getProcessingStage())) {
             stateProcessor.getProtocol().setSessStartSeqSet(new SeqSet(stateProcessor.getProtocol().getRxSeqNo(), stateProcessor.getProtocol().getTxSeqNo()));
         }
         LogonMsg msg = MessageFiller.buildLogonMsg(stateProcessor.getProtocol());

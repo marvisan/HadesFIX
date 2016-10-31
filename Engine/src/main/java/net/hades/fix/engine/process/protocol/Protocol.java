@@ -39,6 +39,7 @@ import net.hades.fix.engine.process.session.persist.MemSessSeqPersister;
 import net.hades.fix.engine.process.session.persist.SessSeqPersister;
 import net.hades.fix.message.FIXMsg;
 import net.hades.fix.message.HeartbeatMsg;
+import net.hades.fix.message.ResendRequestMsg;
 import net.hades.fix.message.exception.BadFormatMsgException;
 import net.hades.fix.message.exception.InvalidMsgException;
 import net.hades.fix.message.exception.TagNotPresentException;
@@ -82,17 +83,16 @@ public abstract class Protocol implements Handler {
     private static final int DEFAULT_RX_BUFFER_SIZE = 1000;
     private static final int DEFAULT_TX_BUFFER_SIZE = 1000;
     private static final int DEFAULT_RESEND_TIMEOUT = 3000;
-    private static final double DEFAULT_HEARTBT_OFFSET_FRACTION = 0.1;
+    private static final double DEFAULT_HEARTBT_OFFSET_FRACTION = 0.2;
 
     protected String id;
     protected volatile TaskStatus status;
     protected volatile ProtocolState protocolState;
-    protected volatile ProcessingStage processingStage;
+    protected volatile String lastTestReqID;
     protected SeqSet sessStartSeqSet;
     protected String sessConfigDir;
 
     protected ProtocolVersion protocolVersion;
-    protected long maxMsgSize;
 
     protected SessionCoordinator coordinator;
     protected SessionInfo configuration;
@@ -103,6 +103,7 @@ public abstract class Protocol implements Handler {
     protected BlockingQueue<Message> rxQueue;
     protected MessageCache historyCache;
     protected SeqGap gap;
+    protected ResendRequestMsg lastResendRequest;
 
     protected volatile boolean shutdown;
 
@@ -133,7 +134,7 @@ public abstract class Protocol implements Handler {
 	historyCache = new MessageCache(this);
 	statistics = new ConcurrentHashMap<>();
 	lastSentSeqNo = new ConcurrentHashMap<>();
-	processingStage = ProcessingStage.INITIALISED;
+	protocolState = ProtocolState.INITIALISED;
 	status = TaskStatus.New;
     }
 
@@ -198,6 +199,14 @@ public abstract class Protocol implements Handler {
 	return id;
     }
 
+    public ProtocolState getProtocolState() {
+	return protocolState;
+    }
+
+    public void setProtocolState(ProtocolState protocolState) {
+	this.protocolState = protocolState;
+    }
+
     @Override
     public void write(Message message) {
 	try {
@@ -221,14 +230,6 @@ public abstract class Protocol implements Handler {
 	return coordinator;
     }
 
-    public ProcessingStage getProcessingStage() {
-	return processingStage;
-    }
-
-    public void setProcessingStage(ProcessingStage processingStage) {
-	this.processingStage = processingStage;
-    }
-
     public TimersHolder getTimers() {
 	return timers;
     }
@@ -250,12 +251,24 @@ public abstract class Protocol implements Handler {
     }
 
     public long getMaxMsgSize() {
-	return maxMsgSize;
+	return configuration.getMaxMsgLen();
     }
 
     public void resetSequences() {
 	setRxSeqNo(0);
 	setTxSeqNo(0);
+    }
+
+    public ResendRequestMsg getLastResendRequest() {
+	return lastResendRequest;
+    }
+
+    public void setLastResendRequest(ResendRequestMsg lastResendRequest) {
+	this.lastResendRequest = lastResendRequest;
+    }
+
+    public String getSessConfigDir() {
+	return sessConfigDir;
     }
 
     /**
@@ -430,6 +443,14 @@ public abstract class Protocol implements Handler {
 	this.routingMode = routingMode;
     }
 
+    public String getLastTestReqID() {
+	return lastTestReqID;
+    }
+
+    public void setLastTestReqID(String lastTestReqID) {
+	this.lastTestReqID = lastTestReqID;
+    }
+
     /**
      * Gets the message router.
      *
@@ -445,7 +466,7 @@ public abstract class Protocol implements Handler {
     protected void reset() {
 	getStateProcessor().setGap(null);
 	getStateProcessor().setGapRequestMessage(null);
-	getStateProcessor().setProcessingStage(ProcessingStage.INITIALISED);
+	getStateProcessor().setProcessingStage(ProtocolState.INITIALISED);
 	getStateProcessor().resetAllTimerTasks();
     }
 
@@ -535,10 +556,9 @@ public abstract class Protocol implements Handler {
 	    } else if (configuration.getTestMessageIndicator()) {
 		setTestSession(true);
 	    }
-	    if (configuration.getMaxMsgLen() != null) {
-		maxMsgSize = configuration.getMaxMsgLen();
+	    if (configuration.getMaxMsgLen() == null) {
+		configuration.setMaxMsgLen(0);
 	    }
-
 	    targetCompID = coordinator.getSessionAddress().getRemoteAddress().getCompID();
 	    targetLocationID = coordinator.getSessionAddress().getRemoteAddress().getLocationID();
 	    targetSubID = coordinator.getSessionAddress().getRemoteAddress().getSubID();
@@ -609,7 +629,7 @@ public abstract class Protocol implements Handler {
 	if (!sessConfigDirFile.exists()) {
 	    if (!sessConfigDirFile.mkdir()) {
 		String errMsg = "Could not create session config dir [" + sessConfigDirFile.getPath() + "] for session ["
-			+ coordinator.getSenderId() + "].";
+			+ coordinator.getLocalID() + "].";
 		Log.severe(errMsg);
 		throw new ConfigurationException(errMsg);
 	    }
@@ -621,7 +641,7 @@ public abstract class Protocol implements Handler {
 	if (!sessConfigDirFile.exists()) {
 	    if (!sessConfigDirFile.mkdir()) {
 		String errMsg = "Could not create session config dir [" + sessConfigDirFile.getPath() + "] for session ["
-			+ coordinator.getSenderId() + "].";
+			+ coordinator.getLocalID() + "].";
 		Log.severe(errMsg);
 		throw new ConfigurationException(errMsg);
 	    }

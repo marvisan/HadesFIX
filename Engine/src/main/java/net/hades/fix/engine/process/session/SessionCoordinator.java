@@ -31,7 +31,7 @@ import net.hades.fix.engine.process.TaskStatus;
 import net.hades.fix.engine.process.event.AlertEvent;
 import net.hades.fix.engine.process.event.EventProcessor;
 import net.hades.fix.engine.process.protocol.MessageFiller;
-import net.hades.fix.engine.process.protocol.ProcessingStage;
+import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.Protocol;
 import net.hades.fix.engine.process.protocol.ProtocolVersion;
 import net.hades.fix.engine.process.stream.ConsumerStream;
@@ -84,6 +84,10 @@ public abstract class SessionCoordinator implements ManagedTask, Advisable {
      * @param clientSocket TCP connection
      */
     public abstract void startStreamHandlers(Socket clientSocket);
+
+    public SessionAddress getSessionAddress() {
+	return sessionAddress;
+    }
 
     public void sendRejectMessage(FIXMsg message, HandlerException exception) throws InterruptedException {
         RejectMsg msg;
@@ -140,7 +144,7 @@ public abstract class SessionCoordinator implements ManagedTask, Advisable {
     public void sessionReset() throws ProtocolException {
         if (ProcessStatus.ACTIVE.equals(processStatus.get())) {
             try {
-                protocol.getStateProcessor().setProcessingStage(ProcessingStage.RESET);
+                protocol.getStateProcessor().setProcessingStage(ProtocolState.RESET);
                 protocol.setTxSeqNo(0);
                 LogonMsg logonMessage = MessageFiller.buildResetSeqNumLogonMsg(getProtocol());
                 logonMessage.setPriority(Message.PRIORITY_HIGH);

@@ -17,7 +17,7 @@ import net.hades.fix.engine.mgmt.alert.BaseSeverityType;
 import net.hades.fix.engine.mgmt.alert.ComponentType;
 import net.hades.fix.engine.process.event.AlertEvent;
 import net.hades.fix.engine.process.protocol.MessageFiller;
-import net.hades.fix.engine.process.protocol.ProcessingStage;
+import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.session.SessionType;
 import net.hades.fix.message.LogonMsg;
@@ -50,7 +50,7 @@ public class LogonResetSeqNumSendStatus extends Status {
         Status status;
         try {
             status = stateProcessor.getStatus(ProtocolState.PROCESSING);
-            stateProcessor.setProcessingStage(ProcessingStage.RESET);
+            stateProcessor.setProcessingStage(ProtocolState.RESET);
             stateProcessor.getProtocol().setTxSeqNo(0);
             LogonMsg msg = MessageFiller.buildResetSeqNumLogonMsg(stateProcessor.getProtocol());
             stateProcessor.sendProtocolMessage(msg);

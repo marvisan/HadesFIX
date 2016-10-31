@@ -26,7 +26,7 @@ import net.hades.fix.engine.process.event.LifeCycleEvent;
 import net.hades.fix.engine.process.event.type.LifeCycleCode;
 import net.hades.fix.engine.process.event.type.LifeCycleType;
 import net.hades.fix.engine.process.protocol.MessageFiller;
-import net.hades.fix.engine.process.protocol.ProcessingStage;
+import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.client.FIXClientStateProcessor;
 import net.hades.fix.engine.process.protocol.client.LogoutSendClientStatus;
@@ -61,7 +61,7 @@ public abstract class Status {
 
     protected SessionType sessionType;
 
-    protected ProcessingStage processingStage;
+    protected ProtocolState processingStage;
 
     /**
      * Ctor.
@@ -129,7 +129,7 @@ public abstract class Status {
         return stateProcessor.getProtocol().getSessionCoordinator().getSessionAddress().toString();
     }
 
-    public void setProcessingStage(ProcessingStage processingStage) {
+    public void setProcessingStage(ProtocolState processingStage) {
         this.processingStage = processingStage;
     }
 

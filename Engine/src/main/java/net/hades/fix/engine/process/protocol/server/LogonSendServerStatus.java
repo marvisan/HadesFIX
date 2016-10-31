@@ -17,7 +17,7 @@ import net.hades.fix.engine.mgmt.alert.BaseSeverityType;
 import net.hades.fix.engine.mgmt.alert.ComponentType;
 import net.hades.fix.engine.process.event.AlertEvent;
 import net.hades.fix.engine.process.protocol.MessageFiller;
-import net.hades.fix.engine.process.protocol.ProcessingStage;
+import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.state.StateProcessor;
 import net.hades.fix.engine.process.protocol.state.Status;
@@ -52,12 +52,12 @@ public class LogonSendServerStatus extends Status {
     public Status process() throws UnrecoverableException, InterruptedException {
         Status status;
         try {
-            if (ProcessingStage.RESET.equals(processingStage)) {
+            if (ProtocolState.RESET.equals(processingStage)) {
                 status = sendLogonResetSeqNumMsg();
             } else {
                 status = sendLogonMsg();
             }
-            stateProcessor.setProcessingStage(ProcessingStage.LOGGEDON);
+            stateProcessor.setProcessingStage(ProtocolState.LOGGEDON);
         } catch (InvalidMsgException ex) {
             status = handleBuildMessageError(ex);
         }

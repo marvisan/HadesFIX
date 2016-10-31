@@ -18,7 +18,7 @@ import net.hades.fix.engine.mgmt.data.ProcessStatus;
 import net.hades.fix.engine.model.CounterpartyAddress;
 import net.hades.fix.engine.process.event.AlertEvent;
 import net.hades.fix.engine.process.protocol.MessageFiller;
-import net.hades.fix.engine.process.protocol.ProcessingStage;
+import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.client.FIXClientOld;
 import net.hades.fix.engine.process.protocol.server.FixServer;
 import net.hades.fix.engine.process.session.ClientSessionCoordinator;
@@ -241,7 +241,7 @@ public class MessageRouter extends Thread {
                 if (clientSession != null) {
                     // check if the session is connected
                     if (ProcessStatus.ACTIVE.equals(clientSession.getProcessStatus()) &&
-                            ProcessingStage.LOGGEDON.equals(clientSession.getStateProcessor().getProcessingStage())) {
+                            ProtocolState.LOGGEDON.equals(clientSession.getStateProcessor().getProcessingStage())) {
                         if (!message.isDecoded()) {
                             message.decode();
                         }
@@ -258,7 +258,7 @@ public class MessageRouter extends Thread {
                 if (clientSession != null) {
                     // check if the session is connected
                     if (ProcessStatus.ACTIVE.equals(clientSession.getProcessStatus()) &&
-                            ProcessingStage.LOGGEDON.equals(clientSession.getStateProcessor().getProcessingStage())) {
+                            ProtocolState.LOGGEDON.equals(clientSession.getStateProcessor().getProcessingStage())) {
                         if (!message.isDecoded()) {
                             message.decode();
                         }

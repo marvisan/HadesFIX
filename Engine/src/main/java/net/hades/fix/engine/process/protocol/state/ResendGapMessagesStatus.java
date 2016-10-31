@@ -17,7 +17,7 @@ import net.hades.fix.engine.mgmt.alert.BaseSeverityType;
 import net.hades.fix.engine.mgmt.alert.ComponentType;
 import net.hades.fix.engine.process.event.AlertEvent;
 import net.hades.fix.engine.process.protocol.MessageFiller;
-import net.hades.fix.engine.process.protocol.ProcessingStage;
+import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.SeqGap;
 import net.hades.fix.engine.process.session.SessionType;
@@ -107,7 +107,7 @@ public class ResendGapMessagesStatus extends Status {
             }
             seqGap = null;
         }
-        stateProcessor.setProcessingStage(ProcessingStage.LOGGEDON);
+        stateProcessor.setProcessingStage(ProtocolState.LOGGEDON);
 
         return result;
     }

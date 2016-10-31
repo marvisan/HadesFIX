@@ -41,9 +41,9 @@ import net.hades.fix.message.exception.TagNotPresentException;
 import net.hades.fix.message.type.MsgType;
 import net.hades.fix.message.util.MsgUtil;
 
-import static net.hades.fix.engine.process.protocol.ProcessingStage.INITIALISED;
-import static net.hades.fix.engine.process.protocol.ProcessingStage.LOGGEDON;
-import static net.hades.fix.engine.process.protocol.ProcessingStage.LOGGEDOUT;
+import static net.hades.fix.engine.process.protocol.ProtocolState.INITIALISED;
+import static net.hades.fix.engine.process.protocol.ProtocolState.LOGGEDON;
+import static net.hades.fix.engine.process.protocol.ProtocolState.LOGGEDOUT;
 
 /**
  * Client side of a FIX engine protocol process.
@@ -77,8 +77,7 @@ public final class FixClient extends Protocol {
 	Log.log(Level.INFO, "Running Fix Client thread [{0}].", id);
 
 	status = TaskStatus.Running;
-	protocolState = ProtocolState.IDLE;
-
+	protocolState = ProtocolState.INITIALISED;
 	ClientSessionMessageProcessor processor = new ClientSessionMessageProcessor(this);
 
 	try {
@@ -102,7 +101,7 @@ public final class FixClient extends Protocol {
 		    Thread.sleep(1);
 		    continue;
 		}
-		switch (processingStage) {
+		switch (protocolState) {
 
 		    case INITIALISED:
 			// accept only counterparty Login message
@@ -242,7 +241,6 @@ public final class FixClient extends Protocol {
 	    coordinator.onAlertEvent(new AlertEvent(this, Alert.createAlert(id, FixClient.class.getSimpleName(),
 		    BaseSeverityType.WARNING, AlertCode.SEQ_PERSISTENCE_ERROR, ex.toString(), ex)));
 	}
-
 	return txSeqNo;
     }
 
@@ -257,16 +255,10 @@ public final class FixClient extends Protocol {
     }
 
     @Override
-    protected void processAdminMessage(FIXMsg fixMsg) throws TagNotPresentException, BadFormatMsgException {
-	// does nothing for client
-    }
-
-    @Override
     protected synchronized MessageRouter getMessageRouter() {
 	if (!routerInitialised) {
 	    routerInitialised = true;
 	}
-
 	return messageRouter;
     }
 
@@ -342,6 +334,11 @@ public final class FixClient extends Protocol {
 
     @Override
     public void setDisabled(boolean disabled) {
+	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    protected void processAdminMessage(FIXMsg fixMsg) throws TagNotPresentException, BadFormatMsgException {
 	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

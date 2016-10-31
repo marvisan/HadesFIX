@@ -22,7 +22,7 @@ import net.hades.fix.engine.process.event.AlertEvent;
 import net.hades.fix.engine.process.event.LifeCycleEvent;
 import net.hades.fix.engine.process.event.type.LifeCycleCode;
 import net.hades.fix.engine.process.event.type.LifeCycleType;
-import net.hades.fix.engine.process.protocol.ProcessingStage;
+import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.Protocol;
 import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.state.*;
@@ -43,7 +43,7 @@ public class FIXClientStateProcessor extends StateProcessor {
 
     public FIXClientStateProcessor(String name, Protocol protocol, Transport transport) {
         super(name, protocol, transport);
-        processingStage.set(ProcessingStage.INITIALISED);
+        processingStage.set(ProtocolState.INITIALISED);
     }
 
     @Override

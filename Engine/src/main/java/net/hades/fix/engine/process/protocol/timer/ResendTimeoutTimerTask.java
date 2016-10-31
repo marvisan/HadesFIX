@@ -37,7 +37,7 @@ public class ResendTimeoutTimerTask extends EngineTimerTask {
     @Override
     public void run() {
         // messages are in descending order - relay all the messages to the consumer stream handlers
-        Deque<FIXMsg> msgs = protocol.getResequencingBuffer().getLastConsequentMessages();
+        Deque<FIXMsg> msgs = null;//protocol.getResequencingBuffer().getLastConsequentMessages();
         if (msgs.size() > 0) {
             int lastSeq = 0;
             for (Iterator<FIXMsg> it = msgs.descendingIterator(); it.hasNext();) {
@@ -72,7 +72,6 @@ public class ResendTimeoutTimerTask extends EngineTimerTask {
         }
 
         protocol.setGap(null);
-        // clear all the gaps
-        protocol.getResequencingBuffer().clear();
+
     }
 }

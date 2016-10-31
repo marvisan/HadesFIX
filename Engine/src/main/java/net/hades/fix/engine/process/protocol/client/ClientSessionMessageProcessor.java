@@ -7,15 +7,18 @@ package net.hades.fix.engine.process.protocol.client;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.NavigableMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.hades.fix.commons.exception.ExceptionUtil;
+import net.hades.fix.engine.exception.LogonException;
 import net.hades.fix.engine.process.protocol.DisconnectSessionException;
 import net.hades.fix.engine.process.protocol.LogoutSessionException;
 import net.hades.fix.engine.process.protocol.MessageFiller;
 import net.hades.fix.engine.process.protocol.MessageProcessor;
-import net.hades.fix.engine.process.protocol.ProcessingStage;
+import net.hades.fix.engine.process.protocol.ProtocolState;
+import net.hades.fix.engine.process.protocol.RejectAndLogoutException;
 import net.hades.fix.engine.process.protocol.SeqGap;
 import net.hades.fix.engine.process.protocol.SeqSet;
 import net.hades.fix.message.BinaryMessage;
@@ -24,7 +27,6 @@ import net.hades.fix.message.LogonMsg;
 import net.hades.fix.message.LogoutMsg;
 import net.hades.fix.message.RejectMsg;
 import net.hades.fix.message.ResendRequestMsg;
-import net.hades.fix.message.SequenceResetMsg;
 import net.hades.fix.message.exception.BadFormatMsgException;
 import net.hades.fix.message.exception.InvalidMsgException;
 import net.hades.fix.message.group.MsgTypeGroup;
@@ -53,6 +55,7 @@ public class ClientSessionMessageProcessor extends MessageProcessor {
     public FIXMsg processLoginSend() {
 	try {
 	    protocol.setSessStartSeqSet(new SeqSet(protocol.getRxSeqNo(), protocol.getTxSeqNo()));
+	    protocol.getTimers().startLogonTimerTask();
 	    return MessageFiller.buildLogonMsg(protocol);
 	} catch (InvalidMsgException ex) {
 	    Log.log(Level.SEVERE, "Fata error buiklding LoginMsg", ex);
@@ -62,19 +65,52 @@ public class ClientSessionMessageProcessor extends MessageProcessor {
 
     public List<FIXMsg> processLoginRcvd(BinaryMessage received) throws InvalidMsgException, DisconnectSessionException {
 	List<FIXMsg> responses = new ArrayList<>();
+	String text = "";
 	try {
 	    FIXMsg msg = validateIncomingLogin(received);
 	    if (!MsgType.Logon.getValue().equals(msg.getHeader().getMsgType())) {
-		throw new BadFormatMsgException(SessionRejectReason.InvalidMessageType, msg.getHeader().getMsgType(),
-			String.format("Expected Logon message [%s] but received [%s]", MsgType.Logon.name(), MsgType.valueFor(msg.getHeader().getMsgType())));
+		throw new DisconnectSessionException(String.format("Expected Logon message [%s] but received [%s]", 
+			MsgType.Logon.name(), MsgType.valueFor(msg.getHeader().getMsgType())));
 	    }
 	    protocol.getTimers().stopLogonTimeoutTask();
 	    int expSeqNum = protocol.getRxSeqNo();
 	    int msgSeqNum = msg.getHeader().getMsgSeqNum();
-	    if (msgSeqNum < expSeqNum) {
-		throw new BadFormatMsgException(SessionRejectReason.ValueOuOfRange, msg.getHeader().getMsgType(),
-			String.format("MsgSeqNum too low, expecting [%s] but received [%s]", expSeqNum, msgSeqNum));
+	    // next expected seq number
+	    if (MsgUtil.compare(protocol.getVersion().getBeginString(), BeginString.FIX_4_4) >= 0
+                && protocol.getConfiguration().getEnableNextExpMsgSeqNum() != null
+                && protocol.getConfiguration().getEnableNextExpMsgSeqNum()
+                && ((LogonMsg) msg).getNextExpectedMsgSeqNum() != null) {
+		int nextExpSeqNum = ((LogonMsg) msg).getNextExpectedMsgSeqNum();
+		int nextTxSeqNum = protocol.getNextTxSeqNo() + 1;
+		if (nextExpSeqNum < nextTxSeqNum) {
+		    NavigableMap<Integer, FIXMsg> messages = protocol.getHistoryCache().getMessages(nextExpSeqNum, nextTxSeqNum - 1);
+		    messages.values().stream().forEach((message) -> {
+			responses.add(message);
+		    });
+		} else if (nextExpSeqNum > nextTxSeqNum) {
+		    LogoutMsg logout = MessageFiller.buildLogoutMsg(protocol, "NextExpectedMsgSeqNum greater than the next seq number");
+		    responses.add(logout);
+		    protocol.setProtocolState(ProtocolState.LOGGEDOUT);
+		    protocol.getTimers().startLogoutTimerTask();
+		    return responses;
+		}
+	    } else {
+		if (msgSeqNum > expSeqNum) {
+		    protocol.setGap(new SeqGap(expSeqNum, msgSeqNum));
+		    ResendRequestMsg resendRequest = MessageFiller.buildResendRequestMsg(protocol);
+		    resendRequest.setBeginSeqNo(protocol.getGap().getFirst());
+		    if (protocol.getConfiguration().getResendEndSeqNum() != null) {
+			resendRequest.setEndSeqNo(protocol.getConfiguration().getResendEndSeqNum());
+		    } else {
+			resendRequest.setEndSeqNo(protocol.getGap().getLast());
+		    }
+		    responses.add(resendRequest);
+		} else if (msgSeqNum < expSeqNum) {
+		    throw new BadFormatMsgException(SessionRejectReason.ValueOuOfRange, msg.getHeader().getMsgSeqNum(), msg.getHeader().getMsgType(),
+			    String.format("MsgSeqNum too low, expecting [%s] but received [%s]", expSeqNum, msgSeqNum));
+		}
 	    }
+	    
 	    // override configured protocol version if set
 	    overrideProtocolVersion((LogonMsg) msg);
 	    overrideHeartbeatInterval((LogonMsg) msg);
@@ -83,32 +119,25 @@ public class ClientSessionMessageProcessor extends MessageProcessor {
 	    setTestSession((LogonMsg) msg);
 	    setFixTransSession((LogonMsg) msg);
 
-	    if (msgSeqNum > expSeqNum) {
-		protocol.setGap(new SeqGap(expSeqNum, msgSeqNum));
-		ResendRequestMsg resendRequest = MessageFiller.buildResendRequestMsg(protocol);
-		resendRequest.setBeginSeqNo(protocol.getGap().getFirst());
-		if (protocol.getConfiguration().getResendEndSeqNum() != null && !protocol.getConfiguration().getResendEndSeqNum().isEmpty()) {
-		    resendRequest.setEndSeqNo(new Integer(protocol.getConfiguration().getResendEndSeqNum()));
-		} else {
-		    resendRequest.setEndSeqNo(protocol.getGap().getLast());
-		}
-		responses.add(resendRequest);
-	    }
-	    protocol.setProcessingStage(ProcessingStage.LOGGEDON);
+	    protocol.getNextRxSeqNo();
+	    protocol.setProtocolState(ProtocolState.LOGGEDON);
 	    return responses;
 	} catch (InvalidMsgException ex) {
 	    Log.log(Level.SEVERE, "Garbled message received : {0}. Error was: {1}",
 		    new Object[]{MsgUtil.getPrintableRawFixMessage(received.getRawMessage()), ExceptionUtil.getStackTrace(ex)});
-	    return responses;
+	    text = "Garbled message received";
 	} catch (BadFormatMsgException ex) {
 	    Log.log(Level.SEVERE, "Message rejected Reason : {0}. SeqNum : {1} Message : {2}", new Object[]{ex.getRejectReason().name(), ex.getSeqNum(), ex.getMessage()});
 	    RejectMsg reject = MessageFiller.buildRejectMsg(protocol, ex.getSeqNum(), SessionRejectReason.RequiredTagMissing, 0, ex.getMessage());
+	    text = ex.getMessage();
 	    responses.add(reject);
 	    protocol.getNextRxSeqNo();
 	}
-	LogoutMsg logout = MessageFiller.buildLogoutMsg(protocol);
+	// all errors log out in this state
+	LogoutMsg logout = MessageFiller.buildLogoutMsg(protocol, SessionStatus.SessionActive);
+	logout.setText(text);
 	responses.add(logout);
-	protocol.setProcessingStage(ProcessingStage.LOGGEDOUT);
+	protocol.setProtocolState(ProtocolState.LOGGEDOUT);
 	protocol.getTimers().startLogoutTimerTask();
 	return responses;
     }
@@ -122,61 +151,21 @@ public class ClientSessionMessageProcessor extends MessageProcessor {
 	    int msgSeqNum = msg.getHeader().getMsgSeqNum();
 	    // check sequence reset special case
 	    if (MsgType.SequenceReset.getValue().equals(msg.getHeader().getMsgType())) {
-		Boolean gapFill = ((SequenceResetMsg) msg).getGapFillFlag();
-		int newSeqNo = ((SequenceResetMsg) msg).getNewSeqNo();
-		if (gapFill != null && gapFill) {
-		    if (newSeqNo > msgSeqNum) {
-			if (msgSeqNum > expSeqNum) {
-			    responses.add(buildResendRequest(expSeqNum, msgSeqNum));
-			} if  (msgSeqNum == expSeqNum) {
-			    protocol.setRxSeqNo(newSeqNo);
-			} else {
-			    if (msg.getHeader().getPossDupFlag() != null && msg.getHeader().getPossDupFlag()) {
-				Log.log(Level.INFO, "Message discarded : {0}", MsgUtil.getPrintableRawFixMessage(msg.getRawMessage()));
-			    } else {
-				throw new LogoutSessionException(String.format("Invalid SequenceReset message: [%s]. Disconnecting session.", 
-					new Object[] {MsgUtil.getPrintableRawFixMessage(msg.getRawMessage())}));
-			    }
-			}
-		    } else {
-			if (msgSeqNum == expSeqNum) {
-			    RejectMsg reject = MessageFiller.buildRejectMsg(protocol, msgSeqNum, SessionRejectReason.ValueOuOfRange, 0,
-				    String.format("Attempt to lower sequence number, invalie value NewSeqNum=", new Object[]{newSeqNo}));
-			    responses.add(reject);
-			    protocol.getNextRxSeqNo();
-			} else {
-			    Log.log(Level.WARNING, "Message discarded : {0} OrigSendingTime is empty.", MsgUtil.getPrintableRawFixMessage(msg.getRawMessage()));
-			}
-		    }
-		} else {
-		    if (newSeqNo > expSeqNum) {
-			protocol.setRxSeqNo(newSeqNo);
-		    } else if (newSeqNo == expSeqNum) {
-			Log.log(Level.WARNING, "Message has the expected sequenece number : {0}", MsgUtil.getPrintableRawFixMessage(msg.getRawMessage()));
-		    } else if (newSeqNo < expSeqNum) {
-			RejectMsg reject = MessageFiller.buildRejectMsg(protocol, msgSeqNum, SessionRejectReason.ValueOuOfRange, 0,
-				String.format("Attempt to lower sequence number, invalie value NewSeqNum=", new Object[]{newSeqNo}));
-			responses.add(reject);
-		    }
-		}
+		handleSequenceReset(msg, responses);
 		return responses;
 	    }
 	    if (msgSeqNum < expSeqNum) {
 		if (msg.getHeader().getPossDupFlag()) {
 		    if (msg.getHeader().getOrigSendingTime() == null) {
 			if (BeginString.FIX_4_2.compareTo(msg.getHeader().getBeginString()) >= 0) {
-			    BadFormatMsgException ex = new BadFormatMsgException(SessionRejectReason.ValueOuOfRange, msg.getHeader().getMsgType(),
-				    "OrigSebdingTime not set on the resend message");
-			    ex.setSeqNum(msg.getHeader().getMsgSeqNum());
-			    throw ex;
+			    throw new BadFormatMsgException(SessionRejectReason.ValueOuOfRange, msg.getHeader().getMsgSeqNum(), msg.getHeader().getMsgType(),
+				    "Required tag OrigSendingTime missing");
 			} else {
 			    Log.log(Level.WARNING, "Message discarded : {0} OrigSendingTime is empty.", MsgUtil.getPrintableRawFixMessage(msg.getRawMessage()));
 			}
 		    } else if (msg.getHeader().getOrigSendingTime().after(msg.getHeader().getSendingTime())) {
-			BadFormatMsgException ex = new BadFormatMsgException(SessionRejectReason.ValueOuOfRange, msg.getHeader().getMsgType(),
-				"OrigSebdingTime later than SendingTime");
-			ex.setSeqNum(msg.getHeader().getMsgSeqNum());
-			throw ex;
+			throw new RejectAndLogoutException(SessionRejectReason.SendingTimeAccuracyProblem, msgSeqNum, msg.getHeader().getMsgType(),
+				"OrigSendingTime later than SendingTime");
 		    } else {
 			if (msgSeqNum >= expSeqNum) {
 			    protocol.relayMessage(msg);
@@ -185,24 +174,48 @@ public class ClientSessionMessageProcessor extends MessageProcessor {
 			}
 		    }
 		} else {
-		    BadFormatMsgException ex = new BadFormatMsgException(SessionRejectReason.ValueOuOfRange, msg.getHeader().getMsgType(),
-			    String.format("MsgSeqNum too low, expecting [%s] but received [%s]", expSeqNum, msgSeqNum));
-		    ex.setSeqNum(msg.getHeader().getMsgSeqNum());
-		    throw ex;
+		    throw new LogoutSessionException(String.format("MsgSeqNum too low, expecting [%s] but received [%s]", expSeqNum, msgSeqNum));
 		}
 	    } else if (msgSeqNum > expSeqNum) {
 		responses.add(buildResendRequest(expSeqNum, msgSeqNum));
 		return responses;
 	    }
 	    // msg seq Okay
-	    if (MsgType.SequenceReset.getValue().equals(msg.getHeader().getMsgType())) {
-		
+	    if (MsgType.Reject.getValue().equals(msg.getHeader().getMsgType())) {
+		handleReject(msg, responses);
+	    } else if (MsgType.Heartbeat.getValue().equals(msg.getHeader().getMsgType())) {
+		handleHeartbeat(msg, responses);
+	    } else if (MsgType.TestRequest.getValue().equals(msg.getHeader().getMsgType())) {
+		handleTestRequest(msg, responses);
+	    } else if (MsgType.ResendRequest.getValue().equals(msg.getHeader().getMsgType())) {
+		handleResendRequest(msg, responses);
+	    } else if (MsgType.Logon.getValue().equals(msg.getHeader().getMsgType())) {
+		if (((LogonMsg) msg).getResetSeqNumFlag() != null && ((LogonMsg) msg).getResetSeqNumFlag()) {
+		    protocol.setRxSeqNo(msg.getHeader().getMsgSeqNum());
+		    protocol.setTxSeqNo(msg.getHeader().getMsgSeqNum());
+		    protocol.getHistoryCache().clear();
+		    protocol.getHistoryCache().save();
+		    LogonMsg reset = MessageFiller.buildResetSeqNumLogonMsg(protocol);
+		    responses.add(reset);
+		} else {
+		    Log.log(Level.WARNING, "Login message unexpectedly received  : {0}", MsgUtil.getPrintableRawFixMessage(msg.getRawMessage()));
+		    protocol.getNextRxSeqNo();
+		}
+	    } else if (MsgType.Logout.getValue().equals(msg.getHeader().getMsgType())) {
+		LogoutMsg message = (LogoutMsg) msg;
+		Log.log(Level.INFO, "Logout received with status: {0} reason : {1}", new Object[] {getLogoutStatus(message), message.getText()});
+		protocol.getNextRxSeqNo();
+		LogoutMsg logout = MessageFiller.buildLogoutMsg(protocol, SessionStatus.LogoutComplete);
+		responses.add(logout);
+		protocol.setProtocolState(ProtocolState.LOGGEDOUT);
+	    } else {
+		protocol.relayMessage(msg);
+		protocol.getNextRxSeqNo();
+		protocol.setProtocolState(ProtocolState.LOGGEDON);	    
 	    }
-
-	    protocol.setProcessingStage(ProcessingStage.LOGGEDON);
 	    return responses;
 	} catch (InvalidMsgException ex) {
-	    Log.log(Level.SEVERE, "Garbled message received : {0}. Error was: {1}",
+	    Log.log(Level.SEVERE, "Garbled message received : {0}. Error was: {1}. Ignored",
 		    new Object[]{MsgUtil.getPrintableRawFixMessage(received.getRawMessage()), ExceptionUtil.getStackTrace(ex)});
 	    return responses;
 	} catch (BadFormatMsgException ex) {
@@ -210,50 +223,36 @@ public class ClientSessionMessageProcessor extends MessageProcessor {
 	    RejectMsg reject = MessageFiller.buildRejectMsg(protocol, ex.getSeqNum(), SessionRejectReason.RequiredTagMissing, 0, ex.getMessage());
 	    responses.add(reject);
 	    protocol.getNextRxSeqNo();
+	} catch (RejectAndLogoutException ex) {
+	    Log.log(Level.SEVERE, "Message rejected Reason : {0}. SeqNum : {1} Message : {2}", new Object[]{ex.getRejectReason().name(), ex.getSeqNum(), ex.getMessage()});
+	    RejectMsg reject = MessageFiller.buildRejectMsg(protocol, ex.getSeqNum(), ex.getRejectReason(), 0, ex.getMessage());
+	    responses.add(reject);
+	    LogoutMsg logout = MessageFiller.buildLogoutMsg(protocol, ex.getMessage());
+	    responses.add(logout);
+	    protocol.setProtocolState(ProtocolState.LOGGEDOUT);
+	    protocol.getTimers().startLogoutTimerTask();
+	    protocol.getNextRxSeqNo();
 	} catch (LogoutSessionException ex) {
-	    Log.log(Level.SEVERE, "Disconnect session. Error was {0}", ex.getMessage());
+	    LogoutMsg logout = MessageFiller.buildLogoutMsg(protocol, ex.getMessage());
+	    responses.add(logout);
+	    protocol.setProtocolState(ProtocolState.LOGGEDOUT);
+	    protocol.getTimers().startLogoutTimerTask();
+	    protocol.getNextRxSeqNo();
 	}
-	LogoutMsg logout = MessageFiller.buildLogoutMsg(protocol);
-	responses.add(logout);
-	protocol.setProcessingStage(ProcessingStage.LOGGEDOUT);
-	protocol.getTimers().startLogoutTimerTask();
 	return responses;
     }
 
     //-------------------------------------------------------------------------------------
     
-    private ResendRequestMsg buildResendRequest(int expSeqNum, int msgSeqNum) throws DisconnectSessionException, InvalidMsgException {
-	if (protocol.getGap() == null) {
-	    protocol.setGap(new SeqGap(expSeqNum, msgSeqNum));
-	}
-	if (protocol.getGap().getFirst() == expSeqNum) {
-	    protocol.getGap().resend();
-	    if (protocol.getGap().getResend() < MAX_NUM_OF_RESENDS) {
-		ResendRequestMsg resendRequest = MessageFiller.buildResendRequestMsg(protocol);
-		resendRequest.setBeginSeqNo(protocol.getGap().getFirst());
-		if (protocol.getConfiguration().getResendEndSeqNum() != null && !protocol.getConfiguration().getResendEndSeqNum().isEmpty()) {
-		    resendRequest.setEndSeqNo(new Integer(protocol.getConfiguration().getResendEndSeqNum()));
-		} else {
-		    resendRequest.setEndSeqNo(protocol.getGap().getLast());
-		}
-		resendRequest.getHeader().setPossDupFlag(Boolean.TRUE);
-		return resendRequest;
-	    } else {
-		throw new DisconnectSessionException("Could not recover from an infinite ResendRequest loop");
+    private String getLogoutStatus(LogoutMsg logout) {
+	if (MsgUtil.compare(logout.getHeader().getBeginString(), BeginString.FIXT_1_1) >= 0 && logout.getHeader().getApplVerID() != null) {
+	    if (MsgUtil.compare(logout.getHeader().getApplVerID(), ApplVerID.FIX50SP1) >= 0) {
+		return logout.getSessionStatus() != null ? logout.getSessionStatus().name() : "";
 	    }
-	} else {
-	    protocol.setGap(new SeqGap(expSeqNum, msgSeqNum));
-	    ResendRequestMsg resendRequest = MessageFiller.buildResendRequestMsg(protocol);
-	    resendRequest.setBeginSeqNo(protocol.getGap().getFirst());
-	    if (protocol.getConfiguration().getResendEndSeqNum() != null && !protocol.getConfiguration().getResendEndSeqNum().isEmpty()) {
-		resendRequest.setEndSeqNo(new Integer(protocol.getConfiguration().getResendEndSeqNum()));
-	    } else {
-		resendRequest.setEndSeqNo(protocol.getGap().getLast());
-	    }
-	    return resendRequest;
 	}
+	return "";
     }
-    
+     
     private void overrideProtocolVersion(LogonMsg message) {
 	if (MsgUtil.compare(message.getHeader().getBeginString(), BeginString.FIXT_1_1) >= 0 && message.getDefaultApplVerID() != null) {
 	    if (MsgUtil.compare(message.getDefaultApplVerID(), ApplVerID.FIX50) >= 0) {
@@ -273,6 +272,7 @@ public class ClientSessionMessageProcessor extends MessageProcessor {
     private void overrideHeartbeatInterval(LogonMsg message) {
 	if (message.getHeartBtInt() != null) {
 	    protocol.getConfiguration().setHeartBtInt(message.getHeartBtInt());
+	    protocol.getTimers().getTimeouts().setHtbtTimeout(message.getHeartBtInt());
 	}
     }
 
@@ -286,7 +286,7 @@ public class ClientSessionMessageProcessor extends MessageProcessor {
 		if (protocol.getMsgTypes() != null && protocol.getMsgTypes().length > 0) {
 		    sessMsgTypes = Arrays.asList(protocol.getMsgTypes());
 		} else {
-		    sessMsgTypes = new ArrayList<MsgTypeGroup>();
+		    sessMsgTypes = new ArrayList<>();
 		}
 		for (MsgTypeGroup msgType : message.getMsgTypeGroups()) {
 		    boolean found = false;

@@ -22,7 +22,7 @@ import net.hades.fix.engine.mgmt.data.ProcessStatus;
 import net.hades.fix.engine.mgmt.data.StreamStats;
 import net.hades.fix.engine.process.event.AlertEvent;
 import net.hades.fix.engine.process.event.GenericEventProcessor;
-import net.hades.fix.engine.process.protocol.ProcessingStage;
+import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.session.SessionCoordinator;
 import net.hades.fix.engine.util.UIDGen;
 import net.hades.fix.message.FIXMsg;
@@ -256,7 +256,7 @@ public class ProducerStream extends Stream {
                 try {
                     if (!producerBlocked) {
                         active = true;
-                        if (!sessionCoordinator.getProtocol().getStateProcessor().getProcessingStage().equals(ProcessingStage.LOGGEDON)) {
+                        if (!sessionCoordinator.getProtocol().getStateProcessor().getProcessingStage().equals(ProtocolState.LOGGEDON)) {
                             // do npt send messages to protocol if the session is not logged in
                             ThreadUtil.sleep(1);
                             continue;

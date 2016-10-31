@@ -9,7 +9,7 @@ import java.util.logging.Logger;
 import net.hades.fix.engine.process.protocol.Protocol;
 
 import net.hades.fix.engine.process.protocol.MessageFiller;
-import net.hades.fix.engine.process.protocol.ProcessingStage;
+import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.message.HeartbeatMsg;
 import net.hades.fix.message.exception.BadFormatMsgException;
 import net.hades.fix.message.exception.InvalidMsgException;
@@ -34,7 +34,7 @@ public class HeartbeatTimeoutTimerTask extends EngineTimerTask {
 	    Log.finest("Heartbeat timeout timer initiated.");
 	}
 
-	if (ProcessingStage.LOGGEDON.equals(protocol.getProcessingStage())) {
+	if (ProtocolState.LOGGEDON.equals(protocol.getProcessingState())) {
 	    try {
 		sendHeartbeat();
 	    } catch (InterruptedException ex) {

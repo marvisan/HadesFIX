@@ -79,7 +79,7 @@ public final class FixServer extends Protocol {
 	    } catch (UnrecoverableException ex) {
 		coordinator.shutdownImmediate();
 	    } catch (RejectMessageException ex) {
-		if (ProcessingStage.INITIALISED.equals(processingStage) || ProcessingStage.LOGGEDOUT.equals(processingStage)) {
+		if (ProtocolState.INITIALISED.equals(processingStage) || ProtocolState.LOGGEDOUT.equals(processingStage)) {
 		    // discard silently
 		    continue;
 		}
@@ -204,7 +204,7 @@ public final class FixServer extends Protocol {
 
     @Override
     public void processAdminMessage(FIXMsg fixMsg) throws TagNotPresentException, BadFormatMsgException {
-	if (!ProcessingStage.LOGGEDON.equals(stateProcessor.getProcessingStage())) {
+	if (!ProtocolState.LOGGEDON.equals(stateProcessor.getProcessingStage())) {
 	    if (MsgType.Logon.getValue().equals(fixMsg.getHeader().getMsgType())) {
 		// logon send by the business layer - reset Logon timer
 		stateProcessor.getTimers().resetLogonTimeoutTask();
@@ -212,7 +212,7 @@ public final class FixServer extends Protocol {
 	}
 	if (fixMsg.getHeader().getMsgType().equals(MsgType.Logon.getValue())) {
 	    // this is a response Logon message coming from the business ties
-	    stateProcessor.setProcessingStage(ProcessingStage.LOGGEDON);
+	    stateProcessor.setProcessingStage(ProtocolState.LOGGEDON);
 	} else if (fixMsg.getHeader().getMsgType().equals(MsgType.Logout.getValue())) {
 	    if (fixMsg.getPriority() == Message.PRIORITY_NORMAL) {
 		stateProcessor.setStatus(ProtocolState.IDLE);

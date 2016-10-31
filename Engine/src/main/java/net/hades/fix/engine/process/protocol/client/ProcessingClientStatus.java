@@ -18,7 +18,7 @@ import net.hades.fix.engine.mgmt.alert.BaseSeverityType;
 import net.hades.fix.engine.mgmt.alert.ComponentType;
 import net.hades.fix.engine.mgmt.data.ProtocolStats;
 import net.hades.fix.engine.process.event.AlertEvent;
-import net.hades.fix.engine.process.protocol.ProcessingStage;
+import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.SeqGap;
 import net.hades.fix.engine.process.protocol.state.RejectSendStatus;
@@ -84,7 +84,7 @@ public class ProcessingClientStatus extends Status {
                 }
 
                 stateProcessor.getTimers().resetInputTimeoutTask();
-                if (ProcessingStage.INITIALISED.equals(stateProcessor.getProcessingStage())) {
+                if (ProtocolState.INITIALISED.equals(stateProcessor.getProcessingStage())) {
                     // only accept login and logout messages in INITIALISED stage
                     if (!(MsgType.Logout.getValue().equals(msg.getHeader().getMsgType()) ||
                           MsgType.Logon.getValue().equals(msg.getHeader().getMsgType()))) {
@@ -98,7 +98,7 @@ public class ProcessingClientStatus extends Status {
                         return status;
                     }
                     stateProcessor.getTimers().resetLogonTimeoutTask();
-                } else if (ProcessingStage.FROZEN.equals(stateProcessor.getProcessingStage())) {
+                } else if (ProtocolState.FROZEN.equals(stateProcessor.getProcessingStage())) {
                     if (!(MsgType.Heartbeat.getValue().equals(msg.getHeader().getMsgType())
                         || MsgType.TestRequest.getValue().equals(msg.getHeader().getMsgType()))) {
                         if (LOGGER.isLoggable(Level.FINER)) {
@@ -242,7 +242,7 @@ public class ProcessingClientStatus extends Status {
                     stateProcessor.getResequencingBuffer().addMessage(msg);
                     status = stateProcessor.getStatus(ProtocolState.RESEND_REQUEST_SEND);
                 }
-                stateProcessor.setProcessingStage(ProcessingStage.ADMIN);
+                stateProcessor.setProcessingStage(ProtocolState.ADMIN);
             } else if (msgSeqNo < expSeqNo && possDuplicate) {
                 // duplicate, discard message
                 LOGGER.warning("Duplicate Message received. Will discard it.");
@@ -258,7 +258,7 @@ public class ProcessingClientStatus extends Status {
                 if(!MsgType.Logout.getValue().equals(msg.getHeader().getMsgType())) {
                     ((LogoutSendClientStatus) status).setExpectLogout(true);
                 }
-                stateProcessor.setProcessingStage(ProcessingStage.ADMIN);
+                stateProcessor.setProcessingStage(ProtocolState.ADMIN);
             } else {
                 String errMsg = "This message has wrong sequence number message received." + " MsgSeqNum="
                         + msgSeqNo + " ExpMsgNum=" + expSeqNo;
@@ -397,27 +397,27 @@ public class ProcessingClientStatus extends Status {
             msg.decode();
 
             if (MsgType.TestRequest.getValue().equals(msg.getHeader().getMsgType())) {
-                stateProcessor.setProcessingStage(ProcessingStage.LOGGEDON);
+                stateProcessor.setProcessingStage(ProtocolState.LOGGEDON);
                 status = stateProcessor.getStatus(ProtocolState.TEST_REQUEST_RECEIVE);
                 status.setMessage(msg);
             } else if (MsgType.Heartbeat.getValue().equals(msg.getHeader().getMsgType())) {
-                stateProcessor.setProcessingStage(ProcessingStage.LOGGEDON);
+                stateProcessor.setProcessingStage(ProtocolState.LOGGEDON);
                 status = stateProcessor.getStatus(ProtocolState.HEARTBEAT_RECEIVE);
                 status.setMessage(msg);
             } else if (MsgType.Reject.getValue().equals(msg.getHeader().getMsgType())) {
-                stateProcessor.setProcessingStage(ProcessingStage.LOGGEDON);
+                stateProcessor.setProcessingStage(ProtocolState.LOGGEDON);
                 status = stateProcessor.getStatus(ProtocolState.REJECT_RECEIVE);
                 status.setMessage(msg);
             } else if (MsgType.SequenceReset.getValue().equals(msg.getHeader().getMsgType())) {
-                stateProcessor.setProcessingStage(ProcessingStage.ADMIN);
+                stateProcessor.setProcessingStage(ProtocolState.ADMIN);
                 status = stateProcessor.getStatus(ProtocolState.SEQUENCE_RESET_RECEIVE);
                 status.setMessage(msg);
             } else if (MsgType.ResendRequest.getValue().equals(msg.getHeader().getMsgType())) {
-                stateProcessor.setProcessingStage(ProcessingStage.ADMIN);
+                stateProcessor.setProcessingStage(ProtocolState.ADMIN);
                 status = stateProcessor.getStatus(ProtocolState.RESEND_REQUEST_RECEIVE);
                 status.setMessage(msg);
             } else if (MsgType.Logout.getValue().equals(msg.getHeader().getMsgType())) {
-                stateProcessor.setProcessingStage(ProcessingStage.ADMIN);
+                stateProcessor.setProcessingStage(ProtocolState.ADMIN);
                 status = stateProcessor.getStatus(ProtocolState.LOGOUT_RECEIVE);
                 status.setMessage(msg);
             } else if (MsgType.Logon.getValue().equals(msg.getHeader().getMsgType())) {
@@ -425,7 +425,7 @@ public class ProcessingClientStatus extends Status {
                 status.setMessage(msg);
             }
         } else {
-            stateProcessor.setProcessingStage(ProcessingStage.LOGGEDON);
+            stateProcessor.setProcessingStage(ProtocolState.LOGGEDON);
             status = this;
             stateProcessor.getProtocol().relayMessage(msg);
         }

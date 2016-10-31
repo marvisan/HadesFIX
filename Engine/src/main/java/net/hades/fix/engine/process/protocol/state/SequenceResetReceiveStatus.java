@@ -11,7 +11,7 @@
 package net.hades.fix.engine.process.protocol.state;
 
 import net.hades.fix.engine.exception.UnrecoverableException;
-import net.hades.fix.engine.process.protocol.ProcessingStage;
+import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.SeqGap;
 import net.hades.fix.engine.process.protocol.client.LogoutSendClientStatus;
@@ -136,7 +136,7 @@ public class SequenceResetReceiveStatus extends Status {
                 ((RejectSendStatus) status).setError(new Exception(errMsg));
             }
         }
-        stateProcessor.setProcessingStage(ProcessingStage.LOGGEDON);
+        stateProcessor.setProcessingStage(ProtocolState.LOGGEDON);
        
         return status;
     }

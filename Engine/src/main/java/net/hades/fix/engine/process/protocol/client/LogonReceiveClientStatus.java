@@ -24,7 +24,7 @@ import net.hades.fix.engine.process.event.MessageEvent;
 import net.hades.fix.engine.process.event.type.LifeCycleCode;
 import net.hades.fix.engine.process.event.type.LifeCycleType;
 import net.hades.fix.engine.process.protocol.MessageFiller;
-import net.hades.fix.engine.process.protocol.ProcessingStage;
+import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.ProtocolState;
 import net.hades.fix.engine.process.protocol.SeqGap;
 import net.hades.fix.engine.process.protocol.state.ResendRequestSendStatus;
@@ -71,20 +71,20 @@ public class LogonReceiveClientStatus extends Status {
         Status status = stateProcessor.getStatus(ProtocolState.PROCESSING);
         try {
             try {
-                if (ProcessingStage.RESET.equals(processingStage)) {
+                if (ProtocolState.RESET.equals(processingStage)) {
                     if (MsgUtil.compare(stateProcessor.getProtocol().getVersion().getBeginString(), BeginString.FIX_4_1) >= 0) {
                         if (((LogonMsg) message).getResetSeqNumFlag() != null && ((LogonMsg) message).getResetSeqNumFlag()) {
                             stateProcessor.getProtocol().setRxSeqNo(message.getHeader().getMsgSeqNum());
                             stateProcessor.getProtocol().getHistoryCache().clear();
-                            stateProcessor.setProcessingStage(ProcessingStage.LOGGEDON);
+                            stateProcessor.setProcessingStage(ProtocolState.LOGGEDON);
                             stateProcessor.getTimers().resetLogonTimeoutTask();
                             return status;
                         }
                     }
-                } else if (ProcessingStage.LOGGEDON.equals(stateProcessor.getProcessingStage())) {
+                } else if (ProtocolState.LOGGEDON.equals(stateProcessor.getProcessingStage())) {
                     if (MsgUtil.compare(stateProcessor.getProtocol().getVersion().getBeginString(), BeginString.FIX_4_1) >= 0) {
                         if (((LogonMsg) message).getResetSeqNumFlag() != null && ((LogonMsg) message).getResetSeqNumFlag()) {
-                            stateProcessor.setProcessingStage(ProcessingStage.RESET);
+                            stateProcessor.setProcessingStage(ProtocolState.RESET);
                             stateProcessor.getProtocol().setRxSeqNo(message.getHeader().getMsgSeqNum());
                             stateProcessor.getProtocol().setTxSeqNo(message.getHeader().getMsgSeqNum() - 1);
                             status = stateProcessor.getStatus(ProtocolState.LOGON_SEND);
@@ -94,7 +94,7 @@ public class LogonReceiveClientStatus extends Status {
                     }
                 } else {
                     status = processLogonMsg((LogonMsg) message);
-                    stateProcessor.setProcessingStage(ProcessingStage.LOGGEDON);
+                    stateProcessor.setProcessingStage(ProtocolState.LOGGEDON);
                     stateProcessor.getProtocol().getEventProcessor().onMessageEvent(new MessageEvent(stateProcessor.getProtocol(), message));
                     stateProcessor.getProtocol().getEventProcessor().onLifeCycleEvent(new LifeCycleEvent(stateProcessor.getProtocol(),
                             LifeCycleType.PROTOCOL_CLIENT.name(),
@@ -319,9 +319,9 @@ public class LogonReceiveClientStatus extends Status {
         }
         if (gapExists) {
             // do not enable yet sending of business messages as we might get logouts
-            stateProcessor.setProcessingStage(ProcessingStage.ADMIN);
+            stateProcessor.setProcessingStage(ProtocolState.ADMIN);
         } else {
-            stateProcessor.setProcessingStage(ProcessingStage.LOGGEDON);
+            stateProcessor.setProcessingStage(ProtocolState.LOGGEDON);
         }
 
         return status;

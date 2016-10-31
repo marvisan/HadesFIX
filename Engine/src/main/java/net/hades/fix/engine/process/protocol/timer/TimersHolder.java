@@ -22,7 +22,7 @@ public class TimersHolder {
 
     private static final Logger Log = Logger.getLogger(TimersHolder.class.getName());
 
-    private final Timeouts timeouts;
+    private  Timeouts timeouts;
     private final Protocol protocol;
 
     private ScheduledExecutorService timerExecutor;
@@ -53,6 +53,10 @@ public class TimersHolder {
 
     public LogoutTimeoutTimerTask getLogoutTimeoutTask() {
 	return logoutTimeoutTask;
+    }
+
+    public Timeouts getTimeouts() {
+	return timeouts;
     }
 
     public synchronized void shutdown() {

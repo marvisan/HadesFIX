@@ -2,14 +2,11 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
-/*
- * MessageUtil.java
- *
- * $Id: MessageUtil.java,v 1.3 2010-11-22 10:43:14 vrotaru Exp $
- */
 package net.hades.fix.engine.util;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import net.hades.fix.engine.model.CounterpartyAddress;
 import net.hades.fix.message.FIXMsg;
 import net.hades.fix.message.type.MsgType;
@@ -18,7 +15,6 @@ import net.hades.fix.message.type.MsgType;
  * Utilities used in FIX message processing.
  *
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
- * @version $Revision: 1.3 $
  */
 public class MessageUtil {
 
@@ -46,7 +42,6 @@ public class MessageUtil {
             MsgType.Logon.getValue().equals(msg.getHeader().getMsgType())) {
             result = true;
         }
-
         return result;
     }
 
@@ -74,7 +69,16 @@ public class MessageUtil {
                 result = true;
             }
         }
-
         return result;
+    }
+    
+    /**
+     * Test request ID generator
+     * @return 
+     */
+    public static String generateTestReqID() {
+	ZonedDateTime utc = ZonedDateTime.now(ZoneOffset.UTC);
+	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HHmmss");
+	return formatter.format(utc);
     }
 }
