@@ -1,5 +1,5 @@
 /*
- *   Copyright (c) 2006-2010 Marvisan Pty. Ltd. All rights reserved.
+ *   Copyright (c) 2006-2010 Marvisan Pty. Ltd. All rights reserved.6
  *               Use is subject to license terms.
  */
 package net.hades.fix.sample.message.builder;
