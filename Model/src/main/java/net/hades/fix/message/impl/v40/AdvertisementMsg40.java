@@ -1,12 +1,6 @@
 /*
- *   Copyright (c) 2006-2008 Marvisan Pty. Ltd. All rights reserved.
+ *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
- */
-
-/*
- * LogoutMsg40.java
- *
- * $Id: AdvertisementMsg40.java,v 1.8 2010-08-25 05:30:32 vrotaru Exp $
  */
 package net.hades.fix.message.impl.v40;
 
@@ -37,8 +31,6 @@ import java.util.logging.Level;
  * FIX version 4.0 AdvertisementMsg implementation.
  * 
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
- * @version $Revision: 1.8 $
- * @created 18/10/2008, 18:36:45
  */
 public class AdvertisementMsg40 extends AdvertisementMsg {
 
@@ -46,7 +38,7 @@ public class AdvertisementMsg40 extends AdvertisementMsg {
 
     private static final long serialVersionUID = -1264014069766369511L;
 
-    protected static final Set<Integer> TAGS_40 = new HashSet<Integer>(Arrays.asList(new Integer[] {
+    protected static final Set<Integer> TAGS_40 = new HashSet<>(Arrays.asList(new Integer[] {
         TagNum.AdvID.getValue(),
         TagNum.AdvTransType.getValue(),
         TagNum.AdvRefID.getValue(),
@@ -87,7 +79,7 @@ public class AdvertisementMsg40 extends AdvertisementMsg {
     // <editor-fold defaultstate="collapsed" desc="Static Block">
 
     static {
-        ALL_TAGS = new HashSet<Integer>(TAGS_40);
+        ALL_TAGS = new HashSet<>(TAGS_40);
         ALL_TAGS.addAll(START_DATA_TAGS);
     }
 
@@ -342,7 +334,7 @@ public class AdvertisementMsg40 extends AdvertisementMsg {
     public void setEncodedIssuer(byte[] encodedIssuer) {
         this.encodedIssuer = encodedIssuer;
         if (encodedIssuerLen == null) {
-            encodedIssuerLen = new Integer(encodedIssuer.length);
+            encodedIssuerLen = encodedIssuer.length;
         }
     }
 

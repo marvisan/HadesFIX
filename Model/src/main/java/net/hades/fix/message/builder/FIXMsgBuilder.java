@@ -2,12 +2,6 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
-/*
- * FIXMsgBuilder.java
- *
- * $Id: FIXMsgBuilder.java,v 1.73 2011-10-29 02:16:41 vrotaru Exp $
- */
 package net.hades.fix.message.builder;
 
 import java.io.IOException;
@@ -15,6 +9,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,22 +46,18 @@ import net.hades.fix.message.util.MsgUtil;
  * Factory class for FIX messages.
  * 
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
- * @version $Revision: 1.73 $
- * @created 8/07/2008, 20:33:29
  */
 public class FIXMsgBuilder {
 
-    // <editor-fold defaultstate="collapsed" desc="Constants">
-
     /**
      * The name of the property file containing the fix message type / builder implementation
-     * class pair values. The file entries would look like:<p/>
+     * class pair values. The file entries would look like:
      * AU=com.mycompany.AUMessageBuilder
      */
     public static final String CUSTOM_MSG_BUILDER_FILE_NAME = "HadesMsgBuilderClasses.properties";
 
     /**
-     * Colon separated list of packages containing the <quote>HadesMsgBuilderClasses.properties</quote>
+     * Colon separated list of packages containing the HadesMsgBuilderClasses.properties
      * files. The load order of the message builders listed in this files is not guaranteed.
      */
     public static final String CUSTOM_MSG_BUILDER_FILE_LOCATIONS = "hades.model.build.file.location";
@@ -166,33 +157,18 @@ public class FIXMsgBuilder {
         {MsgType.TradingSessionStatusRequest.getValue(), "net.hades.fix.message.builder.impl.TradingSessionStatusRequestMsgBuilder"}
     };
 
-    private final Map<String, String> msgBuilderClasses = new HashMap<String, String>();
+    private final Map<String, String> msgBuilderClasses = new HashMap<>();
 
-    private final Map<String, MsgBuilder> msgBuilders = new HashMap<String, MsgBuilder>();
-    
-    // </editor-fold>
+    private final Map<String, MsgBuilder> msgBuilders = new HashMap<>();
 
-    // <editor-fold defaultstate="collapsed" desc="Static Block">
-    
     static {
         INSTANCE = new FIXMsgBuilder();
     }
-    
-    // </editor-fold>
 
-    // <editor-fold defaultstate="collapsed" desc="Attributes">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Constructors">
-    
     private FIXMsgBuilder() {
         loadMsgBuilderClasses();
     }
-    
-    // </editor-fold>
 
-    // <editor-fold defaultstate="collapsed" desc="Public Methods">
-    
     /**
      * Decode a FIX message into a HadesFIX message object.
      * @param msg byte array of a FIX message
@@ -201,21 +177,36 @@ public class FIXMsgBuilder {
      * @throws InvalidMsgException
      * @throws BadFormatMsgException
      */
-    public static FIXMsg build(byte[] msg)
-    throws TagNotPresentException, InvalidMsgException, BadFormatMsgException {
-
-        ByteBuffer message = ByteBuffer.wrap(msg);
-        DecodedMessage decodedMessage = INSTANCE.decodeHeader(message);
-        MsgBuilder builder =  INSTANCE.msgBuilders.get(decodedMessage.header.getMsgType());
-        if (builder == null) {
-            builder = addMsgBuilderToCache(decodedMessage.header.getMsgType());
-        }
-
-        return builder.build(decodedMessage.header, decodedMessage.message);
+    public static FIXMsg build(byte[] msg) throws InvalidMsgException, BadFormatMsgException {
+	DecodedMessage decodedMessage = null;
+	try {
+	    ByteBuffer message = ByteBuffer.wrap(msg);
+	    decodedMessage = INSTANCE.decodeHeader(message);
+	    MsgBuilder builder =  INSTANCE.msgBuilders.get(decodedMessage.header.getMsgType());
+	    if (builder == null) {
+		builder = addMsgBuilderToCache(decodedMessage.header.getMsgType());
+	    }
+	    return builder.build(decodedMessage.header, decodedMessage.message);
+	} catch (BadFormatMsgException ex) {
+	    if (decodedMessage != null && decodedMessage.header != null && decodedMessage.header.getMsgSeqNum() > 0) {
+		ex.setSeqNum(decodedMessage.header.getMsgSeqNum());
+		throw ex;
+	    } else {
+		throw new InvalidMsgException(ex.getMessage(), ex);
+	    }
+	} catch (TagNotPresentException ex) {
+	    if (decodedMessage != null && decodedMessage.header != null && decodedMessage.header.getMsgSeqNum() > 0) {
+		BadFormatMsgException newEx = new BadFormatMsgException(SessionRejectReason.RequiredTagMissing, decodedMessage.header.getMsgType());
+		newEx.setSeqNum(decodedMessage.header.getMsgSeqNum());
+		throw newEx;
+	    } else {
+		throw new InvalidMsgException(ex.getMessage(), ex);
+	    }
+	}
     }
 
     /**
-     * Factory method for a HadesFIX message object for a pre 5.0 version. <p/>
+     * Factory method for a HadesFIX message object for a pre 5.0 version.
      * This method will invoke the {@link #build(String, BeginString, ApplVerID)} method for the
      * configured builder class with <code>applVerID</code> is set to null.
      * @param msgType type of FIX message
@@ -230,7 +221,7 @@ public class FIXMsgBuilder {
     
     /**
      * Factory method for a HadesFIX message object. If <code>applVerID</code> is specified than the
-     * will be set to FIXT. For a pre 5.0 version the <code>applVerID</code> must be left null.<p/>
+     * will be set to FIXT. For a pre 5.0 version the <code>applVerID</code> must be left null.
      *
      * @param msgType type of FIX message
      * @param version this is the transport version (BeginString tag)
@@ -259,7 +250,7 @@ public class FIXMsgBuilder {
      }
 
     /**
-     * This method can be used to programmatically add new message builders.<p/>
+     * This method can be used to programmatically add new message builders.
      * NOTE: Be aware that if the msgType is one of an existing fix message configured
      * by the HadesFIX this method will override that implementation.
      * @param msgType fix message type (tag 35)
@@ -276,7 +267,7 @@ public class FIXMsgBuilder {
     }
 
     /**
-     * This method can be used to programatically add a set of new message builders.<p/>
+     * This method can be used to programmatically add a set of new message builders.
      * NOTE: Be aware that if the msgType is one of an existing fix message configured
      * by the HadesFIX this method will override that implementation.
      * @param builders map containing multiple message builders
@@ -299,16 +290,6 @@ public class FIXMsgBuilder {
         return INSTANCE.msgBuilders.remove(msgType);
     }
 
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Protected Methods">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Package Methods">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Private Methods">
-    
     /**
      * This method peeks in the first 3 message tags and returns them to the factory
      * method in order to build the proper message. A primary validation occurs at this
@@ -335,9 +316,9 @@ public class FIXMsgBuilder {
             throw new InvalidMsgException(error);
         }
         if (version == null) {
-            String error = "This FIX message version is not supported yet [" + tag.value + "].";
+            String error = "This FIX message version is not supported yet [" + Arrays.toString(tag.value) + "].";
             LOGGER.severe(error);
-            throw new BadFormatMsgException(SessionRejectReason.Other, TagNum.BeginString.getValue(), error);
+            throw new InvalidMsgException(error);
         }
         tag = MsgUtil.getNextTag(message);
         if (tag.tagNum != TagNum.BodyLength.getValue()) {
@@ -349,7 +330,7 @@ public class FIXMsgBuilder {
         try {
             bodyLength = Integer.parseInt(new String(tag.value, FIXMsg.DEFAULT_CHARACTER_SET));
         } catch (NumberFormatException ex) {
-            String error = "Not a valid FIX message. Body length value is not a number [" + tag.value + "].";
+            String error = "Not a valid FIX message. Body length value is not a number [" + Arrays.toString(tag.value) + "].";
             LOGGER.severe(error);
             throw new InvalidMsgException(error, ex);
         } catch (UnsupportedEncodingException ex) {
@@ -397,7 +378,7 @@ public class FIXMsgBuilder {
         try {
             rcvdChecksum = Integer.parseInt(new String(tag.value, FIXMsg.DEFAULT_CHARACTER_SET));
         } catch (NumberFormatException ex) {
-            String error = "Not a valid FIX message. Checksum value is not a number [" + tag.value + "].";
+            String error = "Not a valid FIX message. Checksum value is not a number [" + Arrays.toString(tag.value) + "].";
             LOGGER.severe(error);
             throw new InvalidMsgException(error, ex);
         } catch (UnsupportedEncodingException ex) {
@@ -412,21 +393,26 @@ public class FIXMsgBuilder {
             LOGGER.severe(error);
             throw new InvalidMsgException(error);
         }
-        Header header = null;
-        if (BeginString.FIXT_1_1.equals(version)) {
-            if (applVerID == null) {
-                applVerID = getSessionApplVerID();
-            }
-            header = getHeader(version, applVerID);
-        } else if (BeginString.FIX_5_0.equals(version)) {
-            header = getHeader(version, ApplVerID.FIX50);
-        } else if (BeginString.FIX_5_0SP1.equals(version)) {
-            header = getHeader(version, ApplVerID.FIX50SP1);
-        } else if (BeginString.FIX_5_0SP2.equals(version)) {
-            header = getHeader(version, ApplVerID.FIX50SP2);
-        } else {
-            header = getHeader(version);
-        }
+        Header header;
+	switch (version) {
+	    case FIXT_1_1:
+		if (applVerID == null) {
+		    applVerID = getSessionApplVerID();
+		}	header = getHeader(version, applVerID);
+		break;
+	    case FIX_5_0:
+		header = getHeader(version, ApplVerID.FIX50);
+		break;
+	    case FIX_5_0SP1:
+		header = getHeader(version, ApplVerID.FIX50SP1);
+		break;
+	    case FIX_5_0SP2:
+		header = getHeader(version, ApplVerID.FIX50SP2);
+		break;
+	    default:
+		header = getHeader(version);
+		break;
+	}
         header.setBeginString(version);
         header.setMsgType(msgType);
         header.setBodyLength(bodyLength);
@@ -436,7 +422,6 @@ public class FIXMsgBuilder {
         
         result.header = header;
         result.message = message;
-        
         return result;
     }
 
@@ -461,12 +446,11 @@ public class FIXMsgBuilder {
         if (LOGGER.isLoggable(Level.FINEST)) {
             LOGGER.finest("Header decoded");
         }
-
         return result;
     }
 
     private ApplVerID getSessionApplVerID() throws InvalidMsgException {
-        
+
         ApplVerID result = null;
         SessionContext context = ThreadData.getSessionContext();
         if (context.getValue(SessionContextKey.DEFAULT_APPL_VER_ID) != null) {
@@ -476,7 +460,6 @@ public class FIXMsgBuilder {
             LOGGER.severe(error);
             throw new InvalidMsgException(error);
         }
-
         return result;
     }
 
@@ -525,7 +508,7 @@ public class FIXMsgBuilder {
         MsgBuilder builder = null;
         String builderClass = INSTANCE.msgBuilderClasses.get(msgType);
         if (builderClass == null) {
-            String error = "No builder class configured for message [" + msgType.toString() + "].";
+            String error = "No builder class configured for message [" + msgType + "].";
             LOGGER.severe(error);
             throw new InvalidMsgException(error);
         }
@@ -546,7 +529,6 @@ public class FIXMsgBuilder {
             throw new InvalidMsgException(error);
         }
         INSTANCE.msgBuilders.put(msgType, builder);
-
         return builder;
     }
 
@@ -576,7 +558,6 @@ public class FIXMsgBuilder {
             default:
                 throw new InvalidMsgException("FIX messages with version [" + beginString.getValue() + "] are not yet supported.");
         }
-
         return header;
     }
 
@@ -604,7 +585,6 @@ public class FIXMsgBuilder {
                 throw new InvalidMsgException("FIX messages with version [" + beginString.getValue() +
                         "] are not yet supported.");
         }
-
         return header;
     }
 
@@ -652,7 +632,7 @@ public class FIXMsgBuilder {
     }
 
     private List<String> getCustomMsgBuilderFiles() {
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         result.add(CUSTOM_MSG_BUILDER_FILE_NAME);
         String locations = System.getProperty(CUSTOM_MSG_BUILDER_FILE_LOCATIONS);
         if (locations != null && !locations.trim().isEmpty()) {
@@ -669,18 +649,11 @@ public class FIXMsgBuilder {
         String path = loc.replaceAll("\\.", "/");
         StringBuilder sb = new StringBuilder();
         sb.append(path).append("/").append(CUSTOM_MSG_BUILDER_FILE_NAME);
-
         return sb.toString();
     }
-
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Inner Classes">
 
     private class DecodedMessage {
         private Header header;
         private ByteBuffer message;
     }
-    
-    // </editor-fold>
 }

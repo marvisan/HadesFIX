@@ -1,14 +1,10 @@
 /*
- *   Copyright (c) 2006-2010 Marvisan Pty. Ltd. All rights reserved.
+ *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
-/*
- * Message.java
- *
- * $Id: Message.java,v 1.2 2010-08-25 05:30:30 vrotaru Exp $
- */
 package net.hades.fix.message;
+
+import java.io.Serializable;
 
 /**
  * Generic message type.
@@ -16,7 +12,13 @@ package net.hades.fix.message;
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
  * @version $Revision: 1.2 $
  */
-public interface Message {
+public interface Message extends Serializable {
     static final int PRIORITY_NORMAL = 0;
     static final int PRIORITY_HIGH = 10;
+    
+    byte[] getRawMessage();
+    int getPriority();
+    void setPriority(int priority);
+    long getOrderSequence();
+    void setOrderSequence(long order);
 }

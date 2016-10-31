@@ -1,12 +1,6 @@
 /*
- *   Copyright (c) 2006-2008 Marvisan Pty. Ltd. All rights reserved.
+ *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
- */
-
-/*
- * LogoutMsg.java
- *
- * $Id: LogoutMsg.java,v 1.12 2011-04-28 10:07:41 vrotaru Exp $
  */
 package net.hades.fix.message;
 
@@ -22,6 +16,7 @@ import net.hades.fix.message.util.TagEncoder;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.logging.Level;
 
 import net.hades.fix.message.type.ApplVerID;
@@ -41,21 +36,10 @@ import net.hades.fix.message.type.SessionStatus;
  * in an appropriate timeframe.
  * 
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
- * @version $Revision: 1.12 $
- * @created 11/08/2008, 20:28:30
  */
 public abstract class LogoutMsg extends FIXMsg {
 
-    // <editor-fold defaultstate="collapsed" desc="Constants">
-    
     private static final long serialVersionUID = 1L;
-
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Static Block">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Attributes">
 
     /**
      * TagNum = 1409. Starting with 4.0 version.
@@ -77,10 +61,6 @@ public abstract class LogoutMsg extends FIXMsg {
      */
     protected byte[] encodedText;
     
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Constructors">
-    
     public LogoutMsg(Header header, ByteBuffer rawMsg) 
     throws InvalidMsgException, TagNotPresentException, BadFormatMsgException {
         super(header, rawMsg);
@@ -93,10 +73,6 @@ public abstract class LogoutMsg extends FIXMsg {
     public LogoutMsg(BeginString beginString, ApplVerID applVerID) throws InvalidMsgException {
         super(MsgType.Logout.getValue(), beginString, applVerID);
     }
-
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Public Methods">
 
     // ACCESSOR METHODS
     //////////////////////////////////////////
@@ -181,10 +157,6 @@ public abstract class LogoutMsg extends FIXMsg {
         throw new UnsupportedOperationException(getUnsupportedTagMessage());
     }
 
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Protected Methods">
-
     @Override
     protected void validateRequiredTags() throws TagNotPresentException {
         // no required tags in this message
@@ -203,9 +175,9 @@ public abstract class LogoutMsg extends FIXMsg {
                 TagEncoder.encode(bao, TagNum.SessionStatus, sessionStatus.getValue());
             }
             TagEncoder.encode(bao, TagNum.Text, text);
-            if (encodedTextLen != null && encodedTextLen.intValue() > 0) {
+            if (encodedTextLen != null && encodedTextLen > 0) {
                 if (encodedText != null && encodedText.length > 0) {
-                    encodedTextLen = new Integer(encodedText.length);
+                    encodedTextLen = encodedText.length;
                     TagEncoder.encode(bao, TagNum.EncodedTextLen, encodedTextLen);
                     TagEncoder.encode(bao, TagNum.EncodedText, encodedText);
                 }
@@ -228,9 +200,9 @@ public abstract class LogoutMsg extends FIXMsg {
             if (MsgUtil.isTagInList(TagNum.Text.getValue(), SECURED_TAGS, secured)) {
                 TagEncoder.encode(bao, TagNum.Text, text);
             }
-            if (encodedTextLen != null && encodedTextLen.intValue() > 0 && MsgUtil.isTagInList(TagNum.EncodedTextLen.getValue(), SECURED_TAGS, secured)) {
+            if (encodedTextLen != null && encodedTextLen > 0 && MsgUtil.isTagInList(TagNum.EncodedTextLen.getValue(), SECURED_TAGS, secured)) {
                 if (encodedText != null && encodedText.length > 0) {
-                    encodedTextLen = new Integer(encodedText.length);
+                    encodedTextLen = encodedText.length;
                     TagEncoder.encode(bao, TagNum.EncodedTextLen, encodedTextLen);
                     TagEncoder.encode(bao, TagNum.EncodedText, encodedText);
                 }
@@ -277,30 +249,17 @@ public abstract class LogoutMsg extends FIXMsg {
             try {
                 encodedTextLen = new Integer(new String(tag.value, getSessionCharset()));
             } catch (NumberFormatException ex) {
-                String error = "Tag [EncodedTextLen] requires an integer value. The value set was [" + tag.value + "].";
+                String error = "Tag [EncodedTextLen] requires an integer value. The value set was [" + Arrays.toString(tag.value) + "].";
                 LOGGER.log(Level.SEVERE, "{0} Error was: {1}", new Object[] { error, ex.toString() });
                 throw new BadFormatMsgException(SessionRejectReason.IncorrectDataFormat, getHeader().getMsgType(),
                         TagNum.EncodedTextLen.getValue(), error);
             }
-            Tag  dataTag = MsgUtil.getNextTag(message, encodedTextLen.intValue());
+            Tag  dataTag = MsgUtil.getNextTag(message, encodedTextLen);
             encodedText = dataTag.value;
         }
         
         return result;
     }
-    
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Package Methods">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Private Methods">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Inner Classes">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="toString()">
 
     @Override
     public String toString() {
@@ -316,6 +275,4 @@ public abstract class LogoutMsg extends FIXMsg {
 
         return b.toString();
     }
-
-    // </editor-fold>
 }

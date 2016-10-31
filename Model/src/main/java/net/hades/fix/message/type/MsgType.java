@@ -1,12 +1,6 @@
 /*
- *   Copyright (c) 2006-2010 Marvisan Pty. Ltd. All rights reserved.
+ *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
- */
-
-/*
- * MsgType.java
- *
- * $Id: MsgType.java,v 1.17 2011-09-10 05:39:46 vrotaru Exp $
  */
 package net.hades.fix.message.type;
 
@@ -21,8 +15,6 @@ import javax.xml.bind.annotation.XmlType;
  * Types of FIX messages.
  * 
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
- * @version $Revision: 1.17 $
- * @created 24/06/2008, 19:38:00
  */
 @XmlType
 @XmlEnum(String.class)
@@ -150,9 +142,9 @@ public enum MsgType {
 
     private static final long serialVersionUID = 1L;
     
-    private String value;
+    private final String value;
 
-    private static final Map<String, MsgType> stringToEnum = new HashMap<String, MsgType>();
+    private static final Map<String, MsgType> stringToEnum = new HashMap<>();
 
     static {
         for (MsgType tag : values()) {

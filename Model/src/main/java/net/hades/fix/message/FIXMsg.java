@@ -1,12 +1,6 @@
 /*
- *   Copyright (c) 2006-2008 Marvisan Pty. Ltd. All rights reserved.
+ *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
- */
-
-/*
- * FIXMsg.java
- *
- * $Id: FIXMsg.java,v 1.25 2011-10-25 08:29:22 vrotaru Exp $
  */
 package net.hades.fix.message;
 
@@ -35,7 +29,6 @@ import net.hades.fix.message.xml.codec.util.FixmlCodecUtil;
  * Generic FIX message.
  *
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
- * @version $Revision: 1.25 $
  */
 @XmlAccessorType(XmlAccessType.NONE)
 public abstract class FIXMsg extends FIXFragment implements Message {
@@ -56,6 +49,8 @@ public abstract class FIXMsg extends FIXFragment implements Message {
     private static final String RCVD_MSG_PRINT_LINE = "<<<";
 
     private int priority;
+    
+    private long orderSequence; 
 
     /**
      * FIX message header data.
@@ -97,7 +92,7 @@ public abstract class FIXMsg extends FIXFragment implements Message {
     private boolean useNonStdBeginString;
 
     public FIXMsg() {
-        customTags = new HashMap<Integer, String>();
+        customTags = new HashMap<>();
         priority = Message.PRIORITY_NORMAL;
         encryptionRequired = false;
         setSessionData();
@@ -116,11 +111,10 @@ public abstract class FIXMsg extends FIXFragment implements Message {
      * @param header FIX message decoded header
      * @param rawMsg FIX message received
      * @throws InvalidMsgException message decode error
-     * @throws TagNotPresentException required tag not present error
      * @throws BadFormatMsgException message contains recoverable missing tags or data
      */
     public FIXMsg(Header header, final ByteBuffer rawMsg)
-    throws InvalidMsgException, TagNotPresentException, BadFormatMsgException {
+    throws InvalidMsgException, BadFormatMsgException {
         this(header);
         processingState = new ProcessingState();
         this.message = rawMsg;
@@ -158,7 +152,6 @@ public abstract class FIXMsg extends FIXFragment implements Message {
             LOGGER.log(Level.FINEST, "Message version [{0}] type [{1}].", new Object[] { beginString.getValue(), msgType });
         }
     }
-
     /**
      * Encode a message that has already the required values set.
      * @return encoded message
@@ -384,17 +377,35 @@ public abstract class FIXMsg extends FIXFragment implements Message {
         return trailer;
     }
 
-    public byte[] getRawMessage() {
-        return message.array();
-    }
-
+    @Override
     public int getPriority() {
         return priority;
     }
 
+    @Override
     public void setPriority(int priority) {
         this.priority = priority;
     }
+
+    /**
+     * Used by the engine to order the incoming messages in the priority queue
+     * @return 
+     */
+    @Override
+    public long getOrderSequence() {
+	return orderSequence;
+    }
+
+    @Override
+    public void setOrderSequence(long order) {
+	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public byte[] getRawMessage() {
+        return message.array();
+    }
+
 
     @Override
     protected String getUnsupportedTagMessage() {
@@ -569,11 +580,11 @@ public abstract class FIXMsg extends FIXFragment implements Message {
             if (context.getValue(SessionContextKey.VALIDATE_REQUIRED) == null) {
                 validateRequired = false;
             } else {
-                validateRequired = ((Boolean) context.getValue(SessionContextKey.VALIDATE_REQUIRED)).booleanValue();
+                validateRequired = ((Boolean) context.getValue(SessionContextKey.VALIDATE_REQUIRED));
             }
             LOGGER.log(Level.FINEST, "Session FIX required tag validation set to {0}.", validateRequired);
             if (context.getValue(SessionContextKey.USE_NON_STD_BEGIN_STRING) != null) {
-                useNonStdBeginString = ((Boolean) context.getValue(SessionContextKey.USE_NON_STD_BEGIN_STRING)).booleanValue();
+                useNonStdBeginString = ((Boolean) context.getValue(SessionContextKey.USE_NON_STD_BEGIN_STRING));
             }
         }
     }

@@ -1,13 +1,8 @@
 /*
- *   Copyright (c) 2006-2008 Marvisan Pty. Ltd. All rights reserved.
+ *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
 
-/*
- * MsgUtil.java
- *
- * $Id: MsgUtil.java,v 1.15 2011-03-07 09:08:09 vrotaru Exp $
- */
 package net.hades.fix.message.util;
 
 import net.hades.fix.message.FragmentContext;
@@ -43,7 +38,6 @@ import net.hades.fix.message.type.TagNum;
  * Utility class used to manipulate FIX messages.
  * 
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
- * @version $Revision: 1.15 $
  */
 public class MsgUtil {
 
@@ -635,7 +629,6 @@ public class MsgUtil {
                 copyMessage[i] = (byte) 191;
             }
         }
-
         return new String(copyMessage, Charset.forName(FIXMsg.DEFAULT_CHARACTER_SET));
     }
 }

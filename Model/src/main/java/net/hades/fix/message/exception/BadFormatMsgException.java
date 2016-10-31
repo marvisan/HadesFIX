@@ -1,5 +1,5 @@
 /*
- *   Copyright (c) 2006-2008 Marvisan Pty. Ltd. All rights reserved.
+ *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
 
@@ -24,10 +24,9 @@ public class BadFormatMsgException extends Exception {
     private static final long serialVersionUID = 1L;
 
     private SessionRejectReason rejectReason;
-    
     private String msgType;
-    
-    private int tagNum;
+    private Integer tagNum;
+    private Integer seqNum;
     
 
     public BadFormatMsgException(String message) {
@@ -49,6 +48,13 @@ public class BadFormatMsgException extends Exception {
         this.tagNum = tagNum;
     }
 
+    public BadFormatMsgException(SessionRejectReason rejectReason, String msgType, String message) {
+        super(message);
+        this.rejectReason = rejectReason;
+        this.msgType = msgType;
+        this.tagNum = tagNum;
+    }
+    
     public BadFormatMsgException(SessionRejectReason rejectReason, String msgType, int tagNum, String message) {
         super(message);
         this.rejectReason = rejectReason;
@@ -65,7 +71,16 @@ public class BadFormatMsgException extends Exception {
         return rejectReason;
     }
 
-    public int getTagNum() {
+    public Integer getTagNum() {
         return tagNum;
     }
+
+    public Integer getSeqNum() {
+	return seqNum;
+    }
+
+    public void setSeqNum(Integer seqNum) {
+	this.seqNum = seqNum;
+    }
+    
 }
