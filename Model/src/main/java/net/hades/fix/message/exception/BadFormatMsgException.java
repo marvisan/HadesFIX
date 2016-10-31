@@ -41,6 +41,12 @@ public class BadFormatMsgException extends Exception {
         super(message);
         this.rejectReason = rejectReason;
     }
+    
+    public BadFormatMsgException(SessionRejectReason rejectReason, Integer seqNum, String message) {
+        super(message);
+        this.rejectReason = rejectReason;
+	this.seqNum = seqNum;
+    }
 
     public BadFormatMsgException(SessionRejectReason rejectReason, int tagNum, String message) {
         super(message);
@@ -52,12 +58,26 @@ public class BadFormatMsgException extends Exception {
         super(message);
         this.rejectReason = rejectReason;
         this.msgType = msgType;
-        this.tagNum = tagNum;
+    }
+    
+    public BadFormatMsgException(SessionRejectReason rejectReason, Integer seqNum, String msgType, String message) {
+        super(message);
+        this.rejectReason = rejectReason;
+        this.msgType = msgType;
+	this.seqNum = seqNum;
     }
     
     public BadFormatMsgException(SessionRejectReason rejectReason, String msgType, int tagNum, String message) {
         super(message);
         this.rejectReason = rejectReason;
+        this.msgType = msgType;
+        this.tagNum = tagNum;
+    }
+    
+    public BadFormatMsgException(SessionRejectReason rejectReason, Integer seqNum, String msgType, int tagNum, String message) {
+        super(message);
+        this.rejectReason = rejectReason;
+	this.seqNum = seqNum;
         this.msgType = msgType;
         this.tagNum = tagNum;
     }
