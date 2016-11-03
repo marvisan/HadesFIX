@@ -11,5 +11,6 @@ package net.hades.fix.engine.handler;
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
  */
 public enum HandlerParamKey {
-    HadesFIX_ShutdownTimeoutSecs
+    HadesFIX_ShutdownTimeoutSecs,
+    
 }

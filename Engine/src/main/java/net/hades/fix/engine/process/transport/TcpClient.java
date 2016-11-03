@@ -47,7 +47,7 @@ import net.hades.fix.engine.process.session.ClientSessionCoordinator;
  */
 public final class TcpClient implements ManagedTask {
 
-    private static final Logger LOGGER = Logger.getLogger(TcpClient.class.getName());
+    private static final Logger Log = Logger.getLogger(TcpClient.class.getName());
 
     private static final String COMPONENT_NAME = "TCPCLI";
 
@@ -69,7 +69,7 @@ public final class TcpClient implements ManagedTask {
     private SSLContext sslCtx;
     private Socket socket;
     private final String id;
-    private final Duration timeout;
+    private Duration timeout;
 
     private TCPConnections connections;
     private ConnectionData currentConnData;
@@ -84,7 +84,7 @@ public final class TcpClient implements ManagedTask {
 
     @Override
     public ExecutionResult call() throws Exception {
-	LOGGER.log(Level.INFO, "Running Tcp Client thread [{0}].", id);
+	Log.log(Level.INFO, "Running Tcp Client thread [{0}].", id);
 	hasSSL = checkSSLEnabled(configuration.getSslData());
 	connections = extractConnections();
 	currentConnData = connections.getCurrentConnection();
@@ -96,19 +96,19 @@ public final class TcpClient implements ManagedTask {
 			connect(currentConnData);
 		    } catch (ConnectionException ex) {
 			// we will retry if configured
-			LOGGER.log(Level.SEVERE, "Connection error : {0}", ex);
+			Log.log(Level.SEVERE, "Connection error : {0}", ex);
 			if (retryCycleOrQuit()) {
 			    connected = false;
 			}
 		    }
 		}
 	    } catch (Exception ex) {
-		LOGGER.log(Level.SEVERE, "Unexpected error : {0}", ex);
+		Log.log(Level.SEVERE, "Unexpected error : {0}", ex);
 		shutdown = true;
 	    }
 	}
 	status = TaskStatus.Completed;
-	LOGGER.log(Level.INFO, "Tcp Client thread [{0}] terminated.", id);
+	Log.log(Level.INFO, "Tcp Client thread [{0}] terminated.", id);
 	return new ExecutionResult(status);
     }
 
@@ -124,29 +124,31 @@ public final class TcpClient implements ManagedTask {
 
     @Override
     public void shutdownImmediate() {
-	LOGGER.log(Level.INFO, "Closing socket streams for Tcp Client [{0}].", id);
+	Log.log(Level.INFO, "Closing socket streams for Tcp Client [{0}].", id);
 	if (socket != null) {
 	    while (!socket.isClosed()) {
 		try {
 		    socket.close();
 		    socket = null;
 		} catch (IOException ex) {
-		    LOGGER.log(Level.SEVERE, "Could not close Tcp Client socket", ex);
+		    Log.log(Level.SEVERE, "Could not close Tcp Client socket", ex);
 		    break;
 		}
 		try {
 		    Thread.sleep(DEFAULT_SLEEP_MILLIS);
 		} catch (InterruptedException ex) {
-		    LOGGER.log(Level.WARNING, "Thread [{0}] interrupted", id);
+		    Log.log(Level.WARNING, "Thread [{0}] interrupted", id);
 		    break;
 		}
-		if (timeout.minusMillis(DEFAULT_SLEEP_MILLIS).isNegative()) {
-		    LOGGER.info(String.format("Tcp Client [%s] timedout shutdownImmediate() : [%s]", id, status));
+		timeout = timeout.minusMillis(DEFAULT_SLEEP_MILLIS);
+		if (timeout.isNegative()) {
+		    Log.info(String.format("Tcp Client [%s] timedout shutdownImmediate() : [%s]", id, status));
+		    break;
 		}
 	    }
 	}
         shutdown = true;
-        LOGGER.log(Level.INFO, "Tcp Client [{0}] socket streams closed.", id);
+        Log.log(Level.INFO, "Tcp Client [{0}] socket streams closed.", id);
     }
 
     @Override
@@ -165,7 +167,7 @@ public final class TcpClient implements ManagedTask {
             return;
         }
 
-        LOGGER.log(Level.INFO, "Attempting to connect to host [{0}] port [{1}].", new Object[]{connData.host, connData.port});
+        Log.log(Level.INFO, "Attempting to connect to host [{0}] port [{1}].", new Object[]{connData.host, connData.port});
 
 	int socketTimeout = (configuration.getSocketTimeout() != null ? configuration.getSocketTimeout() : DEFAULT_TIMEOUT_MILLIS);
 	socket = getSocket(connData.host, connData.port);
@@ -175,7 +177,7 @@ public final class TcpClient implements ManagedTask {
 	setSoSndbuf();
 	setSendKeepAlive();
 	setSocketTimeout(socketTimeout);
-	LOGGER.log(Level.INFO, "Connected to host [{0}] port [{1}].", new Object[]{connData.host, connData.port});
+	Log.log(Level.INFO, "Connected to host [{0}] port [{1}].", new Object[]{connData.host, connData.port});
 	coordinator.startStreamHandlers(socket);
     }
 
@@ -185,7 +187,7 @@ public final class TcpClient implements ManagedTask {
                 socket.setTcpNoDelay(true);
             } catch (SocketException ex) {
                 String logMsg = "TCP_NODELAY cannot be set on this socket implementation.";
-                LOGGER.warning(logMsg);
+                Log.warning(logMsg);
             }
         }
     }
@@ -199,7 +201,7 @@ public final class TcpClient implements ManagedTask {
             socket.setKeepAlive(sendKeepAlive);
         } catch (SocketException ex) {
             String logMsg = "TCP_NODELAY cannot be set on this socket implementation.";
-            LOGGER.warning(logMsg);
+            Log.warning(logMsg);
         }
     }
 
@@ -213,7 +215,7 @@ public final class TcpClient implements ManagedTask {
                 socket.setSoLinger(true, socketLinger);
             } catch (SocketException ex) {
                 String logMsg = "SO_LINGER cannot be set on this socket implementation.";
-                LOGGER.warning(logMsg);
+                Log.warning(logMsg);
             }
         }
     }
@@ -224,7 +226,7 @@ public final class TcpClient implements ManagedTask {
                 socket.setReceiveBufferSize(configuration.getSocketRcvbuf());
             } catch (SocketException ex) {
                 String logMsg = "SO_RCVBUF cannot be set on this socket implementation.";
-                LOGGER.warning(logMsg);
+                Log.warning(logMsg);
             }
         }
     }
@@ -235,7 +237,7 @@ public final class TcpClient implements ManagedTask {
                 socket.setReceiveBufferSize(configuration.getSocketSndbuf());
             } catch (SocketException ex) {
                 String logMsg = "SO_SNDBUF cannot be set on this socket implementation.";
-                LOGGER.warning(logMsg);
+                Log.warning(logMsg);
             }
         }
     }
@@ -245,7 +247,7 @@ public final class TcpClient implements ManagedTask {
             socket.setSoTimeout(timeout);
         } catch (SocketException ex) {
             String logMsg = "Initial socket timeout cannot be set on this socket implementation.";
-            LOGGER.warning(logMsg);
+            Log.warning(logMsg);
         }
     }
 
@@ -310,15 +312,15 @@ public final class TcpClient implements ManagedTask {
                 throw new UnrecoverableException(errMsg, ex);
             } catch (KeyManagementException ex) {
                 String errMsg = "Could not use the key from given keystore.";
-                LOGGER.log(Level.SEVERE, "{0}. Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
+                Log.log(Level.SEVERE, "{0}. Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
                 throw new UnrecoverableException(errMsg, ex);
             } catch (KeyStoreException ex) {
                 String errMsg = "Could not read the key from given keystore.";
-                LOGGER.log(Level.SEVERE, "{0}. Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
+                Log.log(Level.SEVERE, "{0}. Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
                 throw new UnrecoverableException(errMsg, ex);
             } catch (NoSuchAlgorithmException ex) {
                 String errMsg = "The algorithm used is not supported.";
-                LOGGER.log(Level.SEVERE, "{0}. Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
+                Log.log(Level.SEVERE, "{0}. Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
                 throw new UnrecoverableException(errMsg, ex);
             }
 
@@ -330,11 +332,11 @@ public final class TcpClient implements ManagedTask {
                 throw new ConnectionException(errMsg, ex);
             } catch (UnknownHostException ex) {
                 String errMsg = "Could not create a socket for [" + host + ":" + port + "].";
-                LOGGER.log(Level.SEVERE, "{0}. Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
+                Log.log(Level.SEVERE, "{0}. Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
                 throw new UnrecoverableException(errMsg, ex);
             } catch (IOException ex) {
                 String errMsg = "Could not create a socket for [" + host + ":" + port + "].";
-                LOGGER.log(Level.SEVERE, "{0}. Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
+                Log.log(Level.SEVERE, "{0}. Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
                 throw new UnrecoverableException(errMsg, ex);
             }
         }
@@ -348,7 +350,7 @@ public final class TcpClient implements ManagedTask {
             ks = KeyStore.getInstance(KeyStore.getDefaultType());
         } catch (KeyStoreException ex) {
             String errMsg = "Could not create a KeySTore of default type.";
-            LOGGER.log(Level.SEVERE, "{0}. Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
+            Log.log(Level.SEVERE, "{0}. Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
             throw new UnrecoverableException(errMsg, ex);
         }
 
@@ -364,22 +366,22 @@ public final class TcpClient implements ManagedTask {
             ks.load(fis, password);
         } catch (IOException ex) {
             String errMsg = "Could not load the keystore file [" + keyStoreFileName + "].";
-            LOGGER.log(Level.SEVERE, "{0}. Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
+            Log.log(Level.SEVERE, "{0}. Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
             throw new UnrecoverableException(errMsg, ex);
         } catch (NoSuchAlgorithmException ex) {
             String errMsg = "Could not create a keystore for the given algorithm.";
-            LOGGER.log(Level.SEVERE, "{0}. Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
+            Log.log(Level.SEVERE, "{0}. Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
             throw new UnrecoverableException(errMsg, ex);
         } catch (CertificateException ex) {
             String errMsg = "Could not load the certificate form keystore [" + keyStoreFileName + "].";
-            LOGGER.log(Level.SEVERE, "{0}. Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
+            Log.log(Level.SEVERE, "{0}. Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
             throw new UnrecoverableException(errMsg, ex);
         } finally {
             if (fis != null) {
                 try {
                     fis.close();
                 } catch (IOException ex) {
-                    LOGGER.log(Level.SEVERE, "Could not close the file handler [{0}].", keyStoreFileName);
+                    Log.log(Level.SEVERE, "Could not close the file handler [{0}].", keyStoreFileName);
                 }
             }
         }
@@ -428,7 +430,7 @@ public final class TcpClient implements ManagedTask {
                 try {
                     Thread.sleep(retrySecondsToWait * 1000);
                 } catch (InterruptedException ex1) {
-                    LOGGER.log(Level.SEVERE, "Thread [{0}]interrupted interrupted : ",id);
+                    Log.log(Level.SEVERE, "Thread [{0}]interrupted interrupted : ",id);
                 }
                 if (currentIdx < connections.size()) {
                     result = connections.get(currentIdx);

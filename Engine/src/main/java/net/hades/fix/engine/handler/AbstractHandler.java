@@ -27,7 +27,7 @@ import net.hades.fix.message.config.SessionContext;
  */
 public abstract class AbstractHandler implements Handler  {
 
-    private final Logger Log = Logger.getLogger(this.getClass().getSimpleName());
+    private static final Logger Log = Logger.getLogger(AbstractHandler.class.getName());
 	
     private static final int DEFAULT_SHUTDOWN_TIMEOUT_SECS = 30;
     private static final int DEFAULT_SLEEP_MILLIS = 5;
@@ -111,16 +111,14 @@ public abstract class AbstractHandler implements Handler  {
     }
 
     @Override
-    public void tryWrite(Message message, int waitMillis) {
+    public boolean tryWrite(Message message, int waitMillis) {
 	try {
-	    boolean exit = false;
-	    while (!exit) {
-		exit = inQueue.offer(message, waitMillis, TimeUnit.MILLISECONDS);
-	    };
+	    return inQueue.offer(message, waitMillis, TimeUnit.MILLISECONDS);
 	} catch (InterruptedException ex) {
 	    status = TaskStatus.Exiting;
 	    Log.info(String.format("Handler [%s] Interrupted tryWrite() : [%s]", id, status));
 	}
+	return false;
     }
 
     @Override

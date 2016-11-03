@@ -34,7 +34,7 @@ public class HeartbeatTimeoutTimerTask extends EngineTimerTask {
 	    Log.finest("Heartbeat timeout timer initiated.");
 	}
 
-	if (ProtocolState.LOGGEDON.equals(protocol.getProcessingState())) {
+	if (ProtocolState.LOGGEDON.equals(protocol.getProtocolState())) {
 	    try {
 		sendHeartbeat();
 	    } catch (InterruptedException ex) {

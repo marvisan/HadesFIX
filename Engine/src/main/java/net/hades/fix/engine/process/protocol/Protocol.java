@@ -11,6 +11,7 @@
 package net.hades.fix.engine.process.protocol;
 
 import java.io.File;
+import java.time.Duration;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
@@ -31,12 +32,19 @@ import net.hades.fix.engine.config.Configurator;
 import net.hades.fix.engine.config.model.MsgTypeInfo;
 import net.hades.fix.engine.config.model.SessionInfo;
 import net.hades.fix.engine.exception.ConfigurationException;
+import net.hades.fix.engine.exception.SeqNoPersistenceException;
+import net.hades.fix.engine.mgmt.alert.Alert;
+import net.hades.fix.engine.mgmt.alert.AlertCode;
+import net.hades.fix.engine.mgmt.alert.BaseSeverityType;
+import net.hades.fix.engine.process.event.AlertEvent;
 import net.hades.fix.engine.process.protocol.router.MessageRouter;
+import net.hades.fix.engine.process.protocol.server.FixServer;
 import net.hades.fix.engine.process.protocol.timer.TimersHolder;
 import net.hades.fix.engine.process.session.SessionCoordinator;
 import net.hades.fix.engine.process.session.persist.FileSessSeqPersister;
 import net.hades.fix.engine.process.session.persist.MemSessSeqPersister;
 import net.hades.fix.engine.process.session.persist.SessSeqPersister;
+import net.hades.fix.message.BinaryMessage;
 import net.hades.fix.message.FIXMsg;
 import net.hades.fix.message.HeartbeatMsg;
 import net.hades.fix.message.ResendRequestMsg;
@@ -84,6 +92,8 @@ public abstract class Protocol implements Handler {
     private static final int DEFAULT_TX_BUFFER_SIZE = 1000;
     private static final int DEFAULT_RESEND_TIMEOUT = 3000;
     private static final double DEFAULT_HEARTBT_OFFSET_FRACTION = 0.2;
+    private static final int DEFAULT_TIMEOUT_SECS = 30;
+    protected static final int DEFAULT_SLEEP_MILLIS = 5;
 
     protected String id;
     protected volatile TaskStatus status;
@@ -98,7 +108,6 @@ public abstract class Protocol implements Handler {
     protected SessionInfo configuration;
     protected final ConcurrentMap<String, String> statistics;
     protected final ConcurrentMap<String, Handler> nextHandlers;
-    protected final ConcurrentMap<String, Integer> lastSentSeqNo;
 
     protected BlockingQueue<Message> rxQueue;
     protected MessageCache historyCache;
@@ -122,6 +131,7 @@ public abstract class Protocol implements Handler {
     protected MessageRouter messageRouter;
 
     protected Handler transportOut;
+    protected Duration timeout;
 
     protected final BiFunction<String, String, String> sumStats = (String old, String cur) -> {
 	return String.valueOf(Integer.valueOf(old) + Integer.valueOf(cur));
@@ -133,8 +143,8 @@ public abstract class Protocol implements Handler {
 	nextHandlers = new ConcurrentHashMap<>();
 	historyCache = new MessageCache(this);
 	statistics = new ConcurrentHashMap<>();
-	lastSentSeqNo = new ConcurrentHashMap<>();
 	protocolState = ProtocolState.INITIALISED;
+	timeout = Duration.ofSeconds(DEFAULT_TIMEOUT_SECS, 1);
 	status = TaskStatus.New;
     }
 
@@ -145,44 +155,70 @@ public abstract class Protocol implements Handler {
      * @throws net.hades.fix.message.exception.BadFormatMsgException
      * @throws java.lang.InterruptedException
      */
-    public abstract void writeToTransport(Message msg) throws TagNotPresentException, BadFormatMsgException, InterruptedException;
+    public synchronized void writeToTransport(Message msg) throws TagNotPresentException, BadFormatMsgException, InterruptedException {
+	Message msgToSend = null;
+	if (msg instanceof BinaryMessage) {
+	    msgToSend = msg;
+	}
+	if (msg instanceof FIXMsg) {
+	    if (!((FIXMsg) msg).getHeader().getPossDupFlag()) {
+		((FIXMsg) msg).getHeader().setMsgSeqNum(getNextTxSeqNo());
+		Date now = new Date();
+		((FIXMsg) msg).getHeader().setOrigSendingTime(now);
+		((FIXMsg) msg).getHeader().setSendingTime(now);
+		historyCache.addMessage((FIXMsg) msg);
+	    }
+	    msgToSend = new BinaryMessage(((FIXMsg) msg).encode());
+	    timers.startHeartbeatTimeoutTask();
+	}
+	if (msgToSend != null) {
+	    // we need to make sure is sent in order so use blocking method
+	    transportOut.write(msgToSend);
+	}
+    }
 
-    /**
-     * Sends the message to the consumer stream for delivery.
-     *
-     * @param message FIX business message
-     */
-    public abstract void relayMessage(FIXMsg message);
+    public int getNextRxSeqNo() {
+	int rxSeqNo;
+	try {
+	    rxSeqNo = seqNoPersister.getNextRxSeqNo();
+	} catch (SeqNoPersistenceException ex) {
+	    rxSeqNo = seqNoPersister.getRxSeqNo();
+	    coordinator.onAlertEvent(new AlertEvent(this, Alert.createAlert(id, FixServer.class.getSimpleName(),
+		    BaseSeverityType.FATAL, AlertCode.PROTOCOL_ERROR, ex.toString(), ex)));
+	}
+	return rxSeqNo;
+    }
 
-    /**
-     * Getter for the next RX sequence number. The engine RX sequence number is incremented and persisted locally.
-     *
-     * @return next seq number
-     */
-    public abstract int getNextRxSeqNo();
+    public void setRxSeqNo(int rxSeqNo) {
+	try {
+	    seqNoPersister.setRxSeqNo(rxSeqNo);
+	} catch (SeqNoPersistenceException ex) {
+	    coordinator.onAlertEvent(new AlertEvent(this, Alert.createAlert(id, FixServer.class.getSimpleName(),
+		    BaseSeverityType.FATAL, AlertCode.PROTOCOL_ERROR, ex.toString(), ex)));
+	}
+    }
 
-    /**
-     * Sets the current RX sequence number and writes it to the sequence number file.
-     *
-     * @param rxSeqNo new seq number
-     */
-    public abstract void setRxSeqNo(int rxSeqNo);
+    public int getNextTxSeqNo() {
+	int txSeqNo;
+	try {
+	    txSeqNo = seqNoPersister.getNextTxSeqNo();
+	} catch (SeqNoPersistenceException ex) {
+	    txSeqNo = seqNoPersister.getTxSeqNo();
+	    coordinator.onAlertEvent(new AlertEvent(this, Alert.createAlert(id, FixServer.class.getSimpleName(),
+		    BaseSeverityType.FATAL, AlertCode.PROTOCOL_ERROR, ex.toString(), ex)));
+	}
 
-    /**
-     * Getter for the next TX sequence number. The engine TX sequence number is incremented and persisted locally.
-     *
-     * @return next seq number
-     */
-    public abstract int getNextTxSeqNo();
+	return txSeqNo;
+    }
 
-    /**
-     * Sets the TX sequence number and writes it to the sequence number file.
-     *
-     * @param txSeqNo new tx sequence number
-     */
-    public abstract void setTxSeqNo(int txSeqNo);
-
-    protected abstract void setNeedsRouting(FIXMsg fixMsg);
+    public void setTxSeqNo(int txSeqNo) {
+	try {
+	    seqNoPersister.setTxSeqNo(txSeqNo);
+	} catch (SeqNoPersistenceException ex) {
+	    coordinator.onAlertEvent(new AlertEvent(this, Alert.createAlert(id, FixServer.class.getSimpleName(),
+		    BaseSeverityType.FATAL, AlertCode.PROTOCOL_ERROR, ex.toString(), ex)));
+	}
+    }
 
     @Override
     public void addNextHandler(String id, Handler next) {
@@ -226,6 +262,10 @@ public abstract class Protocol implements Handler {
 	return true;
     }
 
+    public void relayMessage(FIXMsg message) {
+	nextHandlers.values().iterator().next().write(message);
+    }
+
     public SessionCoordinator getSessionCoordinator() {
 	return coordinator;
     }
@@ -240,14 +280,6 @@ public abstract class Protocol implements Handler {
 
     public void setGap(SeqGap gap) {
 	this.gap = gap;
-    }
-    
-    public void addLastSeqNo(String msgType, Integer seqValue) {
-	lastSentSeqNo.put(msgType, seqValue);
-    }
-    
-    public int getLastSeqNo(String msgType) {
-	return lastSentSeqNo.getOrDefault(msgType, 0);
     }
 
     public long getMaxMsgSize() {
@@ -451,31 +483,6 @@ public abstract class Protocol implements Handler {
 	this.lastTestReqID = lastTestReqID;
     }
 
-    /**
-     * Gets the message router.
-     *
-     * @return message router
-     */
-    protected abstract MessageRouter getMessageRouter();
-
-    protected abstract void processAdminMessage(FIXMsg fixMsg) throws TagNotPresentException, BadFormatMsgException;
-
-    /**
-     * Resets the data structures and prepares the protocol layer for a new Logon exchange.
-     */
-    protected void reset() {
-	getStateProcessor().setGap(null);
-	getStateProcessor().setGapRequestMessage(null);
-	getStateProcessor().setProcessingStage(ProtocolState.INITIALISED);
-	getStateProcessor().resetAllTimerTasks();
-    }
-
-    protected void updateLastSentSeqNo(FIXMsg fixMsg) {
-	if (fixMsg instanceof HeartbeatMsg) {
-	    lastSentSeqNo.put(MsgType.Heartbeat.getValue(), fixMsg.getHeader().getMsgSeqNum());
-	}
-    }
-
     protected void setSessionConfigData() throws ConfigurationException {
 	try {
 	    if (configuration.getHeartBtInt() == null) {
@@ -667,20 +674,6 @@ public abstract class Protocol implements Handler {
     protected String buildOutboundLogMessage(FIXMsg fixMsg, byte[] rawMsg) {
 	return ">>> " + getLocalID() + " - " + getCptyID() + " (" + fixMsg.getHeader().getMsgSeqNum() + ") "
 		+ MsgType.displayName(fixMsg.getHeader().getMsgType()) + " " + MsgUtil.getPrintableRawFixMessage(rawMsg);
-    }
-
-    protected boolean isMsgSendTimeValid(FIXMsg fixMsg) {
-	if (fixMsg != null) {
-	    Date sendTime = fixMsg.getHeader().getSendingTime();
-	    Calendar cal = Calendar.getInstance();
-	    cal.setTime(sendTime);
-	    cal.setTimeZone(TimeZone.getTimeZone("UTC"));
-	    long now = cal.getTimeInMillis();
-	    if (Math.abs(now - sendTime.getTime()) > MAX_CLOCK_DEVIANCE_MILLIS) {
-		return false;
-	    }
-	}
-	return true;
     }
 
     protected void createTimeoutTimers() {

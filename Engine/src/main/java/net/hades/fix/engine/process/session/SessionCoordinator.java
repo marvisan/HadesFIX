@@ -51,8 +51,6 @@ public abstract class SessionCoordinator implements ManagedTask, Advisable {
 
     private static final Logger Log = Logger.getLogger(SessionCoordinator.class.getName());
 
-    private static final int MAX_NUM_COMMANDS = 5;
-
     protected HadesInstance hadesInstance;
 
     protected String id;
@@ -65,8 +63,6 @@ public abstract class SessionCoordinator implements ManagedTask, Advisable {
 
     protected ProducerStream producerStream;
     protected ConsumerStream consumerStream;
-    protected List<Handler> singletonHandlers;
-
     protected volatile TaskStatus status;
     protected volatile boolean shutdown;
 
@@ -74,7 +70,6 @@ public abstract class SessionCoordinator implements ManagedTask, Advisable {
         this.hadesInstance = hadesInstance;
 	this.cptyConfiguration = cptyConfiguration;
         this.sessionAddress = sessionAddress;
-
     }
     
     protected abstract SessionInfo getConfiguration();
@@ -99,7 +94,7 @@ public abstract class SessionCoordinator implements ManagedTask, Advisable {
                 msg.setRefSeqNo(message.getHeader().getMsgSeqNum());
             }
             msg.setPriority(Message.PRIORITY_HIGH);
-            protocol.writeMessage(msg);
+            protocol.writeToTransport(msg);
         } catch (InvalidMsgException ex) {
             String errMsg = "Invalid Reject message for session [" + id + "].";
 
@@ -257,7 +252,7 @@ public abstract class SessionCoordinator implements ManagedTask, Advisable {
         }
 
         for (SessionInfo sessionInfo : counterpartyInfo.getSessions()) {
-            Map<String, HandlerDefInfo> handlers = new HashMap<String, HandlerDefInfo>();
+            Map<String, HandlerDefInfo> handlers = new HashMap<>();
             for (HandlerDefInfo handler : counterpartyInfo.getHandlerDefs()) {
                 handlers.put(handler.getName(), handler);
             }

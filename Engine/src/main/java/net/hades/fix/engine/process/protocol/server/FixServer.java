@@ -4,39 +4,34 @@
  */
 package net.hades.fix.engine.process.protocol.server;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import net.hades.fix.commons.exception.ExceptionUtil;
 
 import net.hades.fix.engine.process.TaskStatus;
-import net.hades.fix.commons.thread.ThreadUtil;
-import net.hades.fix.engine.config.model.ServerSessionInfo;
-import net.hades.fix.engine.config.model.SessionInfo;
+import net.hades.fix.engine.config.model.ClientSessionInfo;
 import net.hades.fix.engine.exception.ConfigurationException;
 import net.hades.fix.engine.exception.SeqNoPersistenceException;
-import net.hades.fix.engine.exception.UnrecoverableException;
 import net.hades.fix.engine.mgmt.alert.Alert;
 import net.hades.fix.engine.mgmt.alert.AlertCode;
 import net.hades.fix.engine.mgmt.alert.BaseSeverityType;
-import net.hades.fix.engine.mgmt.alert.ComponentType;
 import net.hades.fix.engine.process.ExecutionResult;
 import net.hades.fix.engine.process.event.AlertEvent;
 import net.hades.fix.engine.process.protocol.*;
-import net.hades.fix.engine.process.protocol.router.MessageRouter;
-import net.hades.fix.engine.process.session.ServerSessionCoordinator;
+import net.hades.fix.engine.process.protocol.client.FixClient;
+import net.hades.fix.engine.process.session.ClientSessionCoordinator;
 import net.hades.fix.engine.util.PartyUtil;
 import net.hades.fix.engine.util.ThreadLocalSessionDataUtil;
 import net.hades.fix.message.BinaryMessage;
 import net.hades.fix.message.FIXMsg;
-import net.hades.fix.message.LogoutMsg;
 import net.hades.fix.message.Message;
-import net.hades.fix.message.exception.BadFormatMsgException;
 import net.hades.fix.message.exception.InvalidMsgException;
-import net.hades.fix.message.exception.TagNotPresentException;
-import net.hades.fix.message.type.MsgType;
-import net.hades.fix.message.util.MsgUtil;
 
 /**
  * Implementation of a FIX server process.
@@ -47,107 +42,110 @@ public final class FixServer extends Protocol {
 
     private static final Logger Log = Logger.getLogger(FixServer.class.getName());
 
-    public static final String COMPONENT_NAME = "FIXSRV";
+    private static final String COMPONENT_NAME = "FIXCLI";
 
-    public FixServer(ServerSessionCoordinator coordinator, ServerSessionInfo configuration) throws ConfigurationException {
+    private static final int DEFAULT_LOGON_TIMEOUT = 60;
+    private static final boolean DO_NOT_RECON_WHEN_SEQ_TOO_LOW = false;
+    private static final boolean DEFAULT_CONN_ON_STARTUP = true;
+    private static final int DEFAULT_RECONNECT_DELAY = 10000;
+    private static final int DEFAULT_MAX_NUM_LOGON_RETRIES = 0;
+
+    private AtomicLong orderSequence;
+
+    public FixServer(ClientSessionCoordinator coordinator, ClientSessionInfo configuration) throws ConfigurationException {
 	super(coordinator, configuration);
-
 	setSessionConfigData();
 	initialise();
-	rxQueue = new ArrayBlockingQueue<>(configuration.getRxBufferSize());
-	id = COMPONENT_NAME + "_" + PartyUtil.getID(targetCompID, targetLocationID, targetSubID);
 	status = TaskStatus.New;
     }
 
     @Override
     public ExecutionResult call() throws Exception {
-	Log.log(Level.INFO, "Running Fix Server thread [{0}].", id);
+	Log.log(Level.INFO, "Running Fix Client thread [{0}].", id);
 
 	status = TaskStatus.Running;
-	protocolState = ProtocolState.IDLE;
-	while (!shutdown) {
-	    FIXMsg reqMsg = null;
-	    try {
-		BinaryMessage message = (BinaryMessage) rxQueue.poll(1, TimeUnit.SECONDS);
+	protocolState = ProtocolState.INITIALISED;
+	ServerSessionMessageProcessor processor = new ServerSessionMessageProcessor(this);
+
+	try {
+	    List<FIXMsg> response;
+	    while (!shutdown) {
+		Message message = rxQueue.peek();
 		if (message == null) {
+		    Thread.sleep(1);
 		    continue;
 		}
-		reqMsg = decodeAndValidate(message.getRawPayload());
-	    } catch (InterruptedException ex) {
-		Log.log(Level.WARNING, "Fix Server thread [{0}] has been interrupted.", id);
-		shutdown = true;
-	    } catch (UnrecoverableException ex) {
-		coordinator.shutdownImmediate();
-	    } catch (RejectMessageException ex) {
-		if (ProtocolState.INITIALISED.equals(processingStage) || ProtocolState.LOGGEDOUT.equals(processingStage)) {
-		    // discard silently
-		    continue;
-		}
-		FIXMsg rejMsg = null;
-	    }
-	    if (reqMsg == null) {
-		continue;
-	    }
-
-	    try {
+		response = Collections.emptyList();
 		switch (protocolState) {
-		    case IDLE:
 
+		    case INITIALISED:
+			// accept only counterparty Login message
+			if (message instanceof BinaryMessage) {
+			    response = processor.processInitStateMessageRcvd((BinaryMessage) rxQueue.take());
+			}
+			break;
+
+		    case LOGGEDON:
+			if (message instanceof BinaryMessage) {
+			    response = processor.processLoggedonStateMessageRcvd((BinaryMessage) rxQueue.take());
+			} else {
+			    FIXMsg msg = (FIXMsg) rxQueue.take();
+			    response = processor.processLogoutMessageTrns(msg);
+			    writeToTransport(msg);
+			}
+			break;
+
+		    case LOGGEDOUT:
+			// only accept Logout and ResendRequest
+			if (message instanceof BinaryMessage) {
+			    response = processor.processLoggedoutStateMessageRcvd((BinaryMessage) rxQueue.take());
+			}
+			break;
 		}
-	    } catch (Exception ex) {
-		Log.log(Level.SEVERE, "Unexpected exception raised by Fix Server", ex);
-		coordinator.onAlertEvent(new AlertEvent(this,
-			Alert.createAlert(id, FixServer.class.getSimpleName(),
-				BaseSeverityType.FATAL, AlertCode.SESSION_DESTROYED, ex.getMessage(), ex)));
+		if (!response.isEmpty()) {
+		    for (Message send : response) {
+			writeToTransport(send);
+		    }
+		}
+
 	    }
+	} catch (InvalidMsgException | InterruptedException | DisconnectSessionException ex) {
+	    Log.log(Level.SEVERE, "Unexpected exception raised by Fix Client", ex);
+	    coordinator.onAlertEvent(new AlertEvent(this, Alert.createAlert(id, FixClient.class.getSimpleName(),
+		    BaseSeverityType.FATAL, AlertCode.SESSION_DESTROYED, ex.getMessage(), ex)));
+	    status = TaskStatus.Error;
+	    return new ExecutionResult(status);
 	}
-	status = TaskStatus.Running;
+	status = TaskStatus.Completed;
 	return new ExecutionResult(status);
     }
 
     @Override
-    public void setTimeoutSecs(int timeoutSecs) {
-	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public Map getStatistics() {
-	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void shutdownImmediate() {
-	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    protected void setSessionConfigData() throws ConfigurationException {
-	super.setSessionConfigData();
-    }
-
-    @Override
-    protected void initialise() throws ConfigurationException {
-	setSessionProtocolVersion();
-	setSupportedMsgTypes();
-	createSessionConfigDir();
-	createSeqNoPersister();
-	ThreadLocalSessionDataUtil.setThreadLocalSessionData(configuration, protocolVersion);
-	createTimeoutTimers();
-    }
-
-    @Override
-    public void relayMessage(FIXMsg message) {
-	if (isRoutingMode()) {
-	    if (Log.isLoggable(Level.FINE)) {
-		Log.log(Level.FINE, ">R> {0} - {1} ({2}) {3} {4}", new Object[]{getLocalID(), getCptyID(), message.getHeader().getMsgSeqNum(),
-		    MsgType.displayName(message.getHeader().getMsgType()), MsgUtil.getPrintableRawFixMessage(message.getRawMessage())});
-	    }
-	    getMessageRouter().routeRequestMessage(message);
-	} else {
-	    while (!rxQueue.offer(message)) {
-		ThreadUtil.sleep(1);
-	    }
+    public void write(Message message) {
+	try {
+	    rxQueue.put(message);
+	    applyOrdering(message);
+	} catch (InterruptedException ex) {
+	    Log.log(Level.SEVERE, "Protocol [{0}] write() interrupted", id);
 	}
+    }
+
+    @Override
+    public boolean tryWrite(Message message, int waitMillis) {
+	try {
+	    boolean outcome = rxQueue.offer(message, 1, TimeUnit.SECONDS);
+	    if (outcome) {
+		applyOrdering(message);
+	    }
+	    return outcome;
+	} catch (InterruptedException ex) {
+	    Log.log(Level.SEVERE, "Protocol [{0}] tryWrite() interrupted", id);
+	}
+	return true;
+    }
+
+    public void relayMessage(FIXMsg message) {
+	nextHandlers.values().iterator().next().write(message);
     }
 
     @Override
@@ -157,8 +155,8 @@ public final class FixServer extends Protocol {
 	    rxSeqNo = seqNoPersister.getNextRxSeqNo();
 	} catch (SeqNoPersistenceException ex) {
 	    rxSeqNo = seqNoPersister.getRxSeqNo();
-	    coordinator.onAlertEvent(new AlertEvent(this, Alert.createAlert(id, FixServer.class.getSimpleName(),
-		    BaseSeverityType.FATAL, AlertCode.PROTOCOL_ERROR, ex.toString(), ex)));
+	    coordinator.onAlertEvent(new AlertEvent(this, Alert.createAlert(id, FixClient.class.getSimpleName(),
+		    BaseSeverityType.WARNING, AlertCode.SEQ_PERSISTENCE_ERROR, ex.toString(), ex)));
 	}
 	return rxSeqNo;
     }
@@ -168,8 +166,8 @@ public final class FixServer extends Protocol {
 	try {
 	    seqNoPersister.setRxSeqNo(rxSeqNo);
 	} catch (SeqNoPersistenceException ex) {
-	    coordinator.onAlertEvent(new AlertEvent(this, Alert.createAlert(id, FixServer.class.getSimpleName(),
-		    BaseSeverityType.FATAL, AlertCode.PROTOCOL_ERROR, ex.toString(), ex)));
+	    coordinator.onAlertEvent(new AlertEvent(this, Alert.createAlert(id, FixClient.class.getSimpleName(),
+		    BaseSeverityType.WARNING, AlertCode.SEQ_PERSISTENCE_ERROR, ex.toString(), ex)));
 	}
     }
 
@@ -180,10 +178,9 @@ public final class FixServer extends Protocol {
 	    txSeqNo = seqNoPersister.getNextTxSeqNo();
 	} catch (SeqNoPersistenceException ex) {
 	    txSeqNo = seqNoPersister.getTxSeqNo();
-	    coordinator.onAlertEvent(new AlertEvent(this, Alert.createAlert(id, FixServer.class.getSimpleName(),
-		    BaseSeverityType.FATAL, AlertCode.PROTOCOL_ERROR, ex.toString(), ex)));
+	    coordinator.onAlertEvent(new AlertEvent(this, Alert.createAlert(id, FixClient.class.getSimpleName(),
+		    BaseSeverityType.WARNING, AlertCode.SEQ_PERSISTENCE_ERROR, ex.toString(), ex)));
 	}
-
 	return txSeqNo;
     }
 
@@ -192,82 +189,92 @@ public final class FixServer extends Protocol {
 	try {
 	    seqNoPersister.setTxSeqNo(txSeqNo);
 	} catch (SeqNoPersistenceException ex) {
-	    coordinator.onAlertEvent(new AlertEvent(this, Alert.createAlert(id, FixServer.class.getSimpleName(),
-		    BaseSeverityType.FATAL, AlertCode.PROTOCOL_ERROR, ex.toString(), ex)));
+	    coordinator.onAlertEvent(new AlertEvent(this, Alert.createAlert(id, FixClient.class.getSimpleName(),
+		    BaseSeverityType.WARNING, AlertCode.SEQ_PERSISTENCE_ERROR, ex.toString(), ex)));
 	}
     }
 
     @Override
-    public SessionInfo getConfiguration() {
-	return configuration;
-    }
-
-    @Override
-    public void processAdminMessage(FIXMsg fixMsg) throws TagNotPresentException, BadFormatMsgException {
-	if (!ProtocolState.LOGGEDON.equals(stateProcessor.getProcessingStage())) {
-	    if (MsgType.Logon.getValue().equals(fixMsg.getHeader().getMsgType())) {
-		// logon send by the business layer - reset Logon timer
-		stateProcessor.getTimers().resetLogonTimeoutTask();
+    protected void setSessionConfigData() throws ConfigurationException {
+	super.setSessionConfigData();
+	try {
+	    if (configuration.getLogonTimeout() == null) {
+		configuration.setLogonTimeout(DEFAULT_LOGON_TIMEOUT);
 	    }
-	}
-	if (fixMsg.getHeader().getMsgType().equals(MsgType.Logon.getValue())) {
-	    // this is a response Logon message coming from the business ties
-	    stateProcessor.setProcessingStage(ProtocolState.LOGGEDON);
-	} else if (fixMsg.getHeader().getMsgType().equals(MsgType.Logout.getValue())) {
-	    if (fixMsg.getPriority() == Message.PRIORITY_NORMAL) {
-		stateProcessor.setStatus(ProtocolState.IDLE);
-		String logMsg = "Logout message received from the business layer.";
-		if (((LogoutMsg) fixMsg).getText() != null) {
-		    logMsg = ((LogoutMsg) fixMsg).getText();
-		}
-
-		coordinator.onAlertEvent(new AlertEvent(this,
-			Alert.createAlert(id, ComponentType.FIXServer.toString(),
-				BaseSeverityType.INFO, AlertCode.LOGOUT_SEND, logMsg, null)));
-
-		((LogoutReceiveServerStatus) stateProcessor.getStatus(ProtocolState.LOGOUT_RECEIVE)).setExpected(true);
-		stateProcessor.getTimers().startLogoutTimerTask();
-		stateProcessor.setStatus(ProtocolState.PROCESSING);
-		Log.severe(logMsg);
+	    if (((ClientSessionInfo) configuration).getConnectOnStartup() == null) {
+		((ClientSessionInfo) configuration).setConnectOnStartup(DEFAULT_CONN_ON_STARTUP);
 	    }
+	    if (((ClientSessionInfo) configuration).getReconnectDelay() == null) {
+		((ClientSessionInfo) configuration).setReconnectDelay(DEFAULT_RECONNECT_DELAY);
+	    }
+	    if (((ClientSessionInfo) configuration).getMaxNumLogonRetries() == null) {
+		((ClientSessionInfo) configuration).setMaxNumLogonRetries(DEFAULT_MAX_NUM_LOGON_RETRIES);
+	    }
+	    if (((ClientSessionInfo) configuration).getDoNotReconnWhenSeqNumTooLow() == null) {
+		((ClientSessionInfo) configuration).setConnectOnStartup(DO_NOT_RECON_WHEN_SEQ_TOO_LOW);
+	    }
+	} catch (Exception ex) {
+	    String error = "Error configuring the Fix Client process.";
+	    Log.log(Level.SEVERE, "{0} Error was : {1}", new Object[]{error, ExceptionUtil.getStackTrace(ex)});
+	    throw new ConfigurationException(error, ex);
+	}
+    }
+
+    //---------------------------------------------------------------------------------------------------------------
+    
+    private void initialise() throws ConfigurationException {
+	setSessionProtocolVersion();
+	setSupportedMsgTypes();
+	createSessionConfigDir();
+	createSeqNoPersister();
+	ThreadLocalSessionDataUtil.setThreadLocalSessionData(configuration, protocolVersion);
+	createTimeoutTimers();
+	orderSequence = new AtomicLong(0);
+	rxQueue = new PriorityBlockingQueue<>(configuration.getRxBufferSize(), new MessagePriorityComparator());
+	id = COMPONENT_NAME + "_" + PartyUtil.getID(targetCompID, targetLocationID, targetSubID);
+	transportOut = nextHandlers.values().iterator().next();
+    }
+
+    private void applyOrdering(Message message) {
+	message.setOrderSequence(orderSequence.getAndIncrement());
+	if (message instanceof BinaryMessage) {
+	    message.setPriority(Message.PRIORITY_HIGH);
+	} else {
+	    message.setPriority(Message.PRIORITY_NORMAL);
 	}
     }
 
     @Override
-    protected MessageRouter getMessageRouter() {
-	if (messageRouter == null) {
-	    // creates and starts the message router
-	    messageRouter = new MessageRouter(this, getLocalID() + "_MSG_ROUTER");
-	    messageRouter.start();
-	    messageRouter.startup();
-	    while (!messageRouter.isActive()) {
-		if (!ThreadUtil.sleep(1)) {
-		    break;
-		}
-	    }
-	    messageRouter.initialiseThreadSessionContextData();
-	}
-
-	return messageRouter;
-    }
-
-    @Override
-    protected void setNeedsRouting(FIXMsg fixMsg) {
-	if (!isRoutingMode()) {
-	    if (fixMsg.getHeader().getDeliverToCompID() != null && !fixMsg.getHeader().getDeliverToCompID().isEmpty()) {
-		setRoutingMode(true);
-	    }
-	}
-    }
-
-    @Override
-    public boolean writeMessage(FIXMsg fixMsg) throws InvalidMsgException {
+    public Map getStatistics() {
 	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public void shutdown() {
-	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	while (!rxQueue.isEmpty()) {
+	    try {
+		Thread.sleep(DEFAULT_SLEEP_MILLIS);
+	    } catch (InterruptedException ex) {
+		Log.log(Level.WARNING, "Thread [{0}] interrupted", id);
+		break;
+	    }
+	    timeout = timeout.minusMillis(DEFAULT_SLEEP_MILLIS);
+	    if (timeout.isNegative()) {
+		Log.info(String.format("Tcp Client [%s] timedout shutdownImmediate() : [%s]", id, status));
+		break;
+	    }
+	}
+	shutdown = true;
+    }
+
+    @Override
+    public void shutdownImmediate() {
+	shutdown = true;
+    }
+
+    @Override
+    public void setDisabled(boolean disabled) {
+	throw new UnsupportedOperationException("Not supported for protocol handler."); 
     }
 
 }

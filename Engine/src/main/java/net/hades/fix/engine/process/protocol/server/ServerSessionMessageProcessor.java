@@ -2,7 +2,7 @@
  *  Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *              Use is subject to license terms.
  */
-package net.hades.fix.engine.process.protocol.client;
+package net.hades.fix.engine.process.protocol.server;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,12 +12,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.hades.fix.commons.exception.ExceptionUtil;
+import net.hades.fix.commons.security.PasswordBank;
 import net.hades.fix.engine.process.protocol.DisconnectSessionException;
 import net.hades.fix.engine.process.protocol.MessageFiller;
 import net.hades.fix.engine.process.protocol.MessageProcessor;
 import net.hades.fix.engine.process.protocol.ProtocolState;
+import net.hades.fix.engine.process.protocol.RejectAndLogoutException;
 import net.hades.fix.engine.process.protocol.SeqGap;
-import net.hades.fix.engine.process.protocol.SeqSet;
 import net.hades.fix.message.BinaryMessage;
 import net.hades.fix.message.FIXMsg;
 import net.hades.fix.message.LogonMsg;
@@ -39,28 +40,17 @@ import net.hades.fix.message.util.MsgUtil;
  * 
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
  */
-public class ClientSessionMessageProcessor extends MessageProcessor {
+public class ServerSessionMessageProcessor extends MessageProcessor {
 
-    private static final Logger Log = Logger.getLogger(ClientSessionMessageProcessor.class.getName());
+    private static final Logger Log = Logger.getLogger(ServerSessionMessageProcessor.class.getName());
 
-    public ClientSessionMessageProcessor(FixClient protocol) {
+    public ServerSessionMessageProcessor(FixServer protocol) {
 	super(protocol);
     }
 
     //------------------------------- MESSAGES -------------------------------------------
-    
-    public FIXMsg processLoginSend() {
-	try {
-	    protocol.setSessStartSeqSet(new SeqSet(protocol.getRxSeqNo(), protocol.getTxSeqNo()));
-	    protocol.getTimers().startLogonTimerTask();
-	    return MessageFiller.buildLogonMsg(protocol);
-	} catch (InvalidMsgException ex) {
-	    Log.log(Level.SEVERE, "Fata error buiklding LoginMsg", ex);
-	}
-	return null;
-    }
 
-    public List<FIXMsg> processInitStateMessageRcvd(BinaryMessage received) throws InvalidMsgException, DisconnectSessionException {
+    public List<FIXMsg> processInitStateMessageRcvd(BinaryMessage received) throws InvalidMsgException, DisconnectSessionException, RejectAndLogoutException {
 	List<FIXMsg> responses = new ArrayList<>();
 	String text = "";
 	try {
@@ -70,10 +60,12 @@ public class ClientSessionMessageProcessor extends MessageProcessor {
 			MsgType.Logon.name(), MsgType.valueFor(msg.getHeader().getMsgType())));
 	    }
 	    protocol.getTimers().startTestRequestTimeoutTask();
-	    protocol.getTimers().stopLogonTimeoutTask();
 	    int expSeqNum = protocol.getRxSeqNo();
 	    int msgSeqNum = msg.getHeader().getMsgSeqNum();
 	    // next expected seq number
+	    if (!isAuthenticated((LogonMsg) msg)) {
+		throw new DisconnectSessionException(String.format("Logon message [%s] cannot be authenticated", MsgType.valueFor(msg.getHeader().getMsgType())));
+	    }
 	    if (MsgUtil.compare(protocol.getVersion().getBeginString(), BeginString.FIX_4_4) >= 0
                 && protocol.getConfiguration().getEnableNextExpMsgSeqNum() != null
                 && protocol.getConfiguration().getEnableNextExpMsgSeqNum()
@@ -138,7 +130,7 @@ public class ClientSessionMessageProcessor extends MessageProcessor {
 	protocol.getTimers().startLogoutTimerTask();
 	return responses;
     }
-   
+
     //-------------------------------------------------------------------------------------
        
     private void overrideProtocolVersion(LogonMsg message) {
@@ -272,6 +264,43 @@ public class ClientSessionMessageProcessor extends MessageProcessor {
 		protocol.getConfiguration().setDefaultCstmApplVerID(message.getDefaultCstmApplVerID());
 	    }
 	}
+    }
+
+    private boolean isAuthenticated(LogonMsg message) {
+	if (BeginString.FIX_4_3.compareTo(message.getHeader().getBeginString()) <= 0) {
+            if (protocol.getConfiguration().getAuthenticationInfo() != null && protocol.getConfiguration().getAuthenticationInfo().getLoginUsername() != null) {
+                if (message.getUsername() != null && message.getPassword() != null) {
+                    if (!message.getUsername().equals(protocol.getConfiguration().getAuthenticationInfo().getLoginUsername())) {
+                        return false;
+                    } else {
+                        char[] password = PasswordBank.getInstance().getEntryValue(protocol.getConfiguration().getAuthenticationInfo().getLoginPassword());
+                        if (!message.getPassword().equals(String.valueOf(password))) {
+                            return false;
+                        }
+                    }
+                } else {
+                    return false;
+                }
+            }
+        } else {
+            if (protocol.getConfiguration().getAuthenticationInfo() != null && protocol.getConfiguration().getAuthenticationInfo().getLoginUsername() != null) {
+                if (message.getRawData() != null && message.getRawData().length > 0) {
+                    char[] password = PasswordBank.getInstance().getEntryValue(protocol.getConfiguration().getAuthenticationInfo().getLoginPassword());
+                    if (password == null) {
+                         String logMsg = "Authentication has been enabled but there is no entry in the PasswordBank for [" + 
+                                 protocol.getConfiguration().getAuthenticationInfo().getLoginUsername() + "].";
+                        Log.log(Level.SEVERE, logMsg);
+                        return false;
+                    } else {
+                        String clientPassword = new String(message.getRawData());
+                        if (!clientPassword.equals(new String(password))) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+	return true;
     }
 
     

@@ -4,6 +4,7 @@
  */
 package net.hades.fix.engine.process.protocol;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -11,20 +12,12 @@ import java.util.NavigableMap;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import net.hades.fix.engine.mgmt.alert.Alert;
-import net.hades.fix.engine.mgmt.alert.AlertCode;
-import net.hades.fix.engine.mgmt.alert.BaseSeverityType;
-import net.hades.fix.engine.process.command.Command;
-import net.hades.fix.engine.process.command.CommandType;
-import net.hades.fix.engine.process.event.AlertEvent;
-import net.hades.fix.engine.process.event.LifeCycleEvent;
-import net.hades.fix.engine.process.event.type.LifeCycleCode;
-import net.hades.fix.engine.process.event.type.LifeCycleType;
-import net.hades.fix.engine.process.protocol.server.LogoutReceiveServerStatus;
+import net.hades.fix.commons.exception.ExceptionUtil;
 
 import net.hades.fix.message.BinaryMessage;
 import net.hades.fix.message.FIXMsg;
 import net.hades.fix.message.HeartbeatMsg;
+import net.hades.fix.message.LogonMsg;
 import net.hades.fix.message.LogoutMsg;
 import net.hades.fix.message.RejectMsg;
 import net.hades.fix.message.ResendRequestMsg;
@@ -33,12 +26,14 @@ import net.hades.fix.message.TestRequestMsg;
 import net.hades.fix.message.builder.FIXMsgBuilder;
 import net.hades.fix.message.exception.BadFormatMsgException;
 import net.hades.fix.message.exception.InvalidMsgException;
+import net.hades.fix.message.type.ApplVerID;
+import net.hades.fix.message.type.BeginString;
 import net.hades.fix.message.type.MsgType;
 import net.hades.fix.message.type.SessionRejectReason;
+import net.hades.fix.message.type.SessionStatus;
 import net.hades.fix.message.type.TagNum;
 import net.hades.fix.message.util.MsgUtil;
 
-import static java.awt.SystemColor.text;
 
 /**
  * Super class for message processors.
@@ -58,7 +53,155 @@ public abstract class MessageProcessor {
 	this.protocol = protocol;
     }
 
-    protected FIXMsg validateIncomingLogin(BinaryMessage message) throws InvalidMsgException, BadFormatMsgException, DisconnectSessionException {
+    public List<FIXMsg> processLoggedonStateMessageRcvd(BinaryMessage received) throws InvalidMsgException, DisconnectSessionException {
+	List<FIXMsg> responses = new ArrayList<>();
+	try {
+	    protocol.getTimers().startTestRequestTimeoutTask();
+	    FIXMsg msg = validateIncoming(received);
+	    int expSeqNum = protocol.getRxSeqNo();
+	    int msgSeqNum = msg.getHeader().getMsgSeqNum();
+	    // check sequence reset special case
+	    if (MsgType.SequenceReset.getValue().equals(msg.getHeader().getMsgType())) {
+		handleSequenceReset(msg, responses);
+		return responses;
+	    }
+	    if (msgSeqNum < expSeqNum) {
+		if (msg.getHeader().getPossDupFlag()) {
+		    if (msg.getHeader().getOrigSendingTime() == null) {
+			if (BeginString.FIX_4_2.compareTo(msg.getHeader().getBeginString()) >= 0) {
+			    throw new BadFormatMsgException(SessionRejectReason.ValueOuOfRange, msg.getHeader().getMsgSeqNum(), msg.getHeader().getMsgType(),
+				    "Required tag OrigSendingTime missing");
+			} else {
+			    Log.log(Level.WARNING, "Message discarded : {0} OrigSendingTime is empty.", MsgUtil.getPrintableRawFixMessage(msg.getRawMessage()));
+			}
+		    } else if (msg.getHeader().getOrigSendingTime().after(msg.getHeader().getSendingTime())) {
+			throw new RejectAndLogoutException(SessionRejectReason.SendingTimeAccuracyProblem, msgSeqNum, msg.getHeader().getMsgType(),
+				"OrigSendingTime later than SendingTime");
+		    } else {
+			if (msgSeqNum >= expSeqNum) {
+			    protocol.relayMessage(msg);
+			} else {
+			    Log.log(Level.INFO, "Message discarded : {0}", MsgUtil.getPrintableRawFixMessage(msg.getRawMessage()));
+			}
+		    }
+		} else {
+		    throw new LogoutSessionException(String.format("MsgSeqNum too low, expecting [%s] but received [%s]", expSeqNum, msgSeqNum));
+		}
+	    } else if (msgSeqNum > expSeqNum) {
+		responses.add(buildResendRequest(expSeqNum, msgSeqNum));
+		return responses;
+	    }
+	    // msg seq Okay
+	    if (MsgType.Reject.getValue().equals(msg.getHeader().getMsgType())) {
+		handleReject(msg, responses);
+	    } else if (MsgType.Heartbeat.getValue().equals(msg.getHeader().getMsgType())) {
+		handleHeartbeat(msg, responses);
+	    } else if (MsgType.TestRequest.getValue().equals(msg.getHeader().getMsgType())) {
+		handleTestRequest(msg, responses);
+	    } else if (MsgType.ResendRequest.getValue().equals(msg.getHeader().getMsgType())) {
+		handleResendRequest(msg, responses);
+	    } else if (MsgType.Logon.getValue().equals(msg.getHeader().getMsgType())) {
+		if (((LogonMsg) msg).getResetSeqNumFlag() != null && ((LogonMsg) msg).getResetSeqNumFlag()) {
+		    protocol.setRxSeqNo(msg.getHeader().getMsgSeqNum());
+		    protocol.setTxSeqNo(msg.getHeader().getMsgSeqNum());
+		    protocol.getHistoryCache().clear();
+		    protocol.getHistoryCache().save();
+		    LogonMsg reset = MessageFiller.buildResetSeqNumLogonMsg(protocol);
+		    responses.add(reset);
+		} else {
+		    Log.log(Level.WARNING, "Login message unexpectedly received  : {0}", MsgUtil.getPrintableRawFixMessage(msg.getRawMessage()));
+		    protocol.getNextRxSeqNo();
+		}
+	    } else if (MsgType.Logout.getValue().equals(msg.getHeader().getMsgType())) {
+		LogoutMsg message = (LogoutMsg) msg;
+		Log.log(Level.INFO, "Logout received with status: {0} reason : {1}", new Object[] {getLogoutStatus(message), message.getText()});
+		protocol.getNextRxSeqNo();
+		LogoutMsg logout = MessageFiller.buildLogoutMsg(protocol, SessionStatus.LogoutComplete);
+		responses.add(logout);
+		protocol.setProtocolState(ProtocolState.LOGGEDOUT);
+	    } else {
+		protocol.relayMessage(msg);
+		protocol.getNextRxSeqNo();
+		protocol.setProtocolState(ProtocolState.LOGGEDON);	    
+	    }
+	    return responses;
+	} catch (InvalidMsgException ex) {
+	    Log.log(Level.SEVERE, "Garbled message received : {0}. Error was: {1}. Ignored",
+		    new Object[]{MsgUtil.getPrintableRawFixMessage(received.getRawMessage()), ExceptionUtil.getStackTrace(ex)});
+	    return responses;
+	} catch (BadFormatMsgException ex) {
+	    Log.log(Level.SEVERE, "Message rejected Reason : {0}. SeqNum : {1} Message : {2}", new Object[]{ex.getRejectReason().name(), ex.getSeqNum(), ex.getMessage()});
+	    RejectMsg reject = MessageFiller.buildRejectMsg(protocol, ex.getSeqNum(), SessionRejectReason.RequiredTagMissing, 0, ex.getMessage());
+	    responses.add(reject);
+	    protocol.getNextRxSeqNo();
+	} catch (RejectAndLogoutException ex) {
+	    Log.log(Level.SEVERE, "Message rejected Reason : {0}. SeqNum : {1} Message : {2}", new Object[]{ex.getRejectReason().name(), ex.getSeqNum(), ex.getMessage()});
+	    RejectMsg reject = MessageFiller.buildRejectMsg(protocol, ex.getSeqNum(), ex.getRejectReason(), 0, ex.getMessage());
+	    responses.add(reject);
+	    LogoutMsg logout = MessageFiller.buildLogoutMsg(protocol, ex.getMessage());
+	    responses.add(logout);
+	    protocol.setProtocolState(ProtocolState.LOGGEDOUT);
+	    protocol.getTimers().startLogoutTimerTask();
+	    protocol.getTimers().stopHeartbeatTimeoutTask();
+	    protocol.getTimers().stopTestRequestTimeoutTask();
+	    protocol.getNextRxSeqNo();
+	} catch (LogoutSessionException ex) {
+	    LogoutMsg logout = MessageFiller.buildLogoutMsg(protocol, ex.getMessage());
+	    responses.add(logout);
+	    protocol.setProtocolState(ProtocolState.LOGGEDOUT);
+	    protocol.getTimers().startLogoutTimerTask();
+	    protocol.getTimers().stopHeartbeatTimeoutTask();
+	    protocol.getTimers().stopTestRequestTimeoutTask();
+	    protocol.getNextRxSeqNo();
+	}
+	return responses;
+    }
+     
+    public List<FIXMsg> processLoggedoutStateMessageRcvd(BinaryMessage received) throws InvalidMsgException, DisconnectSessionException {
+	List<FIXMsg> responses = new ArrayList<>();
+	try {
+	    protocol.getTimers().stopTestRequestTimeoutTask();
+	    FIXMsg msg = validateIncomingLogout(received);
+	    // msg seq Okay
+	    if (MsgType.Logout.getValue().equals(msg.getHeader().getMsgType())) {
+		protocol.getTimers().stopLogoutTimeoutTask();
+		handleLogout(msg);
+		protocol.getNextRxSeqNo();
+		throw new DisconnectSessionException("Session disconnected");
+	    } else if (MsgType.ResendRequest.getValue().equals(msg.getHeader().getMsgType())) {
+		protocol.getTimers().startLogoutTimerTask();
+		handleResendRequest(msg, responses);
+		protocol.getNextRxSeqNo();
+	    } else if (MsgType.Heartbeat.getValue().equals(msg.getHeader().getMsgType()) || MsgType.TestRequest.getValue().equals(msg.getHeader().getMsgType())) {
+		// discard
+		protocol.getNextRxSeqNo();
+	    } else {
+		// disconnect
+		throw new DisconnectSessionException(String.format("Unexpected message received in Logout state : {%s}", MsgUtil.getPrintableRawFixMessage(msg.getRawMessage())));
+	    }
+	    return responses;
+	} catch (InvalidMsgException ex) {
+	    Log.log(Level.SEVERE, "Garbled message received : {0}. Error was: {1}. Ignored",
+		    new Object[]{MsgUtil.getPrintableRawFixMessage(received.getRawMessage()), ExceptionUtil.getStackTrace(ex)});
+	    return responses;
+	} catch (BadFormatMsgException ex) {
+	    Log.log(Level.SEVERE, "Message rejected Reason : {0}. SeqNum : {1} Message : {2}", new Object[]{ex.getRejectReason().name(), ex.getSeqNum(), ex.getMessage()});
+	    RejectMsg reject = MessageFiller.buildRejectMsg(protocol, ex.getSeqNum(), SessionRejectReason.RequiredTagMissing, 0, ex.getMessage());
+	    responses.add(reject);
+	    protocol.getNextRxSeqNo();
+	}
+	return responses;
+    }
+    
+    public List<FIXMsg> processLogoutMessageTrns(FIXMsg received) {
+	if (MsgType.Logout.getValue().equals(received.getHeader().getMsgType())) {
+	    protocol.setProtocolState(ProtocolState.LOGGEDOUT);
+	    protocol.getTimers().startLogoutTimerTask();
+	}
+	return new ArrayList<>();
+    }
+
+    protected FIXMsg validateIncomingLogon(BinaryMessage message) throws InvalidMsgException, BadFormatMsgException, DisconnectSessionException {
 	byte[] byteFixMsg = message.getRawMessage();
 	FIXMsg msg = FIXMsgBuilder.build(byteFixMsg);
 	if (msg.getHeader().getMsgSeqNum() == null || msg.getHeader().getMsgSeqNum() <= 0) {
@@ -67,17 +210,33 @@ public abstract class MessageProcessor {
 	if (protocol.getMaxMsgSize() > 0 && byteFixMsg.length > protocol.getMaxMsgSize()) {
 	    // discard messages larger than maxMsgSize
 	    String errMsg = String.format("Discarded message with size [%s] greater than allowed size [%s].", byteFixMsg.length, protocol.getMaxMsgSize());
-	    BadFormatMsgException ex = new BadFormatMsgException(SessionRejectReason.Other, errMsg);
-	    ex.setSeqNum(msg.getHeader().getMsgSeqNum());
-	    throw ex;
+	    throw new BadFormatMsgException(SessionRejectReason.Other, msg.getHeader().getMsgSeqNum(), msg.getHeader().getMsgType(), errMsg);
 	}
-	validateIncomingLoginMessageAddress(msg);
+	validateIncomingLogonMessageAddress(msg);
 	if (!isMsgSendTimeValid(msg)) {
 	    String errMsg = "SendingTime accuracy problem.";
 	    Log.severe(errMsg);
-	    BadFormatMsgException ex = new BadFormatMsgException(SessionRejectReason.SendingTimeAccuracyProblem, errMsg);
-	    ex.setSeqNum(msg.getHeader().getMsgSeqNum());
-	    throw ex;
+	    throw new BadFormatMsgException(SessionRejectReason.SendingTimeAccuracyProblem, msg.getHeader().getMsgSeqNum(), msg.getHeader().getMsgType(), errMsg);
+	}
+	return msg;
+    }
+    
+    protected FIXMsg validateIncomingLogout(BinaryMessage message) throws InvalidMsgException, BadFormatMsgException, DisconnectSessionException {
+	byte[] byteFixMsg = message.getRawMessage();
+	FIXMsg msg = FIXMsgBuilder.build(byteFixMsg);
+	if (msg.getHeader().getMsgSeqNum() == null || msg.getHeader().getMsgSeqNum() <= 0) {
+	    throw new InvalidMsgException("No sequence number set for this message");
+	}
+	if (protocol.getMaxMsgSize() > 0 && byteFixMsg.length > protocol.getMaxMsgSize()) {
+	    // discard messages larger than maxMsgSize
+	    String errMsg = String.format("Discarded message with size [%s] greater than allowed size [%s].", byteFixMsg.length, protocol.getMaxMsgSize());
+	    throw new BadFormatMsgException(SessionRejectReason.Other, msg.getHeader().getMsgSeqNum(), msg.getHeader().getMsgType(), errMsg);
+	}
+	validateIncomingLogoutMessageAddress(msg);
+	if (!isMsgSendTimeValid(msg)) {
+	    String errMsg = "SendingTime accuracy problem.";
+	    Log.severe(errMsg);
+	    throw new BadFormatMsgException(SessionRejectReason.SendingTimeAccuracyProblem, msg.getHeader().getMsgSeqNum(), msg.getHeader().getMsgType(), errMsg);
 	}
 	return msg;
     }
@@ -169,7 +328,6 @@ public abstract class MessageProcessor {
 	}
 	protocol.getNextRxSeqNo();
 	responses.add(heartbeat);
-	
     }
     
     protected void handleResendRequest(FIXMsg msg, List<FIXMsg> responses) throws InvalidMsgException {
@@ -231,10 +389,47 @@ public abstract class MessageProcessor {
 	    return resendRequest;
 	}
     }
+    
+    protected void handleLogout(FIXMsg msg) throws InvalidMsgException {
+	LogoutMsg logout = (LogoutMsg) msg;
+	Log.log(Level.INFO, "Logout response received. Reason : {0} Text {1}", new Object[] {getLogoutStatus(logout), logout.getText()});
+    }
+  
+    protected String getLogoutStatus(LogoutMsg logout) {
+	if (MsgUtil.compare(logout.getHeader().getBeginString(), BeginString.FIXT_1_1) >= 0 && logout.getHeader().getApplVerID() != null) {
+	    if (MsgUtil.compare(logout.getHeader().getApplVerID(), ApplVerID.FIX50SP1) >= 0) {
+		return logout.getSessionStatus() != null ? logout.getSessionStatus().name() : "";
+	    }
+	}
+	return "";
+    }
 
     //-------------------------------------------------------------------------------------------------------
 
-    private void validateIncomingLoginMessageAddress(FIXMsg message) throws DisconnectSessionException {
+    private void validateIncomingLogonMessageAddress(FIXMsg message) throws DisconnectSessionException {
+	if (message != null) {
+	    if (!protocol.targetCompID.equals(message.getHeader().getSenderCompID())) {
+		String errMsg = "SenderCompID [" + message.getHeader().getSenderCompID() + "] does not matches the session configured ["
+			+ protocol.targetCompID + "]";
+		Log.severe(errMsg);
+		throw new DisconnectSessionException(errMsg);
+	    }
+	    if (protocol.targetSubID != null && (message.getHeader().getSenderSubID() == null || !protocol.targetSubID.equals(message.getHeader().getSenderSubID()))) {
+		String errMsg = "SenderSubID [" + message.getHeader().getSenderSubID() + "] does not matches the session configured ["
+			+ protocol.targetSubID + "]";
+		Log.severe(errMsg);
+		throw new DisconnectSessionException(errMsg);
+	    }
+	    if (protocol.targetLocationID != null && (message.getHeader().getSenderLocationID() == null || !protocol.targetLocationID.equals(message.getHeader().getSenderLocationID()))) {
+		String errMsg = "SenderLocationID [" + message.getHeader().getSenderLocationID() + "] does not matches the session configured ["
+			+ protocol.targetLocationID + "]";
+		Log.severe(errMsg);
+		throw new DisconnectSessionException(errMsg);
+	    }
+	}
+    }
+    
+    private void validateIncomingLogoutMessageAddress(FIXMsg message) throws DisconnectSessionException {
 	if (message != null) {
 	    if (!protocol.targetCompID.equals(message.getHeader().getSenderCompID())) {
 		String errMsg = "SenderCompID [" + message.getHeader().getSenderCompID() + "] does not matches the session configured ["

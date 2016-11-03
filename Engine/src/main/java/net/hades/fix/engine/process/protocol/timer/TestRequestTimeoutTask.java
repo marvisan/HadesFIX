@@ -15,7 +15,6 @@ import net.hades.fix.message.TestRequestMsg;
 import net.hades.fix.message.exception.BadFormatMsgException;
 import net.hades.fix.message.exception.InvalidMsgException;
 import net.hades.fix.message.exception.TagNotPresentException;
-import net.hades.fix.message.type.MsgType;
 import net.hades.fix.message.util.format.DateFormatter;
 
 /**
@@ -37,7 +36,7 @@ public class TestRequestTimeoutTask extends EngineTimerTask {
 	    Log.finest("Test request timer initiated.");
 	}
 
-	if (ProtocolState.LOGGEDON.equals(protocol.getProcessingState())) {
+	if (ProtocolState.LOGGEDON.equals(protocol.getProtocolState())) {
 	    try {
 		sendTestRequest();
 	    } catch (InterruptedException ex) {
@@ -53,7 +52,6 @@ public class TestRequestTimeoutTask extends EngineTimerTask {
 	    msg.setTestReqID(testReqID);
 	    protocol.writeToTransport(msg);
 	    protocol.getTimers().startInputTimeoutTask();
-	    protocol.getLastSeqNo(MsgType.TestRequest.name());
 	    protocol.setLastTestReqID(testReqID);
 	} catch (InvalidMsgException | TagNotPresentException | BadFormatMsgException ex) {
 	    Log.log(Level.SEVERE, "TestRequest message could not be built", ex);

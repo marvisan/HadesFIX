@@ -4,7 +4,7 @@
  */
 package net.hades.fix.engine.process.protocol.client;
 
-import java.util.Date;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.PriorityBlockingQueue;
@@ -14,7 +14,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.hades.fix.commons.exception.ExceptionUtil;
-import net.hades.fix.commons.thread.ThreadUtil;
 import net.hades.fix.engine.config.model.ClientSessionInfo;
 import net.hades.fix.engine.exception.ConfigurationException;
 import net.hades.fix.engine.exception.SeqNoPersistenceException;
@@ -28,18 +27,13 @@ import net.hades.fix.engine.process.protocol.DisconnectSessionException;
 import net.hades.fix.engine.process.protocol.MessagePriorityComparator;
 import net.hades.fix.engine.process.protocol.Protocol;
 import net.hades.fix.engine.process.protocol.ProtocolState;
-import net.hades.fix.engine.process.protocol.router.MessageRouter;
 import net.hades.fix.engine.process.session.ClientSessionCoordinator;
 import net.hades.fix.engine.util.PartyUtil;
 import net.hades.fix.engine.util.ThreadLocalSessionDataUtil;
 import net.hades.fix.message.BinaryMessage;
 import net.hades.fix.message.FIXMsg;
 import net.hades.fix.message.Message;
-import net.hades.fix.message.exception.BadFormatMsgException;
 import net.hades.fix.message.exception.InvalidMsgException;
-import net.hades.fix.message.exception.TagNotPresentException;
-import net.hades.fix.message.type.MsgType;
-import net.hades.fix.message.util.MsgUtil;
 
 import static net.hades.fix.engine.process.protocol.ProtocolState.INITIALISED;
 import static net.hades.fix.engine.process.protocol.ProtocolState.LOGGEDON;
@@ -62,7 +56,6 @@ public final class FixClient extends Protocol {
     private static final int DEFAULT_RECONNECT_DELAY = 10000;
     private static final int DEFAULT_MAX_NUM_LOGON_RETRIES = 0;
 
-    private boolean routerInitialised;
     private AtomicLong orderSequence;
 
     public FixClient(ClientSessionCoordinator coordinator, ClientSessionInfo configuration) throws ConfigurationException {
@@ -91,7 +84,7 @@ public final class FixClient extends Protocol {
 		return new ExecutionResult(status);
 	    }
 	    
-	    List<FIXMsg> response = null;
+	    List<FIXMsg> response;
 	    //send Logon
 	    writeToTransport(loginMsg);
 	    timers.startLogonTimerTask();
@@ -101,36 +94,37 @@ public final class FixClient extends Protocol {
 		    Thread.sleep(1);
 		    continue;
 		}
+		response = Collections.emptyList();
 		switch (protocolState) {
 
 		    case INITIALISED:
 			// accept only counterparty Login message
 			if (message instanceof BinaryMessage) {
-			    response = processor.processLoginRcvd((BinaryMessage) rxQueue.take());
-			    if (!response.isEmpty()) {
-				for (Message send : response) {
-				    writeToTransport(send);
-				}
-			    }
+			    response = processor.processInitStateMessageRcvd((BinaryMessage) rxQueue.take());
 			}
+			break;
 
 		    case LOGGEDON:
 			if (message instanceof BinaryMessage) {
-			    response = processor.processMessageRcvd((BinaryMessage) rxQueue.take());
-			    if (!response.isEmpty()) {
-				for (Message send : response) {
-				    writeToTransport(send);
-				}
-			    }
+			    response = processor.processLoggedonStateMessageRcvd((BinaryMessage) rxQueue.take());
 			} else {
-			    writeToTransport(rxQueue.take());
+			    FIXMsg msg = (FIXMsg) rxQueue.take();
+			    response = processor.processLogoutMessageTrns(msg);
+			    writeToTransport(msg);
 			}
+			break;
 
 		    case LOGGEDOUT:
 			// only accept Logout and ResendRequest
 			if (message instanceof BinaryMessage) {
-			    
+			    response = processor.processLoggedoutStateMessageRcvd((BinaryMessage) rxQueue.take());
 			}
+			break;
+		}
+		if (!response.isEmpty()) {
+		    for (Message send : response) {
+			writeToTransport(send);
+		    }
 		}
 
 	    }
@@ -167,45 +161,6 @@ public final class FixClient extends Protocol {
 	    Log.log(Level.SEVERE, "Protocol [{0}] tryWrite() interrupted", id);
 	}
 	return true;
-    }
-
-    @Override
-    public synchronized void writeToTransport(Message msg) throws TagNotPresentException, BadFormatMsgException, InterruptedException {
-	Message msgToSend = null;
-	if (msg instanceof BinaryMessage) {
-	    msgToSend = msg;
-	}
-	if (msg instanceof FIXMsg) {
-	    if (!((FIXMsg) msg).getHeader().getPossDupFlag()) {
-		((FIXMsg) msg).getHeader().setMsgSeqNum(getNextTxSeqNo());
-		Date now = new Date();
-		((FIXMsg) msg).getHeader().setOrigSendingTime(now);
-		((FIXMsg) msg).getHeader().setSendingTime(now);
-		timers.startHeartbeatTimeoutTask();
-		updateLastSentSeqNo((FIXMsg) msg);
-		historyCache.addMessage((FIXMsg) msg);
-	    }
-	    msgToSend = new BinaryMessage(((FIXMsg) msg).encode());
-	}
-	if (msgToSend != null) {
-	    // we need to make sure is sent in order so use blocking method
-	    transportOut.write(msgToSend);
-	}
-    }
-
-    @Override
-    public void relayMessage(FIXMsg message) {
-	if (isRoutingMode()) {
-	    if (Log.isLoggable(Level.FINE)) {
-		Log.log(Level.FINE, ">R> {0} - {1} ({2}) {3} {4}", new Object[]{getLocalID(), getCptyID(), message.getHeader().getMsgSeqNum(),
-		    MsgType.displayName(message.getHeader().getMsgType()), MsgUtil.getPrintableRawFixMessage(message.getRawMessage())});
-	    }
-	    getMessageRouter().routeResponseMessage(message);
-	} else {
-	    while (!rxQueue.offer(message)) {
-		ThreadUtil.sleep(1);
-	    }
-	}
     }
 
     @Override
@@ -252,14 +207,6 @@ public final class FixClient extends Protocol {
 	    coordinator.onAlertEvent(new AlertEvent(this, Alert.createAlert(id, FixClient.class.getSimpleName(),
 		    BaseSeverityType.WARNING, AlertCode.SEQ_PERSISTENCE_ERROR, ex.toString(), ex)));
 	}
-    }
-
-    @Override
-    protected synchronized MessageRouter getMessageRouter() {
-	if (!routerInitialised) {
-	    routerInitialised = true;
-	}
-	return messageRouter;
     }
 
     @Override
@@ -313,33 +260,36 @@ public final class FixClient extends Protocol {
     }
 
     @Override
-    protected void setNeedsRouting(FIXMsg fixMsg) {
-	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
     public Map getStatistics() {
 	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public void shutdown() {
-	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	while (!rxQueue.isEmpty()) {
+	    try {
+		Thread.sleep(DEFAULT_SLEEP_MILLIS);
+	    } catch (InterruptedException ex) {
+		Log.log(Level.WARNING, "Thread [{0}] interrupted", id);
+		break;
+	    }
+	    timeout = timeout.minusMillis(DEFAULT_SLEEP_MILLIS);
+	    if (timeout.isNegative()) {
+		Log.info(String.format("Tcp Client [%s] timedout shutdownImmediate() : [%s]", id, status));
+		break;
+	    }
+	}
+	shutdown = true;
     }
 
     @Override
     public void shutdownImmediate() {
-	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	shutdown = true;
     }
 
     @Override
     public void setDisabled(boolean disabled) {
-	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    protected void processAdminMessage(FIXMsg fixMsg) throws TagNotPresentException, BadFormatMsgException {
-	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	throw new UnsupportedOperationException("Not supported for protocol handler."); 
     }
 
 }
