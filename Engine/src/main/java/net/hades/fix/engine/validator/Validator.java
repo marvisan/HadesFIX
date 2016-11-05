@@ -2,12 +2,6 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
-/*
- * Validator.java
- *
- * $Id: Validator.java,v 1.2 2011-03-29 11:04:31 vrotaru Exp $
- */
 package net.hades.fix.engine.validator;
 
 import java.text.DecimalFormat;
@@ -18,14 +12,13 @@ import java.util.Map;
  * Abstract class and factory for a validator.
  *
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
- * @version $Revision: 1.2 $
  */
 public abstract class Validator {
 
     protected Map<String, String> errors;
 
     protected Validator() {
-        errors = new LinkedHashMap<String, String>();
+        errors = new LinkedHashMap<>();
     }
 
     public Validator(Map<String, String> errors) {

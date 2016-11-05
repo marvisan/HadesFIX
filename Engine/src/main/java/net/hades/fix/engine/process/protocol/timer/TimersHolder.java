@@ -7,7 +7,6 @@ package net.hades.fix.engine.process.protocol.timer;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,16 +21,13 @@ public class TimersHolder {
 
     private static final Logger Log = Logger.getLogger(TimersHolder.class.getName());
 
-    private  Timeouts timeouts;
+    private final  Timeouts timeouts;
     private final Protocol protocol;
 
     private ScheduledExecutorService timerExecutor;
 
     private HeartbeatTimeoutTimerTask heartbeatTimeoutTask;
     private ScheduledFuture<?> heartbeatTimeoutResult;
-
-    private ResendTimeoutTimerTask resendTimeoutTask;
-    private ScheduledFuture<?> resendTimeoutResult;
 
     private LogoutTimeoutTimerTask logoutTimeoutTask;
     private ScheduledFuture<?> logoutTimeoutResult;
@@ -97,39 +93,6 @@ public class TimersHolder {
 	    }
 	    if (Log.isLoggable(Level.FINEST)) {
 		Log.log(Level.FINEST, "Stopped heartbeat timeout timer for [{0}].", result);
-	    }
-	}
-    }
-
-    /**
-     * Starts the timer task if the option is enabled.
-     */
-    public synchronized void startResendTimerTask() {
-	if (resendTimeoutResult != null) {
-	    if (!resendTimeoutResult.isCancelled() && !resendTimeoutResult.isDone()) {
-		resendTimeoutResult.cancel(true);
-	    }
-	}
-	if (timerExecutor != null && !timerExecutor.isShutdown()) {
-	    resendTimeoutResult = timerExecutor.schedule(resendTimeoutTask, timeouts.getResendTimeout(), TimeUnit.MICROSECONDS);
-	    if (Log.isLoggable(Level.FINEST)) {
-		Log.log(Level.FINEST, "Started resend timer for [{0}] milliseconds.", timeouts.getResendTimeout());
-	    }
-	}
-    }
-
-    /**
-     * Cancel the resend timeout task.
-     */
-    public synchronized void stopResendTimeoutTask() {
-	if (resendTimeoutResult != null) {
-	    boolean result = true;
-	    if (!resendTimeoutResult.isCancelled() && !resendTimeoutResult.isDone()) {
-		result = resendTimeoutResult.cancel(true);
-	    }
-	    resendTimeoutResult = null;
-	    if (Log.isLoggable(Level.FINEST)) {
-		Log.log(Level.FINEST, "Cancelled ResendTimeout task [{0}].", result);
 	    }
 	}
     }
@@ -267,7 +230,6 @@ public class TimersHolder {
     }
 
     public void stopAllTasks() {
-	stopResendTimeoutTask();
 	stopLogoutTimeoutTask();
 	stopLogonTimeoutTask();
 	stopHeartbeatTimeoutTask();
@@ -279,9 +241,6 @@ public class TimersHolder {
 	timerExecutor = Executors.newScheduledThreadPool(100);
 
 	heartbeatTimeoutTask = new HeartbeatTimeoutTimerTask(protocol);
-	if (timeouts.isEnableResendTimeout()) {
-	    resendTimeoutTask = new ResendTimeoutTimerTask(protocol);
-	}
 	logoutTimeoutTask = new LogoutTimeoutTimerTask(protocol);
 	logonTimeoutTask = new LogonTimeoutTimerTask(protocol);
 	testRequestTimeoutTask = new TestRequestTimeoutTask(protocol);

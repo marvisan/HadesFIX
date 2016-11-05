@@ -37,7 +37,7 @@ public class HandlerInfo implements CompositeDataView, Serializable {
 
     static {
         try {
-            COMPOSITE_DATA_ITEMS = new String[]{"id", "name", "disabled", "nextHandler"};
+            COMPOSITE_DATA_ITEMS = new String[]{"id", "name", "disabled", "nextHandlers"};
             COMPOSITE_DATA_ITEMS_DESCRIPTION = new String[]{"Handler System ID", "Handler Definition Reference",
                     "Is Disabled?", "Next Handlers"};
             COMPOSITE_DATA_OPEN_TYPES = new OpenType<?>[]{SimpleType.STRING, SimpleType.STRING, SimpleType.BOOLEAN,
@@ -63,9 +63,9 @@ public class HandlerInfo implements CompositeDataView, Serializable {
     @XmlJavaTypeAdapter(BooleanAdapter.class)
     private Boolean disabled;
 
-    @XmlElement(name = "handler")
+    @XmlElement(name = "nextHandlers")
     @XmlElementWrapper(name = "next")
-    private HandlerRefInfo[] handler;
+    private HandlerRefInfo[] nextHandlers;
 
     public HandlerInfo() {
     }
@@ -94,13 +94,14 @@ public class HandlerInfo implements CompositeDataView, Serializable {
         this.disabled = disabled;
     }
 
-    public HandlerRefInfo[] getHandler() {
-	return handler;
+    public HandlerRefInfo[] getNextHandlers() {
+	return nextHandlers;
     }
 
-    public void setHandler(HandlerRefInfo[] handler) {
-	this.handler = handler;
+    public void setNextHandlers(HandlerRefInfo[] nextHandlers) {
+	this.nextHandlers = nextHandlers;
     }
+
 
     @Override
     public CompositeData toCompositeData(CompositeType ct) {
@@ -120,7 +121,7 @@ public class HandlerInfo implements CompositeDataView, Serializable {
                     itemNames.toArray(new String[itemNames.size()]),
                     itemDescriptions.toArray(new String[itemDescriptions.size()]),
                     itemTypes.toArray(new OpenType<?>[itemTypes.size()]));
-            CompositeData cd = new CompositeDataSupport(xct, COMPOSITE_DATA_ITEMS, new Object[]{id, name, disabled, handler});
+            CompositeData cd = new CompositeDataSupport(xct, COMPOSITE_DATA_ITEMS, new Object[]{id, name, disabled, nextHandlers});
             assert ct.isValue(cd);
             return cd;
         } catch (Exception e) {
@@ -140,8 +141,8 @@ public class HandlerInfo implements CompositeDataView, Serializable {
         if (disabled != null) {
             sb.append(", disabled=").append(disabled);
         }
-        if (handler != null) {
-            sb.append(", handler=").append(Stream.of(handler).map(p -> p.getId()).collect(Collectors.joining(","))).append("\n");
+        if (nextHandlers != null) {
+            sb.append(", handler=").append(Stream.of(nextHandlers).map(p -> p.getId()).collect(Collectors.joining(","))).append("\n");
         }
         sb.append("]}");
         return sb.toString();

@@ -2,15 +2,7 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
-/*
- * SchedulerValidator.java
- *
- * $Id: SchedulerValidator.java,v 1.1 2011-03-28 04:38:37 vrotaru Exp $
- */
 package net.hades.fix.engine.validator;
-
-import net.hades.fix.engine.config.model.ScheduleDateInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +13,7 @@ import net.hades.fix.engine.config.model.HadesInstanceInfo;
 import net.hades.fix.engine.config.model.ScheduleCalendarInfo;
 import net.hades.fix.engine.config.model.ScheduleTaskInfo;
 import net.hades.fix.engine.config.model.SessionInfo;
+import net.hades.fix.engine.config.model.ScheduleDateInfo;
 
 /**
  *
@@ -50,7 +43,7 @@ public class SchedulerValidator extends Validator {
     }
 
     private void validateUniqueSchedulerTaskNames(HadesInstanceInfo configuration) {
-        List<String> taskNames = new ArrayList<String>();
+        List<String> taskNames = new ArrayList<>();
         int noOccur = 0;
         if (configuration.getScheduler() != null) {
             if (configuration.getScheduler().getTasks() != null && configuration.getScheduler().getTasks().length > 0) {
@@ -266,7 +259,6 @@ public class SchedulerValidator extends Validator {
                 break;
             }
         }
-
         return result;
     }
 
@@ -293,7 +285,6 @@ public class SchedulerValidator extends Validator {
                 return false;
             }
         }
-
         return true;
     }
 
@@ -320,7 +311,6 @@ public class SchedulerValidator extends Validator {
                 return false;
             }
         }
-
         return true;
     }
 
@@ -356,7 +346,6 @@ public class SchedulerValidator extends Validator {
                 return false;
             }
         }
-
         return true;
     }
 }

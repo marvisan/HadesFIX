@@ -2,12 +2,6 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
-/*
- * ErrorCode.java
- *
- * $Id: ErrorCode.java,v 1.1 2011-03-28 04:38:38 vrotaru Exp $
- */
 package net.hades.fix.engine.validator;
 
 import java.util.HashMap;
@@ -25,7 +19,7 @@ public enum ErrorCode {
     DuplicateTask                                   ("001"),
     NonAllowedChar                                  ("002"),
     MissingHourField                                ("003"),
-    MissingMinuteField                             ("004"),
+    MissingMinuteField				    ("004"),
     MissingDayOfMonthField                          ("005"),
     MissingMonthField                               ("006"),
     MissingYearField                                ("007"),
@@ -36,9 +30,9 @@ public enum ErrorCode {
 
     private static final long serialVersionUID = 1L;
 
-    private String value;
+    private final String value;
 
-    private static final Map<String, ErrorCode> stringToEnum = new HashMap<String, ErrorCode>();
+    private static final Map<String, ErrorCode> stringToEnum = new HashMap<>();
 
     static {
         for (ErrorCode tag : values()) {

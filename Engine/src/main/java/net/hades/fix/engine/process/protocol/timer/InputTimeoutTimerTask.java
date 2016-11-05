@@ -33,7 +33,7 @@ public class InputTimeoutTimerTask extends EngineTimerTask {
 
     @Override
     public void run() {
-	if (ProtocolState.LOGGEDON.equals(protocol.getProcessingState())) {
+	if (ProtocolState.LOGGEDON.equals(protocol.getProtocolState())) {
 	    String logMsg = "Input queue timer expired. Killing the session.";
 	    Log.severe(logMsg);
 

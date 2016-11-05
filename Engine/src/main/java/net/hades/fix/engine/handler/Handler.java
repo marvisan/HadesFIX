@@ -4,6 +4,7 @@
  */
 package net.hades.fix.engine.handler;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -31,6 +32,7 @@ public interface Handler<T extends Message,U extends ExecutionResult> extends Ca
     Map<String, String> getStatistics();
     void shutdown();
     void shutdownImmediate();
+    List<Handler> getNextHandlers();
 
     /**
      * Enables/Disable a handler. By default the handler is enabled.

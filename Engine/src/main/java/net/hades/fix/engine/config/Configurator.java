@@ -4,12 +4,6 @@
  */
 package net.hades.fix.engine.config;
 
-import net.hades.fix.engine.config.model.HadesInstanceInfo;
-import net.hades.fix.engine.exception.ConfigurationException;
-import net.hades.fix.engine.logging.LoggerController;
-import net.hades.fix.message.xml.codec.ValidationErrorHandler;
-import net.hades.fix.message.xml.codec.XMLValidationResult;
-
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -21,6 +15,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import net.hades.fix.engine.config.model.HadesInstanceInfo;
+import net.hades.fix.engine.exception.ConfigurationException;
+import net.hades.fix.engine.logging.LoggerController;
+import net.hades.fix.message.xml.codec.ValidationErrorHandler;
+import net.hades.fix.message.xml.codec.XMLValidationResult;
 
 /**
  * Read the configuration files and sets the main configuartion class with data.

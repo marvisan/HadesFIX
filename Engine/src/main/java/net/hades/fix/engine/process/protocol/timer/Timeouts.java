@@ -13,22 +13,11 @@ public class Timeouts {
 
     private int htbtTimeout;
     private int htbtOffset;
-    private int resendTimeout;
     private int testRequestTimeout;
     private int logonTimeout;
     private int logoutTimeout;
 
-    private boolean enableResendTimeout;
-
     public Timeouts() {
-    }
-
-    public boolean isEnableResendTimeout() {
-        return enableResendTimeout;
-    }
-
-    public void setEnableResendTimeout(boolean enableResendTimeout) {
-        this.enableResendTimeout = enableResendTimeout;
     }
 
     public int getHtbtOffset() {
@@ -61,14 +50,6 @@ public class Timeouts {
 
     public void setLogoutTimeout(int logoutTimeout) {
         this.logoutTimeout = logoutTimeout;
-    }
-
-    public int getResendTimeout() {
-        return resendTimeout;
-    }
-
-    public void setResendTimeout(int resendTimeout) {
-        this.resendTimeout = resendTimeout;
     }
 
     public int getTestRequestTimeout() {

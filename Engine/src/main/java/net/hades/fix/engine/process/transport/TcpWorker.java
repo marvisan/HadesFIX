@@ -10,7 +10,9 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -207,6 +209,11 @@ public final class TcpWorker implements Handler {
     @Override
     public void setDisabled(boolean disabled) {
 	throw new UnsupportedOperationException("Tcp Worker cannot be disabled"); 
+    }
+
+    @Override
+    public List<Handler> getNextHandlers() {
+	return new ArrayList<>(nextHandlers.values());
     }
 
     private class MessageSender implements ManagedTask {

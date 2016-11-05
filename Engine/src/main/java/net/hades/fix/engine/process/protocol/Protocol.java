@@ -12,9 +12,7 @@ package net.hades.fix.engine.process.protocol;
 
 import java.io.File;
 import java.time.Duration;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.TimeZone;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -46,7 +44,6 @@ import net.hades.fix.engine.process.session.persist.MemSessSeqPersister;
 import net.hades.fix.engine.process.session.persist.SessSeqPersister;
 import net.hades.fix.message.BinaryMessage;
 import net.hades.fix.message.FIXMsg;
-import net.hades.fix.message.HeartbeatMsg;
 import net.hades.fix.message.ResendRequestMsg;
 import net.hades.fix.message.exception.BadFormatMsgException;
 import net.hades.fix.message.exception.InvalidMsgException;
@@ -171,7 +168,7 @@ public abstract class Protocol implements Handler {
 	    msgToSend = new BinaryMessage(((FIXMsg) msg).encode());
 	    timers.startHeartbeatTimeoutTask();
 	}
-	if (msgToSend != null) {
+	if (msgToSend != null && msgToSend.getRawMessage() != null) {
 	    // we need to make sure is sent in order so use blocking method
 	    transportOut.write(msgToSend);
 	}
@@ -540,16 +537,8 @@ public abstract class Protocol implements Handler {
 	    if (configuration.getDisableGapDetection() == null) {
 		configuration.setDisableGapDetection(DEFAULT_DISABLE_GAP_DETECTION);
 	    }
-	    if (configuration.getEnableResendTimeout() == null) {
-		configuration.setEnableResendTimeout(ENABLE_RESEND_TIMEOUT);
-	    }
 	    if (configuration.getPersistence() == null) {
 		configuration.setPersistence(DEFAULT_PERSISTENCE);
-	    }
-	    if (configuration.getEnableResendTimeout()) {
-		if (configuration.getResendTimeout() == null) {
-		    configuration.setResendTimeout(DEFAULT_RESEND_TIMEOUT);
-		}
 	    }
 	    if (configuration.getTestMessageIndicator() == null) {
 		configuration.setTestMessageIndicator(DEFAULT_TEST_MSG_IND);
@@ -678,10 +667,6 @@ public abstract class Protocol implements Handler {
 
     protected void createTimeoutTimers() {
 	Timeouts timeouts = new Timeouts();
-	timeouts.setEnableResendTimeout(getConfiguration().getEnableResendTimeout());
-	if (timeouts.isEnableResendTimeout()) {
-	    timeouts.setResendTimeout(getConfiguration().getResendTimeout());
-	}
 	timeouts.setHtbtOffset(getConfiguration().getHeartBtOffset());
 	timeouts.setHtbtTimeout(getConfiguration().getHeartBtInt());
 	timeouts.setLogonTimeout(getConfiguration().getLogonTimeout());

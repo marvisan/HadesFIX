@@ -3,20 +3,11 @@
  *               Use is subject to license terms.
  */
 
-/*
- * StreamValidator.java
- *
- * $Id: StreamValidator.java,v 1.1 2011-03-28 04:38:38 vrotaru Exp $
- */
 package net.hades.fix.engine.validator;
-
-import net.hades.fix.engine.config.model.HadesInstanceInfo;
-import net.hades.fix.engine.config.model.SessionInfo;
 
 import java.util.Map;
 
-import net.hades.fix.engine.config.model.CounterpartyInfo;
-import net.hades.fix.engine.config.model.StreamInfo;
+import net.hades.fix.engine.config.model.HadesInstanceInfo;
 
 /**
  * Stream configuration validator.

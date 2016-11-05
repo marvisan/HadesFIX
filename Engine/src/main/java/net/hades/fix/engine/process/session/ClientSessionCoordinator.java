@@ -13,7 +13,6 @@ import net.hades.fix.engine.exception.ConfigurationException;
 import net.hades.fix.engine.mgmt.alert.Alert;
 import net.hades.fix.engine.mgmt.alert.AlertCode;
 import net.hades.fix.engine.mgmt.alert.BaseSeverityType;
-import net.hades.fix.engine.mgmt.alert.ComponentType;
 import net.hades.fix.engine.model.SessionAddress;
 import net.hades.fix.engine.process.event.AlertEvent;
 import net.hades.fix.engine.process.stream.ConsumerStream;

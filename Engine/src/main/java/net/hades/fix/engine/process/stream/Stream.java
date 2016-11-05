@@ -2,180 +2,177 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
-/*
- * Stream.java
- *
- * $Id: Stream.java,v 1.33 2011-04-30 04:39:44 vrotaru Exp $
- */
 package net.hades.fix.engine.process.stream;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.hades.fix.commons.exception.ExceptionUtil;
+import net.hades.fix.engine.config.model.HandlerDefInfo;
+import net.hades.fix.engine.config.model.HandlerInfo;
+import net.hades.fix.engine.config.model.HandlerParamInfo;
+import net.hades.fix.engine.config.model.HandlerRefInfo;
+import net.hades.fix.engine.config.model.StreamInfo;
 import net.hades.fix.engine.exception.ConfigurationException;
-import net.hades.fix.engine.mgmt.alert.AlertCode;
-import net.hades.fix.engine.mgmt.alert.BaseSeverityType;
-import net.hades.fix.engine.mgmt.alert.ComponentType;
-import net.hades.fix.engine.mgmt.data.Stats;
-import net.hades.fix.engine.mgmt.data.StreamProcessData;
-import net.hades.fix.engine.mgmt.data.StreamStats;
-import net.hades.fix.engine.process.ManagedProcess;
-import net.hades.fix.engine.process.command.Command;
-import net.hades.fix.engine.process.event.AlertEvent;
-import net.hades.fix.engine.process.event.EventProcessor;
-import net.hades.fix.engine.process.listener.AlertListener;
-import net.hades.fix.engine.process.listener.LifeCycleListener;
-import net.hades.fix.engine.process.protocol.Protocol;
-import net.hades.fix.engine.process.session.Coordinable;
-import net.hades.fix.engine.mgmt.alert.Alert;
-import net.hades.fix.engine.mgmt.data.ProcessData;
-import net.hades.fix.engine.mgmt.data.ProcessStatus;
-import net.hades.fix.engine.process.listener.MessageListener;
+import net.hades.fix.engine.handler.Handler;
 import net.hades.fix.engine.process.session.SessionCoordinator;
 
 /**
  * Generic class for a message stream container.
  * 
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
- * @version $Revision: 1.33 $
  */
 public abstract class Stream {
 
-    private static final Logger LOGGER = Logger.getLogger(Stream.class .getName());
+    private static final Logger Log = Logger.getLogger(Stream.class .getName());
 
-    protected static final int MAX_NUM_COMMANDS                     = 5;
-
-    protected Protocol protocol;
     protected SessionCoordinator sessionCoordinator;
+    protected StreamInfo configuration;
+    protected List<Handler> handlers;
+    protected List<HandlerDefInfo> handlerDefs;
 
-    protected volatile boolean shutdown;
-
-    protected EventProcessor eventProcessor;
-
-    protected AtomicReference<ProcessStatus> processStatus;
-    protected AtomicReference<StreamProcessData> mgmtData;
-    protected AtomicReference<StreamStats> stats;
-
-    protected BlockingDeque<Command> commandQueue;
-
-    protected Stream(String name) {
-        super(name);
-        mgmtData = new AtomicReference<StreamProcessData>(new StreamProcessData());
-        stats = new AtomicReference<StreamStats>(new StreamStats());
-        processStatus = new AtomicReference<ProcessStatus>(ProcessStatus.INITIALISING);
-        commandQueue = new LinkedBlockingDeque<Command>(MAX_NUM_COMMANDS);
+    protected Stream(SessionCoordinator sessionCoordinator, StreamInfo configuration, HandlerDefInfo[] handlerDefs) throws ConfigurationException {
+        this.sessionCoordinator = sessionCoordinator;
+	this.configuration = configuration;
+	this.handlerDefs = Arrays.asList(handlerDefs);
+	createHandlers();
+	wireupHandlers();
+    }
+    
+    public Handler getFirstHandler() {
+	Handler result = null;
+	for (Handler handler : handlers) {
+	    result = handler;
+	    String id = handler.getId();
+	    boolean found = false;
+	    for (Handler other : handlers) {
+		for (Handler h : other.getNextHandlers()) {
+		    if (h.getId().equals(id)) {
+			found = true;
+			break;
+		    }
+		}
+		if (found) {
+		    break;
+		}
+	    }
+	}
+	return result;
+    }
+    
+    public Handler getLastHandler() {
+	for (Handler handler : handlers) {
+	    if (handler.getNextHandlers() == null || handler.getNextHandlers().isEmpty()) {
+		return handler;
+	    }
+	}
+	return null;
     }
 
-    protected abstract void initialise() throws ConfigurationException;
+    //---------------------------------------------------------------------------------------------
     
-    protected abstract void startup();
+    protected void wireupHandlers() throws ConfigurationException {
+	for (HandlerInfo handlerInfo : configuration.getHandlers()) {
+	    Handler th = findHandlerById(handlerInfo.getId());
+	    if (th == null) {
+		throw new ConfigurationException(String.format("Handler with id [%s] is not properly configured", handlerInfo.getId()));
+	    }
+	    if (handlerInfo.getNextHandlers() != null && handlerInfo.getNextHandlers().length > 0) {
+		for (HandlerRefInfo ref : handlerInfo.getNextHandlers()) {
+		    Handler tr = findHandlerById(ref.getId());
+		    if (tr == null) {
+			throw new ConfigurationException(String.format("Handler with id [%s] is not properly configured", ref.getId()));
+		    }
+		    th.addNextHandler(ref.getId(), tr);
+		}
+	    }
+	}
+    }
     
-    protected abstract void block();
-    
-    protected abstract void unblock();
-    
-    protected abstract void shutdown();
-    
-    protected abstract void shutdownNow();
+    private Handler findHandlerById(String id) {
+	for (Handler handler : handlers) {
+	    if (id.equals(handler.getId())) {
+		return handler;
+	    }
+	}
+	return null;
+    }
 
-    @Override
-    public void execute(Command command) {
+    private void createHandlers() throws ConfigurationException {
+	handlers = new ArrayList<>();
+	for (HandlerInfo handlerInfo : configuration.getHandlers()) {
+	    Handler handler = getConfiguredHandler(handlerInfo.getId(), handlerInfo.getName());
+	    if (handler != null) {
+		handlers.add(handler);
+	    }
+	}
+    }
+   
+    private Handler getConfiguredHandler(String id, String name) throws ConfigurationException {
+        for (HandlerDefInfo handlerDef : handlerDefs) {
+            if (name.equals(handlerDef.getName())) {
+		Map<String, String> parameters = buildParameterMap(handlerDef.getParameters());
+                return createHandlerInstance(handlerDef.getImplClass(), id, parameters);
+            }
+        }
+        return null;
+    }
+
+    private Handler createHandlerInstance(String implClass, String id, Map<String, String> parameters) throws ConfigurationException {
         try {
-            commandQueue.put(command);
-        } catch (InterruptedException ex) {
-            String errMsg = "Stream thread [" + getName() + "] has been unexpectedly interrupted.";
-            LOGGER.log(Level.WARNING, "{0} Error was : {1}", new Object[] { errMsg, ExceptionUtil.getStackTrace(ex) });
-            eventProcessor.onAlertEvent(new AlertEvent(this,
-                        Alert.createAlert(getName(), ComponentType.Stream.toString(),
-                        BaseSeverityType.WARNING, AlertCode.THREAD_INTERRUPTED, errMsg, ex)));
+	    Class[] types = new Class[] { String.class, Map.class, ConcurrentMap.class };
+            Class<? extends Handler> handlerClass = Class.forName(implClass.trim()).asSubclass(Handler.class);
+	    Constructor<? extends Handler> ctor = handlerClass.getConstructor(types);
+	    Object[] params = new Object[] { id, parameters, sessionCoordinator.getSessionContext() };
+            return ctor.newInstance(params);
+        } catch (ClassNotFoundException ex) {
+            String errMsg = "Singleton handler class [" + implClass + "] handler [" + id + "] was not found.";
+            Log.log(Level.SEVERE, "{0} Error was : {1}", new Object[] {errMsg, ExceptionUtil.getStackTrace(ex)});
+            throw new ConfigurationException(errMsg, ex);
+        } catch (InstantiationException ex) {
+            String errMsg = "Could not create an instance of handler class [" + implClass + "] handler [" + id + "].";
+            Log.log(Level.SEVERE, "{0} Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
+            throw new ConfigurationException(errMsg, ex);
+        } catch (IllegalAccessException ex) {
+            String errMsg = "Class accessor error for [" + implClass + "] handler [" + id + "].";
+            Log.log(Level.SEVERE, "{0} Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
+            throw new ConfigurationException(errMsg, ex);
+        } catch (NoSuchMethodException ex) {
+	    String errMsg = "Class constructor for [" + implClass + "] handler [" + id + "] does not exists.";
+            Log.log(Level.SEVERE, "{0} Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
+            throw new ConfigurationException(errMsg, ex);
+	} catch (SecurityException ex) {
+	    String errMsg = "Security access error for [" + implClass + "] handler [" + id + "].";
+            Log.log(Level.SEVERE, "{0} Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
+            throw new ConfigurationException(errMsg, ex);
+	} catch (IllegalArgumentException ex) {
+	    String errMsg = "Inavlid arguments of constructor for [" + implClass + "] handler [" + id + "].";
+            Log.log(Level.SEVERE, "{0} Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
+            throw new ConfigurationException(errMsg, ex);
+	} catch (InvocationTargetException ex) {
+	    String errMsg = "Could not call constructor for [" + implClass + "] handler [" + id + "].";
+            Log.log(Level.SEVERE, "{0} Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
+            throw new ConfigurationException(errMsg, ex);
+	}
+    }
+
+    private Map<String, String> buildParameterMap(HandlerParamInfo[] handlerParams) {
+        Map<String, String> result = null;
+        if (handlerParams != null && handlerParams.length > 0) {
+            result = new HashMap<>(handlerParams.length);
+            for (HandlerParamInfo handlerParam : handlerParams) {
+                result.put(handlerParam.getName(), handlerParam.getValue());
+            }
         }
+        return result;
     }
 
-    @Override
-    public void addLifeCycleListener(LifeCycleListener listener) {
-        eventProcessor.addLifeCycleListener(listener);
-    }
-
-    @Override
-    public void addAlertListener(AlertListener listener) {
-        eventProcessor.addAlertListener(listener);
-    }
-
-    @Override
-    public void addMessageListener(MessageListener listener) {
-        eventProcessor.addMessageListener(listener);
-    }
-
-    @Override
-    public Coordinable getSessionCoordinator() {
-        return sessionCoordinator;
-    }
-
-    @Override
-    public Stats getStats() {
-        return stats.get();
-    }
-
-    @Override
-    public ProcessData getMgmtData() {
-        return mgmtData.get();
-    }
-
-    @Override
-    public ProcessStatus getProcessStatus() {
-        return processStatus.get();
-    }
-
-    @Override
-    public void setProcessStatus(ProcessStatus processStatus) {
-        this.processStatus.set(processStatus);
-    }
-
-    @Override
-    public String retrieveSessionAddress() {
-        return sessionCoordinator.getSessionAddress().toString();
-    }
-
-    public EventProcessor getEventProcessor() {
-        return eventProcessor;
-    }
-
-    protected abstract String getID();
-
-    protected void processCommand(Command command) {
-        if (command == null) {
-            return;
-        }
-        switch (command.getCommandType()) {
-            case Startup:
-                startup();
-                break;
-
-            case Block:
-                block();
-                break;
-
-            case Unblock:
-                unblock();
-                break;
-
-            case Shutdown:
-                shutdown();
-                break;
-
-            case ShutdownNow:
-                shutdownNow();
-                break;
-
-            default:
-                LOGGER.log(Level.SEVERE, "Command [{0}] not implemented for a Stream.", command.getCommandType().name());
-
-        }
-    }
 }

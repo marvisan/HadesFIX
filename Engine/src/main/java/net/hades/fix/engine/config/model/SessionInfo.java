@@ -69,10 +69,6 @@ public class SessionInfo implements Serializable {
     @XmlAttribute(name = "description")
     protected String description;
 
-    @XmlAttribute(name = "enableResendTimeout")
-    @XmlJavaTypeAdapter(BooleanAdapter.class)
-    protected Boolean enableResendTimeout;
-
     @XmlAttribute(name = "testMessageIndicator")
     @XmlJavaTypeAdapter(BooleanAdapter.class)
     protected Boolean testMessageIndicator;
@@ -316,14 +312,6 @@ public class SessionInfo implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public Boolean getEnableResendTimeout() {
-        return enableResendTimeout;
-    }
-
-    public void setEnableResendTimeout(Boolean enableResendTimeout) {
-        this.enableResendTimeout = enableResendTimeout;
     }
 
     public Boolean getTestMessageIndicator() {
@@ -691,9 +679,6 @@ public class SessionInfo implements Serializable {
         }
         if (description != null) {
             sb.append("description=").append(description).append("\n");
-        }
-        if (enableResendTimeout != null) {
-            sb.append("enableResendTimeout=").append(enableResendTimeout).append("\n");
         }
         if (testMessageIndicator != null) {
             sb.append("testMessageIndicator=").append(testMessageIndicator).append("\n");

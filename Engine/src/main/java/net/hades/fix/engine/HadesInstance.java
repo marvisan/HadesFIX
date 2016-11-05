@@ -56,7 +56,6 @@ import net.hades.fix.engine.mgmt.HadesFIXEngineMBean;
 import net.hades.fix.engine.mgmt.alert.Alert;
 import net.hades.fix.engine.mgmt.alert.AlertCode;
 import net.hades.fix.engine.mgmt.alert.BaseSeverityType;
-import net.hades.fix.engine.mgmt.alert.ComponentType;
 import net.hades.fix.engine.mgmt.data.ProcessStatus;
 import net.hades.fix.engine.mgmt.security.HadesServerProvider;
 import net.hades.fix.engine.model.CounterpartyAddress;
@@ -74,7 +73,6 @@ import net.hades.fix.engine.process.listener.MessageListener;
 import net.hades.fix.engine.process.session.ClientSessionCoordinator;
 import net.hades.fix.engine.process.session.ServerSessionCoordinator;
 import net.hades.fix.engine.process.session.SessionCoordinator;
-import net.hades.fix.engine.process.transport.TCPServerOld;
 import net.hades.fix.engine.scheduler.Scheduler;
 
 /**
@@ -93,7 +91,7 @@ public class HadesInstance implements Reportable {
 
     private final HadesInstanceInfo configuration;
     private ConcurrentMap<SessionAddress, SessionCoordinator> sessions;
-    private ConcurrentMap<String, TCPServerOld> tcpServers;
+    private ExecutorService executorService;
 
     private Scheduler scheduler;
 
@@ -129,7 +127,7 @@ public class HadesInstance implements Reportable {
 
             engine.eventProcessor.onAlertEvent(new AlertEvent(engine,
                     Alert.createAlert(engine.getConfiguration().getName(),
-                            ComponentType.HadesFIXEngine.toString(),
+			    HadesInstance.class.getSimpleName(),
                             BaseSeverityType.INFO,
                             AlertCode.COMPONENT_STARTED,
                             "HadesFIX engine successfully started", null)));
@@ -176,7 +174,7 @@ public class HadesInstance implements Reportable {
     }
 
     public ExecutorService getExecutorService() {
-	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	return executorService;
     }
 
     public static HadesFIXEngineMBean getOpenMBean() {
@@ -185,11 +183,6 @@ public class HadesInstance implements Reportable {
 
     public EventProcessor getEventProcessor() {
         return eventProcessor;
-    }
-
-    public void startEngine() {
-        startConfiguredSessions();
-        startInstanceScheduledTasks();
     }
 
     public void initialise() throws ConfigurationException {
@@ -203,6 +196,11 @@ public class HadesInstance implements Reportable {
         createScheduler();
 
         LOGGER.info("HadesFIX engine initialised successfully.");
+    }
+
+    public void startEngine() {
+        startConfiguredSessions();
+        startInstanceScheduledTasks();
     }
 
     public void waitToExit() {
@@ -433,10 +431,6 @@ public class HadesInstance implements Reportable {
         }
 
         return result;
-    }
-
-    private void startSessionCoordinator(SessionCoordinator session) {
-        session.execute(new Command(CommandType.Startup));
     }
 
     private void setConfiguredListeners() throws ConfigurationException {

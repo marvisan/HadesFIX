@@ -5,6 +5,8 @@
 package net.hades.fix.engine.handler;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -124,6 +126,11 @@ public abstract class AbstractHandler implements Handler  {
     @Override
     public void addNextHandler(String id, Handler next) {
 	nextHandlers.putIfAbsent(id, next);
+    }
+
+    @Override
+    public List<Handler> getNextHandlers() {
+	return new ArrayList<>(nextHandlers.values());
     }
 
     @Override
