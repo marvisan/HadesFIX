@@ -23,7 +23,6 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
-
 /**
  * TCP server socket connection.
  *
@@ -44,12 +43,12 @@ public class ServerTcpConnectionInfo extends TcpConnectionInfo implements Compos
 
     static {
         try {
-	    COMPOSITE_DATA_ITEMS = new String[]{"host", "port", "soLinger", "tcpNodelay",
+	    COMPOSITE_DATA_ITEMS = new String[]{"id", "host", "port", "soLinger", "tcpNodelay",
 		"soTimeout", "soRcvbuf", "soSndbuf", "sendKeepAlive", "restrHostsIPAddresses"};
-	    COMPOSITE_DATA_ITEMS_DESCRIPTION = new String[]{"Sell side host", "Sell side port",
+	    COMPOSITE_DATA_ITEMS_DESCRIPTION = new String[]{"Tcp Server Id", "Sell side host", "Sell side port",
 		"Socket SO_LINGER Value", "Socket TCP_NODELAY Value", "Socket SO_TIMEOUT Value",
 		"Socket Rx Buffer Size", "Socket Tx Buffer Size", "Socket SEND_ALIVE Value", "Restricted Hosts List"};
-	    COMPOSITE_DATA_OPEN_TYPES = new OpenType<?>[]{SimpleType.STRING, SimpleType.INTEGER, SimpleType.INTEGER, 
+	    COMPOSITE_DATA_OPEN_TYPES = new OpenType<?>[]{SimpleType.STRING, SimpleType.STRING, SimpleType.INTEGER, SimpleType.INTEGER, 
 		SimpleType.BOOLEAN, SimpleType.INTEGER, SimpleType.INTEGER, SimpleType.INTEGER, SimpleType.BOOLEAN,
 		SimpleType.STRING};
 
@@ -96,7 +95,7 @@ public class ServerTcpConnectionInfo extends TcpConnectionInfo implements Compos
                     itemNames.toArray(new String[itemNames.size()]),
                     itemDescriptions.toArray(new String[itemDescriptions.size()]),
                     itemTypes.toArray(new OpenType<?>[itemTypes.size()]));
-            CompositeData cd = new CompositeDataSupport(xct, COMPOSITE_DATA_ITEMS, new Object[]{host, port, socketLingerTimeout, 
+            CompositeData cd = new CompositeDataSupport(xct, COMPOSITE_DATA_ITEMS, new Object[]{id, host, port, socketLingerTimeout, 
 		tcpNodelay, socketTimeout, socketRcvbuf, socketSndbuf, sendKeepAlive, restrHostsIPAddresses});
             assert ct.isValue(cd);
             return cd;

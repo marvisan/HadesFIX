@@ -408,10 +408,8 @@ public class HadesInstance implements Reportable {
         SessionCoordinator coordinator;
         if (sessionInfo instanceof ClientSessionInfo) {
             coordinator = new ClientSessionCoordinator(this, sessionInfo, cptyInfo, address);
-            coordinator.initialise();
         } else {
             coordinator = new ServerSessionCoordinator(this, sessionInfo, cptyInfo, address);
-            coordinator.initialise();
         }
         sessions.put(address, coordinator);
     }

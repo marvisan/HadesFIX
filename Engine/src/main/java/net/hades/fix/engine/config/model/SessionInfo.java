@@ -649,168 +649,172 @@ public class SessionInfo implements Serializable {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("{SessionInfo[");
-        sb.append("compID=").append(compID).append("\n");
+        sb.append("compID=").append(compID).append(",");
         if (subID != null) {
-            sb.append("subID=").append(subID).append("\n");
+            sb.append("subID=").append(subID).append(",");
         }
         if (locationID != null) {
-            sb.append("locationID=").append(locationID).append("\n");
+            sb.append("locationID=").append(locationID).append(",");
         }
         if (disabled != null) {
-            sb.append("disabled=").append(disabled).append("\n");
+            sb.append("disabled=").append(disabled).append(",");
         }
         if (deliverToCompID != null) {
-            sb.append("deliverToCompID=").append(deliverToCompID).append("\n");
+            sb.append("deliverToCompID=").append(deliverToCompID).append(",");
         }
         if (deliverToSubID != null) {
-            sb.append("deliverToSubID=").append(deliverToSubID).append("\n");
+            sb.append("deliverToSubID=").append(deliverToSubID).append(",");
         }
         if (deliverToLocationID != null) {
-            sb.append("deliverToLocationID=").append(deliverToLocationID).append("\n");
+            sb.append("deliverToLocationID=").append(deliverToLocationID).append(",");
         }
         if (messageEncoding != null) {
-            sb.append("messageEncoding=").append(messageEncoding).append("\n");
+            sb.append("messageEncoding=").append(messageEncoding).append(",");
         }
         if (heartBtInt != null) {
-            sb.append("heartBtInt=").append(heartBtInt).append("\n");
+            sb.append("heartBtInt=").append(heartBtInt).append(",");
         }
         if (heartBtOffset != null) {
-            sb.append("heartBtOffset=").append(heartBtOffset).append("\n");
+            sb.append("heartBtOffset=").append(heartBtOffset).append(",");
         }
         if (description != null) {
-            sb.append("description=").append(description).append("\n");
+            sb.append("description=").append(description).append(",");
         }
         if (testMessageIndicator != null) {
-            sb.append("testMessageIndicator=").append(testMessageIndicator).append("\n");
+            sb.append("testMessageIndicator=").append(testMessageIndicator).append(",");
         }
         if (resendTimeout != null) {
-            sb.append("resendTimeout=").append(resendTimeout).append("\n");
+            sb.append("resendTimeout=").append(resendTimeout).append(",");
         }
         if (enableRejectResponse != null) {
-            sb.append("enableRejectResponse=").append(enableRejectResponse).append("\n");
+            sb.append("enableRejectResponse=").append(enableRejectResponse).append(",");
         }
         if (fillLastMsgSeqNum != null) {
-            sb.append("fillLastMsgSeqNum=").append(fillLastMsgSeqNum).append("\n");
+            sb.append("fillLastMsgSeqNum=").append(fillLastMsgSeqNum).append(",");
         }
         if (maxMsgLen != null) {
-            sb.append("maxMsgLen=").append(maxMsgLen).append("\n");
+            sb.append("maxMsgLen=").append(maxMsgLen).append(",");
         }
         if (logoutTimeout != null) {
-            sb.append("logoutTimeout=").append(logoutTimeout).append("\n");
+            sb.append("logoutTimeout=").append(logoutTimeout).append(",");
         }
         if (latencyCheck != null) {
-            sb.append("latencyCheck=").append(latencyCheck).append("\n");
+            sb.append("latencyCheck=").append(latencyCheck).append(",");
         }
         if (maxLatencyTreshold != null) {
-            sb.append("maxLatencyTreshold=").append(maxLatencyTreshold).append("\n");
+            sb.append("maxLatencyTreshold=").append(maxLatencyTreshold).append(",");
         }
         if (description != null) {
-            sb.append("description=").append(description).append("\n");
+            sb.append("description=").append(description).append(",");
         }
         if (enableNextExpMsgSeqNum != null) {
-            sb.append("enableNextExpMsgSeqNum=").append(enableNextExpMsgSeqNum).append("\n");
+            sb.append("enableNextExpMsgSeqNum=").append(enableNextExpMsgSeqNum).append(",");
         }
         if (resetSeqAtStartup != null) {
-            sb.append("resetSeqAtStartup=").append(resetSeqAtStartup).append("\n");
+            sb.append("resetSeqAtStartup=").append(resetSeqAtStartup).append(",");
         }
         if (resetSeqAtLogon != null) {
-            sb.append("resetSeqAtLogon=").append(resetSeqAtLogon).append("\n");
+            sb.append("resetSeqAtLogon=").append(resetSeqAtLogon).append(",");
         }
         if (resetSeqAtLogout != null) {
-            sb.append("resetSeqAtLogout=").append(resetSeqAtLogout).append("\n");
+            sb.append("resetSeqAtLogout=").append(resetSeqAtLogout).append(",");
         }
         if (resetSeqAtDisconnect != null) {
-            sb.append("resetSeqAtDisconnect=").append(resetSeqAtDisconnect).append("\n");
+            sb.append("resetSeqAtDisconnect=").append(resetSeqAtDisconnect).append(",");
         }
         if (disableGapDetection != null) {
-            sb.append("disableGapDetection=").append(disableGapDetection).append("\n");
+            sb.append("disableGapDetection=").append(disableGapDetection).append(",");
         }
         if (printableFIXML != null) {
-            sb.append("printableFIXML=").append(printableFIXML).append("\n");
+            sb.append("printableFIXML=").append(printableFIXML).append(",");
         }
         if (validateIncomingFIXML != null) {
-            sb.append("validateIncomingFIXML=").append(validateIncomingFIXML).append("\n");
+            sb.append("validateIncomingFIXML=").append(validateIncomingFIXML).append(",");
         }
         if (validateOutgoingFIXML != null) {
-            sb.append("validateOutgoingFIXML=").append(validateOutgoingFIXML).append("\n");
+            sb.append("validateOutgoingFIXML=").append(validateOutgoingFIXML).append(",");
         }
         if (abortFIXMLValidationOnError != null) {
-            sb.append("abortFIXMLValidationOnError=").append(abortFIXMLValidationOnError).append("\n");
+            sb.append("abortFIXMLValidationOnError=").append(abortFIXMLValidationOnError).append(",");
         }
         if (enableMsgValidation != null) {
-            sb.append("enableMsgValidation=").append(enableMsgValidation).append("\n");
+            sb.append("enableMsgValidation=").append(enableMsgValidation).append(",");
         }
         if (persistence != null) {
-            sb.append("persistence=").append(persistence).append("\n");
+            sb.append("persistence=").append(persistence).append(",");
         }
         if (fixVersion != null) {
-            sb.append("fixVersion=").append(fixVersion).append("\n");
+            sb.append("fixVersion=").append(fixVersion).append(",");
         }
         if (defaultApplVerID != null) {
-            sb.append("defaultApplVerID=").append(defaultApplVerID).append("\n");
+            sb.append("defaultApplVerID=").append(defaultApplVerID).append(",");
         }
         if (defaultApplExtID != null) {
-            sb.append("defaultApplExtID=").append(defaultApplExtID).append("\n");
+            sb.append("defaultApplExtID=").append(defaultApplExtID).append(",");
         }
         if (defaultCstmApplVerID != null) {
-            sb.append("defaultCstmApplVerID=").append(defaultCstmApplVerID).append("\n");
+            sb.append("defaultCstmApplVerID=").append(defaultCstmApplVerID).append(",");
         }
         if (customApplVerID != null) {
-            sb.append("customApplVerID=").append(customApplVerID).append("\n");
+            sb.append("customApplVerID=").append(customApplVerID).append(",");
         }
         if (rxBufferSize != null) {
-            sb.append("rxBufferSize=").append(rxBufferSize).append("\n");
+            sb.append("rxBufferSize=").append(rxBufferSize).append(",");
         }
         if (txBufferSize != null) {
-            sb.append("txBufferSize=").append(txBufferSize).append("\n");
+            sb.append("txBufferSize=").append(txBufferSize).append(",");
         }
         if (resendEndSeqNum != null) {
-            sb.append("resendEndSeqNum=").append(resendEndSeqNum).append("\n");
+            sb.append("resendEndSeqNum=").append(resendEndSeqNum).append(",");
         }
         if (logonTimeout != null) {
-            sb.append("logonTimeout=").append(logonTimeout).append("\n");
+            sb.append("logonTimeout=").append(logonTimeout).append(",");
         }
         if (authenticationInfo != null) {
-            sb.append("authenticationInfo=").append(authenticationInfo.toString()).append("\n");
+            sb.append("authenticationInfo=").append(authenticationInfo.toString()).append(",");
         }
         if (encryptedAuthenticationInfo != null) {
-            sb.append("encryptedAuthenticationInfo=").append(encryptedAuthenticationInfo.toString()).append("\n");
+            sb.append("encryptedAuthenticationInfo=").append(encryptedAuthenticationInfo.toString()).append(",");
         }
         if (connection != null) {
-            sb.append("connection=").append(connection.toString()).append("\n");
+            sb.append("connection=").append(connection.toString()).append(",");
         }
         if (encryption != null) {
-            sb.append("encryption=").append(encryption.toString()).append("\n");
+            sb.append("encryption=").append(encryption.toString()).append(",");
         }
         if (producerStreamInfo != null) {
-            sb.append("producerStreamInfo=").append(producerStreamInfo.toString()).append("\n");
+            sb.append("producerStreamInfo=").append(producerStreamInfo.toString()).append(",");
         }
         if (consumerStreamInfo != null) {
-            sb.append("consumerStreamInfo=").append(consumerStreamInfo.toString()).append("\n");
+            sb.append("consumerStreamInfo=").append(consumerStreamInfo.toString()).append(",");
         }
         if (msgTypes != null && msgTypes.length > 0) {
-            sb.append("msgTypes=").append("\n");
+            sb.append("msgTypes=");
             for (MsgTypeInfo msgTypeInfo : msgTypes) {
-                sb.append(msgTypeInfo.toString()).append("\n");
+                sb.append(msgTypeInfo.toString()).append("|");
             }
+	    sb.append(",");
         }
         if (schedules != null && schedules.length > 0) {
-            sb.append("scheduleTasks=").append("\n");
+            sb.append("scheduleTasks=");
             for (ScheduleTaskInfo scheduleTask : schedules) {
-                sb.append(scheduleTask.toString()).append("\n");
+                sb.append(scheduleTask.toString()).append("|");
             }
+	    sb.append(",");
         }
         if (handlerDefs != null && handlerDefs.length > 0) {
-            sb.append("handlerDefs=").append("\n");
+            sb.append("handlerDefs=");
             for (HandlerDefInfo handlerDefInfo : handlerDefs) {
-                sb.append(handlerDefInfo.toString()).append("\n");
+                sb.append(handlerDefInfo.toString()).append("|");
             }
+	    sb.append(",");
         }
         if (securedMessages != null && securedMessages.length > 0) {
-            sb.append("securedMessages=").append("\n");
+            sb.append("securedMessages=");
             for (SecuredMessageInfo securedMessageInfo : securedMessages) {
-                sb.append(securedMessageInfo.toString()).append("\n");
+                sb.append(securedMessageInfo.toString()).append("|");
             }
+	    sb.append(",");
         }
 
         return sb.toString();

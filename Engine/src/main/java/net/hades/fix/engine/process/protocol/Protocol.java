@@ -2,17 +2,13 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
- /*
- * Protocol.java
- *
- * $Id: Protocol.java,v 1.50 2011-04-07 09:57:51 vrotaru Exp $
- */
 package net.hades.fix.engine.process.protocol;
 
 import java.io.File;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -82,12 +78,10 @@ public abstract class Protocol implements Handler {
     private static final boolean DEFAULT_VALID_OUT_FIXML = false;
     private static final boolean DEFAULT_ABORT_VALID_ON_ERR = false;
     private static final boolean DEFAULT_DISABLE_GAP_DETECTION = false;
-    private static final boolean ENABLE_RESEND_TIMEOUT = false;
     private static final boolean DEFAULT_TEST_MSG_IND = false;
     private static final boolean DEFAULT_PERSISTENCE = false;
     private static final int DEFAULT_RX_BUFFER_SIZE = 1000;
     private static final int DEFAULT_TX_BUFFER_SIZE = 1000;
-    private static final int DEFAULT_RESEND_TIMEOUT = 3000;
     private static final double DEFAULT_HEARTBT_OFFSET_FRACTION = 0.2;
     private static final int DEFAULT_TIMEOUT_SECS = 30;
     protected static final int DEFAULT_SLEEP_MILLIS = 5;
@@ -238,6 +232,11 @@ public abstract class Protocol implements Handler {
 
     public void setProtocolState(ProtocolState protocolState) {
 	this.protocolState = protocolState;
+    }
+
+    @Override
+    public List<Handler> getNextHandlers() {
+	return new ArrayList<>(nextHandlers.values());
     }
 
     @Override

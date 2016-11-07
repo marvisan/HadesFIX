@@ -4,6 +4,7 @@
  */
 package net.hades.fix.engine.process.protocol.client;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;

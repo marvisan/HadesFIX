@@ -150,6 +150,7 @@ public abstract class TcpConnectionInfo extends ConnectionInfo {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("{TcpConnectionInfo[");
+	sb.append("id=").append(id);
         if (host != null) {
             sb.append("host=").append(host);
         }
