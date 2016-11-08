@@ -6,9 +6,6 @@
 package net.hades.fix.engine.config.model;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import javax.xml.bind.annotation.*;
 
 import net.hades.fix.engine.util.PartyUtil;
@@ -40,31 +37,6 @@ public class CounterpartyInfo implements Serializable {
 
     public CounterpartyInfo(String compID) {
         this.compID = compID;
-    }
-
-    /**
-     * Only handler parameters can be reconfigured at runtime for now.
-     *
-     * @param newConfiguration
-     */
-    public void reconfigure(CounterpartyInfo newConfiguration) {
-        HandlerDefInfo[] newHandlerDefs = newConfiguration.getHandlerDefs();
-        for (HandlerDefInfo handlerDef : handlerDefs) {
-            for (HandlerDefInfo newHandlerDef : newHandlerDefs) {
-                if (handlerDef.getName().equals(newHandlerDef.getName())) {
-                    List<HandlerParamInfo> newParams = new ArrayList<>(Arrays.asList(handlerDef.getParameters()));
-                    handlerDef.setParameters(newParams.toArray(new HandlerParamInfo[newParams.size()]));
-                    break;
-                }
-            }
-        }
-        for (SessionInfo session : sessions) {
-            for (SessionInfo newSession : newConfiguration.getSessions()) {
-                if (PartyUtil.getID(newSession).equals(PartyUtil.getID(session))) {
-                    session.reconfigure(newSession);
-                }
-            }
-        }
     }
 
     @XmlAttribute(name = "compID", required = true)

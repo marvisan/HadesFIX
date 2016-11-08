@@ -5,9 +5,6 @@
 package net.hades.fix.engine.config.model;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -29,7 +26,7 @@ import net.hades.fix.engine.util.PartyUtil;
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
  */
 @XmlType(name = "SessionInfo", propOrder = {"connection", "authenticationInfo", "encryptedAuthenticationInfo", "encryption",
-    "producerStreamInfo", "consumerStreamInfo", "msgTypes", "handlerDefs", "securedMessages", "schedules"})
+    "producerStreamInfo", "consumerStreamInfo", "msgTypes", "nextHandlers", "handlerDefs", "securedMessages", "schedules"})
 @XmlAccessorType(XmlAccessType.NONE)
 public class SessionInfo implements Serializable {
 
@@ -205,6 +202,10 @@ public class SessionInfo implements Serializable {
     @XmlElementWrapper(name = "schedules")
     @XmlElementRef()
     protected ScheduleTaskInfo[] schedules;
+    
+    @XmlElement(name = "nextHandlers")
+    @XmlElementWrapper(name = "next")
+    protected HandlerRefInfo[] nextHandlers;
 
     @XmlTransient
     protected String remoteID;
@@ -214,24 +215,6 @@ public class SessionInfo implements Serializable {
         resetSeqAtLogon = Boolean.FALSE;
         resetSeqAtLogout = Boolean.FALSE;
         resetSeqAtStartup = Boolean.FALSE;
-    }
-
-    /**
-     * Only handler parameters can be reconfigured at runtime for now.
-     *
-     * @param newConfiguration
-     */
-    public void reconfigure(SessionInfo newConfiguration) {
-        HandlerDefInfo[] newHandlerDefs = newConfiguration.getHandlerDefs();
-        for (HandlerDefInfo handlerDef : handlerDefs) {
-            for (HandlerDefInfo newHandlerDef : newHandlerDefs) {
-                if (handlerDef.getName().equals(newHandlerDef.getName())) {
-                    List<HandlerParamInfo> newParams = new ArrayList<>(Arrays.asList(handlerDef.getParameters()));
-                    handlerDef.setParameters(newParams.toArray(new HandlerParamInfo[newParams.size()]));
-                    break;
-                }
-            }
-        }
     }
 
     public String getCompID() {
@@ -638,6 +621,14 @@ public class SessionInfo implements Serializable {
         this.disabled = disabled;
     }
 
+    public HandlerRefInfo[] getNextHandlers() {
+	return nextHandlers;
+    }
+
+    public void setNextHandlers(HandlerRefInfo[] nextHandlers) {
+	this.nextHandlers = nextHandlers;
+    }
+
     public String getRemoteID() {
         return remoteID;
     }
@@ -816,7 +807,12 @@ public class SessionInfo implements Serializable {
             }
 	    sb.append(",");
         }
-
+	if (nextHandlers != null && nextHandlers.length > 0) {
+            sb.append("nextHandlers=");
+            for (HandlerRefInfo nextHandler : nextHandlers) {
+                sb.append(nextHandler.toString()).append("|");
+            }
+        }
         return sb.toString();
     }
 }

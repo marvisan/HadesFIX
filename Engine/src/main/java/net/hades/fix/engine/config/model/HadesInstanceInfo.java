@@ -5,14 +5,10 @@
 package net.hades.fix.engine.config.model;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import javax.xml.bind.annotation.*;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import net.hades.fix.engine.config.xml.adapter.BooleanAdapter;
-import net.hades.fix.engine.util.PartyUtil;
 
 /**
  * General FIX engine configuration data.
@@ -93,32 +89,6 @@ public class HadesInstanceInfo implements Serializable {
 
     @XmlElementRef(required = false)
     private SchedulerInfo scheduler;
-
-    /**
-     * Only handler parameters can be reconfigured at runtime for now.
-     *
-     * @param newConfiguration reconfiguration values
-     */
-    public void reconfigure(HadesInstanceInfo newConfiguration) {
-        HandlerDefInfo[] newHandlerDefs = newConfiguration.getHandlerDefs();
-        for (HandlerDefInfo handlerDef : handlerDefs) {
-            for (HandlerDefInfo newHandlerDef : newHandlerDefs) {
-                if (handlerDef.getName().equals(newHandlerDef.getName())) {
-                    List<HandlerParamInfo> newParams = new ArrayList<>(Arrays.asList(handlerDef.getParameters()));
-                    handlerDef.setParameters(newParams.toArray(new HandlerParamInfo[newParams.size()]));
-                    break;
-                }
-            }
-        }
-        for (CounterpartyInfo counterparty : counterparties) {
-            for (CounterpartyInfo newCounterparty : newConfiguration.getCounterparties()) {
-                if (PartyUtil.getID(newCounterparty).equals(PartyUtil.getID(counterparty))) {
-                    counterparty.reconfigure(newCounterparty);
-                    break;
-                }
-            }
-        }
-    }
 
     public String getName() {
         return name;

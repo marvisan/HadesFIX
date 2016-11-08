@@ -46,14 +46,18 @@ public class ServerSessionInfo extends SessionInfo implements CompositeDataView,
     private static final String[] COMPOSITE_DATA_ITEMS_DESCRIPTION;
     private static final OpenType<?>[] COMPOSITE_DATA_OPEN_TYPES;
     private static final TabularType TABULAR_HANDLER_DEF_TYPE;
+    private static final TabularType TABULAR_HANDLER_REF_TYPE;
     private static final TabularData TABULAR_HANDLER_DEFS;
+    private static final TabularData TABULAR_HANDLER_REFS;
     private static final String[] TABULAR_HANDLER_DEF_INDEX;
+    private static final String[] TABULAR_HANDLER_REF_INDEX;
 
     public static CompositeType DataType;
 
     static {
         try {
             TABULAR_HANDLER_DEF_INDEX = new String[]{"name"};
+	    TABULAR_HANDLER_REF_INDEX = new String[]{"id"};
             COMPOSITE_DATA_ITEMS = new String[]{"compID", "subID", "locationID", "disabled",
                     "deliverToCompID", "deliverToSubID", "deliverToLocationID", "messageEncoding", "heartBtInt", "heartBtOffset",
                     "description", "testMessageIndicator", "resendTimeout", "enableRejectResponse", "fillLastMsgSeqNum",
@@ -61,7 +65,7 @@ public class ServerSessionInfo extends SessionInfo implements CompositeDataView,
                     "resetSeqAtLogon", "resetSeqAtLogout", "resetSeqAtDisconnect", "disableGapDetection", "printableFIXML", "validateIncomingFIXML",
                     "validateOutgoingFIXML", "abortFIXMLValidationOnError", "enableMsgValidation", "persistence", "fixVersion", "defaultApplVerID",
                     "defaultApplExtID", "defaultCstmApplVerID", "customApplVerID", "rxBufferSize", "txBufferSize", "resendEndSeqNum",
-                    "logonTimeout", "authenticationInfo", "connection", "producerStreamInfo", "consumerStreamInfo", "handlerDefs",
+                    "logonTimeout", "authenticationInfo", "connection", "producerStreamInfo", "consumerStreamInfo", "handlerRefs", "handlerDefs",
                     "enableLogonPassThrough"};
             COMPOSITE_DATA_ITEMS_DESCRIPTION = new String[]{"CompID", "SubID", "LocationID", "Is Disabled?",
                     "DeliverToCompID", "DeliverToSubID", "DeliverToLocationID", "Message Encoding", "Heartbeat Interval", "Heartbeat Offset",
@@ -70,10 +74,12 @@ public class ServerSessionInfo extends SessionInfo implements CompositeDataView,
                     "Reset Seq At Logon", "Reset Seq At Logout", "Reset Seq At Disconnect", "Disable Gap Detection", "Printable FIXML", "Validate Incoming FIXML",
                     "Validate Outgoing FIXML", "Abort FIXML Validation On Error", "Enable Msg Validation", "Enable Persistence", "FIX Version", "Default ApplVerID",
                     "Default ApplExtID", "Default CstmApplVerID", "Custom ApplVerID", "RX Buffer Size", "TX Buffer Size", "Resend End SeqNum",
-                    "Logon Timeout", "Authentication Data", "Connection Data", "Producer Stream Data", "Consumer Stream Data", "Handler Defs Data",
+                    "Logon Timeout", "Authentication Data", "Connection Data", "Producer Stream Data", "Consumer Stream Data", "Handler Refs Data", "Handler Defs Data",
                     "Enable Logon PassThrough"};
             TABULAR_HANDLER_DEF_TYPE = new TabularType("HandlerDefInfo", "List of Handler Definitions", HandlerDefInfo.DataType, TABULAR_HANDLER_DEF_INDEX);
             TABULAR_HANDLER_DEFS = new TabularDataSupport(TABULAR_HANDLER_DEF_TYPE);
+	    TABULAR_HANDLER_REF_TYPE = new TabularType("HandlerRefInfo", "List of Handler References", HandlerDefInfo.DataType, TABULAR_HANDLER_REF_INDEX);
+	    TABULAR_HANDLER_REFS = new TabularDataSupport(TABULAR_HANDLER_REF_TYPE);
             COMPOSITE_DATA_OPEN_TYPES = new OpenType<?>[]{SimpleType.STRING, SimpleType.STRING, SimpleType.STRING, SimpleType.BOOLEAN,
                     SimpleType.STRING, SimpleType.STRING, SimpleType.STRING, SimpleType.STRING, SimpleType.INTEGER, SimpleType.INTEGER,
                     SimpleType.STRING, SimpleType.BOOLEAN, SimpleType.INTEGER, SimpleType.BOOLEAN, SimpleType.BOOLEAN,
@@ -81,8 +87,8 @@ public class ServerSessionInfo extends SessionInfo implements CompositeDataView,
                     SimpleType.BOOLEAN, SimpleType.BOOLEAN, SimpleType.BOOLEAN, SimpleType.BOOLEAN, SimpleType.BOOLEAN, SimpleType.BOOLEAN,
                     SimpleType.BOOLEAN, SimpleType.BOOLEAN, SimpleType.BOOLEAN, SimpleType.BOOLEAN, SimpleType.STRING, SimpleType.STRING,
                     SimpleType.STRING, SimpleType.STRING, SimpleType.STRING, SimpleType.INTEGER, SimpleType.INTEGER, SimpleType.STRING,
-                    SimpleType.INTEGER, AuthenticationInfo.DataType, ClientTcpConnectionInfo.DataType, StreamInfo.DataType, StreamInfo.DataType, TABULAR_HANDLER_DEF_TYPE,
-                    SimpleType.BOOLEAN};
+                    SimpleType.INTEGER, AuthenticationInfo.DataType, ClientTcpConnectionInfo.DataType, StreamInfo.DataType, StreamInfo.DataType, 
+		    TABULAR_HANDLER_REF_TYPE, TABULAR_HANDLER_DEF_TYPE, SimpleType.BOOLEAN};
 
             DataType = new CompositeType("ServerSessionInfo", "Server Session Data", COMPOSITE_DATA_ITEMS,
                     COMPOSITE_DATA_ITEMS_DESCRIPTION, COMPOSITE_DATA_OPEN_TYPES);
@@ -128,6 +134,9 @@ public class ServerSessionInfo extends SessionInfo implements CompositeDataView,
                     itemNames.toArray(new String[itemNames.size()]),
                     itemDescriptions.toArray(new String[itemDescriptions.size()]),
                     itemTypes.toArray(new OpenType<?>[itemTypes.size()]));
+	    for (HandlerRefInfo handlerRef : nextHandlers) {
+                TABULAR_HANDLER_REFS.put(handlerRef.toCompositeData(HandlerRefInfo.DataType));
+            }
             for (HandlerDefInfo handlerDef : handlerDefs) {
                 TABULAR_HANDLER_DEFS.put(handlerDef.toCompositeData(HandlerDefInfo.DataType));
             }
@@ -141,8 +150,8 @@ public class ServerSessionInfo extends SessionInfo implements CompositeDataView,
                     logonTimeout, authenticationInfo != null ? authenticationInfo.toCompositeData(AuthenticationInfo.DataType) : null,
                     connection != null ? ((ServerTcpConnectionInfo) connection).toCompositeData(ServerTcpConnectionInfo.DataType) : null,
                     producerStreamInfo != null ? producerStreamInfo.toCompositeData(StreamInfo.DataType) : null,
-                    consumerStreamInfo != null ? consumerStreamInfo.toCompositeData(StreamInfo.DataType) : null,
-                    TABULAR_HANDLER_DEFS, enableLogonPassThrough});
+                    consumerStreamInfo != null ? consumerStreamInfo.toCompositeData(StreamInfo.DataType) : null, 
+		    TABULAR_HANDLER_REFS, TABULAR_HANDLER_DEFS, enableLogonPassThrough});
             assert ct.isValue(cd);
             return cd;
         } catch (Exception e) {

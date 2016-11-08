@@ -109,24 +109,24 @@ public class PartyUtil {
      * @param component component
      * @return session ID
      */
-//    public static String getSessionId(Object component) {
-//        StringBuilder sb = new StringBuilder();
-//        if (component instanceof Handler) {
-//            sb.append(((Handler)component).retrieveSessionAddress());
-//        } else if (component instanceof Status) {
-//            sb.append(((Status)component).retrieveSessionAddress());
-//        } else if (component instanceof TCPClientOld) {
-//            sb.append(((TCPClientOld)component).retrieveSessionAddress());
-//        } else if (component instanceof TCPServerWorkerOld) {
-//            sb.append(((TCPServerWorkerOld)component).retrieveSessionAddress());
-//        } else if (component instanceof EngineTimerTask) {
-//            sb.append(((EngineTimerTask)component).getStateProcessor().getProtocol().getSessionCoordinator().getSessionAddress());
-//        } else if (component instanceof Manageable) {
-//            sb.append(((Manageable)component).retrieveSessionAddress());
-//        } else {
-//            sb.append("Undefined");
-//        }
-//        
-//        return sb.toString();
-//    }
+    public static String getSessionId(Object component) {
+        StringBuilder sb = new StringBuilder();
+        if (component instanceof Handler) {
+            sb.append(((Handler)component).retrieveSessionAddress());
+        } else if (component instanceof Status) {
+            sb.append(((Status)component).retrieveSessionAddress());
+        } else if (component instanceof TCPClientOld) {
+            sb.append(((TCPClientOld)component).retrieveSessionAddress());
+        } else if (component instanceof TCPServerWorkerOld) {
+            sb.append(((TCPServerWorkerOld)component).retrieveSessionAddress());
+        } else if (component instanceof EngineTimerTask) {
+            sb.append(((EngineTimerTask)component).getStateProcessor().getProtocol().getSessionCoordinator().getSessionAddress());
+        } else if (component instanceof Manageable) {
+            sb.append(((Manageable)component).retrieveSessionAddress());
+        } else {
+            sb.append("Undefined");
+        }
+        
+        return sb.toString();
+    }
 }
