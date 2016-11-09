@@ -26,6 +26,7 @@ import net.hades.fix.engine.config.Configurator;
 import net.hades.fix.engine.config.model.MsgTypeInfo;
 import net.hades.fix.engine.config.model.SessionInfo;
 import net.hades.fix.engine.exception.ConfigurationException;
+import net.hades.fix.engine.exception.ProtocolException;
 import net.hades.fix.engine.exception.SeqNoPersistenceException;
 import net.hades.fix.engine.mgmt.alert.Alert;
 import net.hades.fix.engine.mgmt.alert.AlertCode;
@@ -40,7 +41,9 @@ import net.hades.fix.engine.process.session.persist.MemSessSeqPersister;
 import net.hades.fix.engine.process.session.persist.SessSeqPersister;
 import net.hades.fix.message.BinaryMessage;
 import net.hades.fix.message.FIXMsg;
+import net.hades.fix.message.LogonMsg;
 import net.hades.fix.message.ResendRequestMsg;
+import net.hades.fix.message.SequenceResetMsg;
 import net.hades.fix.message.exception.BadFormatMsgException;
 import net.hades.fix.message.exception.InvalidMsgException;
 import net.hades.fix.message.exception.TagNotPresentException;
@@ -317,6 +320,78 @@ public abstract class Protocol implements Handler {
 	return seqNoPersister.getRxSeqNo();
     }
 
+    public void sendResetSequenceMessage(int newSeqNum) throws ProtocolException, InterruptedException {
+        SequenceResetMsg msg;
+        try {
+            msg = MessageFiller.buildSequenceResetMsg(this);
+            msg.setGapFillFlag(Boolean.FALSE);
+            msg.setNewSeqNo(newSeqNum);
+            setRxSeqNo(newSeqNum - 1);
+            msg.setPriority(Message.PRIORITY_HIGH);
+            writeToTransport(msg);
+        } catch (InvalidMsgException ex) {
+            String errMsg = "Invalid SequenceReset message for session [" + id + "].";
+            Log.log(Level.SEVERE, "{0} Error was : {1}", new Object[] { errMsg, ExceptionUtil.getStackTrace(ex) });
+            coordinator.onAlertEvent(new AlertEvent(this,
+                    Alert.createAlert(id, this.getClass().getSimpleName(), BaseSeverityType.RECOVERABLE,
+                    AlertCode.MSG_FORMAT_ERROR, errMsg, ex)));
+            throw new ProtocolException(errMsg, ex);
+        } catch (TagNotPresentException ex) {
+	    String errMsg = "Missing tag in SequenceReset message for session [" + id + "].";
+                Log.log(Level.SEVERE, "{0} Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
+                coordinator.onAlertEvent(new AlertEvent(this,
+                        Alert.createAlert(id, this.getClass().getSimpleName(), BaseSeverityType.RECOVERABLE,
+                                AlertCode.MSG_FORMAT_ERROR, errMsg, ex)));
+	} catch (BadFormatMsgException ex) {
+	    String errMsg = "Bad format Reject message for session [" + id + "].";
+                Log.log(Level.SEVERE, "{0} Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
+                coordinator.onAlertEvent(new AlertEvent(this,
+                        Alert.createAlert(id, this.getClass().getSimpleName(), BaseSeverityType.RECOVERABLE,
+                                AlertCode.MSG_FORMAT_ERROR, errMsg, ex)));
+	}
+    }
+
+    /**
+     * Sends a Logon message with ResetSeqNumFlag set to true that will trigger a sequence
+     * number reset on both sides.
+     * @throws net.hades.fix.engine.exception.ProtocolException
+     */
+    public void sessionReset() throws ProtocolException {
+        if (TaskStatus.Running.equals(status)) {
+            try {
+                setTxSeqNo(0);
+                LogonMsg logonMessage = MessageFiller.buildResetSeqNumLogonMsg(this);
+                logonMessage.setPriority(Message.PRIORITY_HIGH);
+                writeToTransport(logonMessage);
+            } catch (TagNotPresentException ex) {
+		String errMsg = "Missing tag in Reject message for session [" + id + "].";
+                Log.log(Level.SEVERE, "{0} Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
+                coordinator.onAlertEvent(new AlertEvent(this,
+                        Alert.createAlert(id, this.getClass().getSimpleName(), BaseSeverityType.RECOVERABLE,
+                                AlertCode.MSG_FORMAT_ERROR, errMsg, ex)));
+	    } catch (BadFormatMsgException ex) {
+		String errMsg = "Bad format Reject message for session [" + id + "].";
+                Log.log(Level.SEVERE, "{0} Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
+                coordinator.onAlertEvent(new AlertEvent(this,
+                        Alert.createAlert(id, this.getClass().getSimpleName(), BaseSeverityType.RECOVERABLE,
+                                AlertCode.MSG_FORMAT_ERROR, errMsg, ex)));
+	    } catch (InterruptedException ex) {
+		String errMsg = "Invalid Reject message for session [" + id + "].";
+                Log.log(Level.SEVERE, "{0} Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
+                coordinator.onAlertEvent(new AlertEvent(this,
+                        Alert.createAlert(id, this.getClass().getSimpleName(), BaseSeverityType.RECOVERABLE,
+                                AlertCode.MSG_FORMAT_ERROR, errMsg, ex)));
+	    } catch (InvalidMsgException ex) {
+		String errMsg = "Invalid message for session [" + id + "].";
+                Log.log(Level.SEVERE, "{0} Error was : {1}", new Object[]{errMsg, ExceptionUtil.getStackTrace(ex)});
+                coordinator.onAlertEvent(new AlertEvent(this,
+                        Alert.createAlert(id, this.getClass().getSimpleName(), BaseSeverityType.RECOVERABLE,
+                                AlertCode.MSG_FORMAT_ERROR, errMsg, ex)));
+	    }
+        } else {
+            throw new ProtocolException("Could not reset session sequence number. The session is not active.");
+        }
+    }
     /**
      * Gets the ApplVerID for a message type based on the configuration and session settings.
      *

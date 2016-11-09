@@ -54,12 +54,12 @@ public abstract class Stream {
 	    String id = handler.getId();
 	    boolean found = false;
 	    for (Handler other : handlers) {
-		for (Handler h : other.getNextHandlers()) {
-		    if (h.getId().equals(id)) {
-			found = true;
-			break;
-		    }
-		}
+//		for (Handler h : other.getNextHandlers()) {
+//		    if (h.getId().equals(id)) {
+//			found = true;
+//			break;
+//		    }
+//		}
 		if (found) {
 		    break;
 		}
@@ -79,7 +79,7 @@ public abstract class Stream {
 
     //---------------------------------------------------------------------------------------------
     
-    protected void wireupHandlers() throws ConfigurationException {
+    private void wireupHandlers() throws ConfigurationException {
 	for (HandlerInfo handlerInfo : configuration.getHandlers()) {
 	    Handler th = findHandlerById(handlerInfo.getId());
 	    if (th == null) {

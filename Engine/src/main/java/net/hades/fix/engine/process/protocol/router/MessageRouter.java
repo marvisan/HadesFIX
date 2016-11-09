@@ -2,38 +2,8 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
-/*
- * MessageRouter.java
- *
- * $Id: MessageRouter.java,v 1.11 2011-04-07 09:57:51 vrotaru Exp $
- */
 package net.hades.fix.engine.process.protocol.router;
 
-import net.hades.fix.commons.exception.ExceptionUtil;
-import net.hades.fix.commons.thread.ThreadUtil;
-import net.hades.fix.engine.mgmt.alert.Alert;
-import net.hades.fix.engine.mgmt.alert.BaseSeverityType;
-import net.hades.fix.engine.mgmt.data.ProcessStatus;
-import net.hades.fix.engine.model.CounterpartyAddress;
-import net.hades.fix.engine.process.event.AlertEvent;
-import net.hades.fix.engine.process.protocol.MessageFiller;
-import net.hades.fix.engine.process.protocol.ProtocolState;
-import net.hades.fix.engine.process.protocol.client.FIXClientOld;
-import net.hades.fix.engine.process.protocol.server.FixServer;
-import net.hades.fix.engine.process.session.ClientSessionCoordinator;
-import net.hades.fix.engine.process.session.Coordinable;
-import net.hades.fix.engine.util.MessageUtil;
-import net.hades.fix.engine.util.ThreadLocalSessionDataUtil;
-import net.hades.fix.message.FIXMsg;
-import net.hades.fix.message.RejectMsg;
-import net.hades.fix.message.exception.BadFormatMsgException;
-import net.hades.fix.message.exception.InvalidMsgException;
-import net.hades.fix.message.group.HopsGroup;
-import net.hades.fix.message.type.SessionRejectReason;
-
-import java.util.Date;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -41,11 +11,22 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import net.hades.fix.engine.process.protocol.client.FixClient;
+import net.hades.fix.commons.exception.ExceptionUtil;
+import net.hades.fix.commons.thread.ThreadUtil;
+import net.hades.fix.engine.model.CounterpartyAddress;
+import net.hades.fix.engine.process.protocol.server.FixServer;
+import net.hades.fix.engine.util.MessageUtil;
+import net.hades.fix.engine.util.ThreadLocalSessionDataUtil;
+import net.hades.fix.message.FIXMsg;
+import net.hades.fix.message.exception.BadFormatMsgException;
+import net.hades.fix.message.exception.InvalidMsgException;
+import net.hades.fix.message.group.HopsGroup;
+
 /**
  * Router class that sends messages to be delivered to a counterparty destination.
  *
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
- * @version $Revision: 1.11 $
  */
 public class MessageRouter extends Thread {
 
@@ -53,24 +34,18 @@ public class MessageRouter extends Thread {
 
     private FixServer server;
 
-    private Map<CounterpartyAddress, FIXClientOld> clients;
-
+    private Map<CounterpartyAddress, FixClient> clients;
     private LinkedBlockingQueue<FIXMsg> inboundQueue;
-
     private LinkedBlockingQueue<FIXMsg> outboundQueue;
-
     private volatile boolean active;
-
     private RouterRequestWorker requestWorker;
-
     private RoutingReplyWorker replyWorker;
-
     private CountDownLatch exitSignal = new CountDownLatch(1);
 
     public MessageRouter(FixServer server, String routerName) {
         super(routerName);
         this.server = server;
-        clients = new ConcurrentHashMap<CounterpartyAddress, FIXClientOld>();
+        clients = new ConcurrentHashMap<CounterpartyAddress, FixClient>();
         inboundQueue = new LinkedBlockingQueue<FIXMsg>();
         outboundQueue = new LinkedBlockingQueue<FIXMsg>();
 
@@ -172,18 +147,18 @@ public class MessageRouter extends Thread {
     }
 
     private void rejectMessage(String text, FIXMsg message) throws InterruptedException {
-        try {
-            RejectMsg reject = MessageFiller.buildRejectMsg(server, message, SessionRejectReason.Other, new Exception(text));
-            server.getStateProcessor().sendProtocolMessage(reject);
-        } catch (InvalidMsgException ex) {
-            server.getEventProcessor().onAlertEvent(new AlertEvent(this,
-                    new Alert(new Date(),
-                            getName(),
-                            BaseSeverityType.FATAL,
-                            FixServer.COMPONENT_NAME,
-                            "Could not build Reject for message" + (message != null ? new String(message.getRawMessage()) : "null"),
-                            ex)));
-        }
+//        try {
+//            RejectMsg reject = MessageFiller.buildRejectMsg(server, message, SessionRejectReason.Other, new Exception(text));
+//            server.sendProtocolMessage(reject);
+//        } catch (InvalidMsgException ex) {
+//            server.onAlertEvent(new AlertEvent(this,
+//                    new Alert(new Date(),
+//                            getName(),
+//                            BaseSeverityType.FATAL,
+//                            FixServer.COMPONENT_NAME,
+//                            "Could not build Reject for message" + (message != null ? new String(message.getRawMessage()) : "null"),
+//                            ex)));
+//        }
     }
 
     private class RouterRequestWorker extends Thread {
@@ -235,21 +210,21 @@ public class MessageRouter extends Thread {
 
         private void sendMessageToDestination(FIXMsg message) throws InvalidMsgException, BadFormatMsgException, InterruptedException {
             CounterpartyAddress destination = MessageUtil.getDeliverToAddress(message);
-            FIXClientOld clientSession;
+            FixClient clientSession;
             if (clients.containsKey(destination)) {
                 clientSession = clients.get(destination);
                 if (clientSession != null) {
                     // check if the session is connected
-                    if (ProcessStatus.ACTIVE.equals(clientSession.getProcessStatus()) &&
-                            ProtocolState.LOGGEDON.equals(clientSession.getStateProcessor().getProcessingStage())) {
-                        if (!message.isDecoded()) {
-                            message.decode();
-                        }
-                        prepareMessageForRouting(message);
-                        clientSession.writeMessage(message);
-                    } else {
-                        rejectMessage("Route to " + destination.getID() + " destination not connected.", message);
-                    }
+//                    if (ProcessStatus.ACTIVE.equals(clientSession.getProcessStatus()) &&
+//                            ProtocolState.LOGGEDON.equals(clientSession.getStateProcessor().getProcessingStage())) {
+//                        if (!message.isDecoded()) {
+//                            message.decode();
+//                        }
+//                        prepareMessageForRouting(message);
+//                        clientSession.writeMessage(message);
+//                    } else {
+//                        rejectMessage("Route to " + destination.getID() + " destination not connected.", message);
+//                    }
                 } else {
                     rejectMessage("Route to " + destination.getID() + " destination not configured.", message);
                 }
@@ -257,16 +232,16 @@ public class MessageRouter extends Thread {
                 clientSession = searchForClientSession(destination);
                 if (clientSession != null) {
                     // check if the session is connected
-                    if (ProcessStatus.ACTIVE.equals(clientSession.getProcessStatus()) &&
-                            ProtocolState.LOGGEDON.equals(clientSession.getStateProcessor().getProcessingStage())) {
-                        if (!message.isDecoded()) {
-                            message.decode();
-                        }
-                        prepareMessageForRouting(message);
-                        clientSession.writeMessage(message);
-                    } else {
-                        rejectMessage("Route to " + destination.getID() + " destination not connected.", message);
-                    }
+//                    if (ProcessStatus.ACTIVE.equals(clientSession.getProcessStatus()) &&
+//                            ProtocolState.LOGGEDON.equals(clientSession.getStateProcessor().getProcessingStage())) {
+//                        if (!message.isDecoded()) {
+//                            message.decode();
+//                        }
+//                        prepareMessageForRouting(message);
+//                        clientSession.writeMessage(message);
+//                    } else {
+//                        rejectMessage("Route to " + destination.getID() + " destination not connected.", message);
+//                    }
                 } else {
                     rejectMessage("Route to " + destination.getID() + " destination not configured.", message);
                 }
@@ -274,21 +249,20 @@ public class MessageRouter extends Thread {
             }
         }
 
-        private FIXClientOld searchForClientSession(CounterpartyAddress dest) {
-            FIXClientOld client = null;
-            List<Coordinable> coordinators = server.getSessionCoordinator().getEngine().getSessionCoordinators();
-            if (coordinators != null && !coordinators.isEmpty()) {
-                for (Coordinable coordinator : coordinators) {
-                    if (coordinator instanceof ClientSessionCoordinator) {
-                        if (dest.equals(coordinator.getSessionAddress().getRemoteAddress())) {
-                            client = (FIXClientOld) coordinator.getProtocol();
-                            client.setMessageRouter(getMessageRouter());
-                            break;
-                        }
-                    }
-                }
-            }
-
+        private FixClient searchForClientSession(CounterpartyAddress dest) {
+            FixClient client = null;
+//            List<Coordinable> coordinators = server.getSessionCoordinator().getSessionCoordinators();
+//            if (coordinators != null && !coordinators.isEmpty()) {
+//                for (Coordinable coordinator : coordinators) {
+//                    if (coordinator instanceof ClientSessionCoordinator) {
+//                        if (dest.equals(coordinator.getSessionAddress().getRemoteAddress())) {
+//                            client = (FIXClientOld) coordinator.getProtocol();
+//                            client.setMessageRouter(getMessageRouter());
+//                            break;
+//                        }
+//                    }
+//                }
+//            }
             return client;
         }
     }
@@ -343,7 +317,7 @@ public class MessageRouter extends Thread {
 
         private void sendMessageToDestination(FIXMsg message) throws InvalidMsgException {
             prepareMessageForRouting(message);
-            server.writeMessage(message);
+//            server.writeMessage(message);
         }
     }
 }

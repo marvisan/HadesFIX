@@ -2,12 +2,6 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
-/*
- * StreamStats.java
- *
- * $Id: StreamStats.java,v 1.3 2011-03-17 07:36:01 vrotaru Exp $
- */
 package net.hades.fix.engine.mgmt.data;
 
 import java.io.ByteArrayOutputStream;
@@ -24,15 +18,11 @@ import javax.management.openmbean.OpenType;
 import javax.management.openmbean.SimpleType;
 
 /**
- * TCP statsitics collected by a TCP processes.
+ * TCP statistics collected by a TCP processes.
  * 
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
- * @version $Revision: 1.3 $
- * @created 27/04/2010
  */
 public class StreamStats extends Stats implements CompositeDataView {
-
-    // <editor-fold defaultstate="collapsed" desc="Constants">
 
     private static final long serialVersionUID = 1L;
 
@@ -41,10 +31,6 @@ public class StreamStats extends Stats implements CompositeDataView {
     private static final OpenType<?>[] STREAM_STATS_OPEN_TYPES;
 
     public static CompositeType DataType;
-
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Static Block">
 
     static {
 	try {
@@ -64,28 +50,13 @@ public class StreamStats extends Stats implements CompositeDataView {
 	}
     }
 
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Attributes">
-
     private int msgInCount;
-    
     private int msgOutCount;
-
     private int msgRejectCount;
-
     private int msgDiscardCount;
-
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Constructors">
 
     public StreamStats() {
     }
-
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Public Methods">
 
     public int getMsgDiscardCount() {
         return msgDiscardCount;
@@ -138,8 +109,8 @@ public class StreamStats extends Stats implements CompositeDataView {
     @Override
     public CompositeData toCompositeData(CompositeType ct) {
         try {
-            List<String> itemNames = new ArrayList<String>(ct.keySet());
-            List<String> itemDescriptions = new ArrayList<String>(itemNames.size());
+            List<String> itemNames = new ArrayList<>(ct.keySet());
+            List<String> itemDescriptions = new ArrayList<>(itemNames.size());
             List<OpenType<?>> itemTypes = new ArrayList<OpenType<?>>();
             for (String item : itemNames) {
                 itemDescriptions.add(ct.getDescription(item));
@@ -160,18 +131,4 @@ public class StreamStats extends Stats implements CompositeDataView {
             throw new RuntimeException(e);
         }
     }
-
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Protected Methods">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Package Methods">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Private Methods">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Inner Classes">
-    // </editor-fold>
 }

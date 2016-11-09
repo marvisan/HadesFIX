@@ -15,6 +15,7 @@ import net.hades.fix.engine.HadesInstance;
 import net.hades.fix.engine.config.model.CounterpartyInfo;
 import net.hades.fix.engine.config.model.SessionInfo;
 import net.hades.fix.engine.exception.ConfigurationException;
+import net.hades.fix.engine.exception.ProtocolStatusException;
 import net.hades.fix.engine.mgmt.alert.Alert;
 import net.hades.fix.engine.mgmt.alert.AlertCode;
 import net.hades.fix.engine.mgmt.alert.BaseSeverityType;
@@ -54,20 +55,13 @@ public final class ClientSessionCoordinator extends SessionCoordinator {
 	    status = TaskStatus.Completed;
 	    result = new ExecutionResult(status);
 	} catch (Exception ex) {
-	    eventProcessor.onAlertEvent(new AlertEvent(this,
+	    onAlertEvent(new AlertEvent(this,
 		    Alert.createAlert(id, ClientSessionCoordinator.class.getSimpleName(),
 			    BaseSeverityType.FATAL, AlertCode.SESSION_DESTROYED, "Unexpected error.", ex)));
 	    status = TaskStatus.Error;
-	    result = new ExecutionResult(status);
+	    result = new ExecutionResult(status, ex);
 	}
-
-	hadesInstance.removeSessionCoordinator(getCptyID(), getLocalID());
 	return result;
-    }
-
-    @Override
-    public void startStreamHandlers(Socket clientSocket) {
-	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
@@ -85,7 +79,7 @@ public final class ClientSessionCoordinator extends SessionCoordinator {
 	try {
 	    commandQueue.put("SHUTDOWN");
 	} catch (InterruptedException ex) {
-	    eventProcessor.onAlertEvent(new AlertEvent(this,
+	    onAlertEvent(new AlertEvent(this,
 		    Alert.createAlert(id, ClientSessionCoordinator.class.getSimpleName(),
 			    BaseSeverityType.FATAL, AlertCode.SESSION_DESTROYED, "Unexpected error.", ex)));
 	    status = TaskStatus.Error;
@@ -95,6 +89,26 @@ public final class ClientSessionCoordinator extends SessionCoordinator {
     @Override
     public TaskStatus getStatus() {
 	return status;
+    }
+
+    @Override
+    public void startStreamHandlers(Socket clientSocket) {
+	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void stopStreamHandlers() {
+	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void disconnectTransport() throws ProtocolStatusException {
+	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void connectTransport() throws ProtocolStatusException {
+	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }

@@ -6,7 +6,16 @@ package net.hades.fix.engine.util;
 
 import net.hades.fix.engine.config.model.SessionInfo;
 import net.hades.fix.engine.config.model.CounterpartyInfo;
+import net.hades.fix.engine.handler.Handler;
 import net.hades.fix.engine.model.CounterpartyAddress;
+import net.hades.fix.engine.process.EngineTask;
+import net.hades.fix.engine.process.PriorityNamedTask;
+import net.hades.fix.engine.process.protocol.timer.EngineTimerTask;
+import net.hades.fix.engine.process.session.SessionCoordinator;
+import net.hades.fix.engine.process.transport.TcpClient;
+import net.hades.fix.engine.process.transport.TcpServer;
+import net.hades.fix.engine.process.transport.TcpWorker;
+
 
 /**
  * Utility class used to return different data required for a party.
@@ -112,17 +121,17 @@ public class PartyUtil {
     public static String getSessionId(Object component) {
         StringBuilder sb = new StringBuilder();
         if (component instanceof Handler) {
-            sb.append(((Handler)component).retrieveSessionAddress());
-        } else if (component instanceof Status) {
-            sb.append(((Status)component).retrieveSessionAddress());
-        } else if (component instanceof TCPClientOld) {
-            sb.append(((TCPClientOld)component).retrieveSessionAddress());
-        } else if (component instanceof TCPServerWorkerOld) {
-            sb.append(((TCPServerWorkerOld)component).retrieveSessionAddress());
-        } else if (component instanceof EngineTimerTask) {
-            sb.append(((EngineTimerTask)component).getStateProcessor().getProtocol().getSessionCoordinator().getSessionAddress());
-        } else if (component instanceof Manageable) {
-            sb.append(((Manageable)component).retrieveSessionAddress());
+            sb.append(((Handler)component).getId());
+        } else if (component instanceof SessionCoordinator) {
+            sb.append(((SessionCoordinator)component).getId());
+        } else if (component instanceof TcpClient) {
+            sb.append(((TcpClient)component).getId());
+	} else if (component instanceof TcpServer) {
+            sb.append(((TcpServer)component).getId());
+        } else if (component instanceof TcpWorker) {
+            sb.append(((TcpWorker)component).getId());
+        } else if (component instanceof PriorityNamedTask) {
+            sb.append(((PriorityNamedTask)component).getName());
         } else {
             sb.append("Undefined");
         }

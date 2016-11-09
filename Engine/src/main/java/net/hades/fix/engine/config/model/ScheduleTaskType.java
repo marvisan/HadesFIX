@@ -23,8 +23,6 @@ public enum ScheduleTaskType {
     @XmlEnumValue("start")      StartSession                ("start"),
     @XmlEnumValue("stop")       StopSession                 ("stop"),
     @XmlEnumValue("reset")      SessionReset                ("reset"),
-    @XmlEnumValue("freeze")     FreezeSession               ("freeze"),
-    @XmlEnumValue("thaw")       ThawSession                 ("thaw"),
     @XmlEnumValue("connect")    ConnectSession              ("connect"),
     @XmlEnumValue("disconnect") DisconnectSession           ("disconnect"),
     @XmlEnumValue("shutdown")   ShutdownInstance            ("shutdown");

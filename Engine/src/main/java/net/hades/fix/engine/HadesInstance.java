@@ -4,7 +4,6 @@
  */
 package net.hades.fix.engine;
 
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -20,6 +19,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -56,14 +57,12 @@ import net.hades.fix.engine.mgmt.HadesFIXEngineMBean;
 import net.hades.fix.engine.mgmt.alert.Alert;
 import net.hades.fix.engine.mgmt.alert.AlertCode;
 import net.hades.fix.engine.mgmt.alert.BaseSeverityType;
-import net.hades.fix.engine.mgmt.data.ProcessStatus;
 import net.hades.fix.engine.mgmt.security.HadesServerProvider;
 import net.hades.fix.engine.model.CounterpartyAddress;
 import net.hades.fix.engine.model.SessionAddress;
 import net.hades.fix.engine.process.PriorityNamedThreadFactory;
 import net.hades.fix.engine.process.Reportable;
-import net.hades.fix.engine.process.command.Command;
-import net.hades.fix.engine.process.command.CommandType;
+import net.hades.fix.engine.process.TaskStatus;
 import net.hades.fix.engine.process.event.AlertEvent;
 import net.hades.fix.engine.process.event.EventProcessor;
 import net.hades.fix.engine.process.event.GenericEventProcessor;
@@ -102,6 +101,7 @@ public class HadesInstance implements Reportable {
 
     private static HadesFIXEngineMBean openMBean = null;
     private static ObjectName openMBeanObjectName = null;
+    protected final BlockingQueue<String> commandQueue;
 
     public HadesInstance() throws ConfigurationException {
         LOGGER.log(Level.INFO, "HadesFIX engine : {0}. Welcome !", DateFormatter.getFixTSFormat().format(new Date()));
@@ -109,6 +109,7 @@ public class HadesInstance implements Reportable {
         configuration = Configurator.readConfiguration();
         ConfigurationValidator.validateConfiguration(configuration);
 	exeuctorService = Executors.newCachedThreadPool(new PriorityNamedThreadFactory());
+	commandQueue = new ArrayBlockingQueue<>(1);
     }
 
     // MAIN
@@ -210,16 +211,17 @@ public class HadesInstance implements Reportable {
             try {
 		Thread.sleep(5);
             } catch (InterruptedException ex) {
-                String error = "Thread interrupted unexpectedly.";
-                LOGGER.log(Level.SEVERE, "{0} Error was : {1}", new Object[]{error, ExceptionUtil.getStackTrace(ex)});
+		String error = "Thread interrupted unexpectedly.";
+		LOGGER.log(Level.SEVERE, "{0} Error was : {1}", new Object[]{error, ExceptionUtil.getStackTrace(ex)});
 
-                eventProcessor.onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.HadesFIXEngine.toString(),
-                        BaseSeverityType.WARNING, AlertCode.THREAD_INTERRUPTED, "HadesFIX engine process interrupted", ex)));
+		eventProcessor.onAlertEvent(new AlertEvent(this,
+			Alert.createAlert(configuration.getName(), HadesInstance.class.getSimpleName(),
+				BaseSeverityType.WARNING, AlertCode.THREAD_INTERRUPTED, "HadesFIX engine process interrupted", ex)));
 
-                ThreadUtil.sleep(1000);
-                shutdown = true;
-            }
-        }
+		ThreadUtil.sleep(1000);
+		shutdown = true;
+	    }
+	}
     }
 
     @Override
@@ -283,12 +285,10 @@ public class HadesInstance implements Reportable {
                         }
                         if (sessionInfo instanceof ClientSessionInfo) {
                             coordinator = new ClientSessionCoordinator(this, sessionInfo, cptyInfo, address);
-                            coordinator.initialise();
                         } else {
                             coordinator = new ServerSessionCoordinator(this, sessionInfo, cptyInfo, address);
-                            coordinator.initialise();
                         }
-                        startSessionCoordinator(coordinator);
+//                        startSessionCoordinator(coordinator);
                         sessions.put(address, coordinator);
                     }
                 }
@@ -300,7 +300,7 @@ public class HadesInstance implements Reportable {
         SessionCoordinator sessionCoordinator = getSessionCoordinator(cptyAddr, sessAddr);
         if (sessionCoordinator != null) {
             sessionCoordinator.shutdown();
-            while (!ProcessStatus.SHUTDOWN.equals(sessionCoordinator.getProcessStatus())) {
+            while (!TaskStatus.Completed.equals(sessionCoordinator.getStatus())) {
                 if (!ThreadUtil.sleep(1)) {
                     break;
                 }
@@ -311,7 +311,7 @@ public class HadesInstance implements Reportable {
     }
 
     public Map<SessionInfo, SessionCoordinator> getConfiguredSessions() {
-        Map<SessionInfo, SessionCoordinator> configuredSessions = new HashMap<SessionInfo, SessionCoordinator>();
+        Map<SessionInfo, SessionCoordinator> configuredSessions = new HashMap<>();
         for (CounterpartyInfo counterparty : configuration.getCounterparties()) {
             for (SessionInfo configSession : counterparty.getSessions()) {
                 configSession.setRemoteID(counterparty.getID());
@@ -329,27 +329,27 @@ public class HadesInstance implements Reportable {
         }
         for (Entry<SessionAddress, SessionCoordinator> sessionEntry : sessions.entrySet()) {
             SessionAddress address = sessionEntry.getKey();
-            if (!ProcessStatus.SHUTDOWN.equals(sessionEntry.getValue().getProcessStatus())) {
-                sessionEntry.getValue().execute(new Command(CommandType.Shutdown));
-                while (!ProcessStatus.SHUTDOWN.equals(sessionEntry.getValue().getProcessStatus())) {
-                    if (!ThreadUtil.sleep(1)) {
-                        break;
-                    }
-                }
-            }
+//            if (!TaskStatus.Completed.equals(sessionEntry.getValue().getStatus())) {
+//                sessionEntry.getValue().execute(new Command(CommandType.Shutdown));
+//                while (!ProcessStatus.SHUTDOWN.equals(sessionEntry.getValue().getProcessStatus())) {
+//                    if (!ThreadUtil.sleep(1)) {
+//                        break;
+//                    }
+//                }
+//            }
 
             LOGGER.log(Level.INFO, "Session [{0}] shut down gracefully.", address.toString());
         }
         sessions.clear();
-        for (TCPServerOld tcpServer : tcpServers.values()) {
-            tcpServer.execute(new Command(CommandType.Shutdown));
-            while (!ProcessStatus.SHUTDOWN.equals(tcpServer.getProcessStatus())) {
-                if (!ThreadUtil.sleep(1)) {
-                    break;
-                }
-            }
-        }
-        tcpServers.clear();
+//        for (TcpServer tcpServer : tcpServers.values()) {
+//            tcpServer.execute(new Command(CommandType.Shutdown));
+//            while (!ProcessStatus.SHUTDOWN.equals(tcpServer.getProcessStatus())) {
+//                if (!ThreadUtil.sleep(1)) {
+//                    break;
+//                }
+//            }
+//        }
+//        tcpServers.clear();
 
         LOGGER.log(Level.INFO, "HadesFIX engine [{0}] shutdown successfully.", configuration.getName());
 	shutdown = true;
@@ -361,22 +361,22 @@ public class HadesInstance implements Reportable {
         }
         for (Entry<SessionAddress, SessionCoordinator> sessionEntry : sessions.entrySet()) {
             SessionAddress address = sessionEntry.getKey();
-            if (!ProcessStatus.SHUTDOWN.equals(sessionEntry.getValue().getProcessStatus())) {
-                sessionEntry.getValue().execute(new Command(CommandType.ShutdownNow));
-                while (!ProcessStatus.SHUTDOWN.equals(sessionEntry.getValue().getProcessStatus())) {
-                    if (!ThreadUtil.sleep(1)) {
-                        break;
-                    }
-                }
-            }
+//            if (!ProcessStatus.SHUTDOWN.equals(sessionEntry.getValue().getProcessStatus())) {
+//                sessionEntry.getValue().execute(new Command(CommandType.ShutdownNow));
+//                while (!ProcessStatus.SHUTDOWN.equals(sessionEntry.getValue().getProcessStatus())) {
+//                    if (!ThreadUtil.sleep(1)) {
+//                        break;
+//                    }
+//                }
+//            }
 
             LOGGER.log(Level.INFO, "Session [{0}] shut down immediate.", address.toString());
         }
         sessions.clear();
-        for (TCPServerOld tcpServer : tcpServers.values()) {
-            tcpServer.execute(new Command(CommandType.ShutdownNow));
-        }
-        tcpServers.clear();
+//        for (TCPServerOld tcpServer : tcpServers.values()) {
+//            tcpServer.execute(new Command(CommandType.ShutdownNow));
+//        }
+//        tcpServers.clear();
 
         LOGGER.log(Level.INFO, "HadesFIX engine [{0}] shutdown successfully.", configuration.getName());
 
@@ -420,7 +420,7 @@ public class HadesInstance implements Reportable {
             for (SessionCoordinator coordinator : sessions.values()) {
                 if (cptyAddress.equals(coordinator.getSessionAddress().getRemoteAddress().getID()) &&
                         localAddress.equals(coordinator.getSessionAddress().getLocalAddress().getID())) {
-                    if (!ProcessStatus.SHUTDOWN.equals(coordinator.getProcessStatus())) {
+                    if (!TaskStatus.Completed.equals(coordinator.getStatus())) {
                         result = false;
                     }
                     break;
@@ -734,7 +734,7 @@ public class HadesInstance implements Reportable {
 
     private void startConfiguredSessions() {
 	sessions.values().stream().forEach((session) -> {
-	    startSessionCoordinator(session);
+//	    startSessionCoordinator(session);
 	});
     }
 

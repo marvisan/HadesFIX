@@ -2,12 +2,6 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
-/*
- * SessionStats.java
- *
- * $Id: SessionStats.java,v 1.4 2011-03-27 00:27:44 vrotaru Exp $
- */
 package net.hades.fix.engine.mgmt.data;
 
 import java.io.ByteArrayOutputStream;
@@ -27,12 +21,8 @@ import javax.management.openmbean.SimpleType;
  * Stats collected by the session processes.
  * 
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
- * @version $Revision: 1.4 $
- * @created 27/04/2010
  */
 public class SessionStats extends Stats implements CompositeDataView {
-
-    // <editor-fold defaultstate="collapsed" desc="Constants">
 
     private static final long serialVersionUID = 1L;
 
@@ -41,10 +31,6 @@ public class SessionStats extends Stats implements CompositeDataView {
     private static final OpenType<?>[] SESS_STATS_OPEN_TYPES;
 
     public static CompositeType DataType;
-
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Static Block">
 
     static {
 	try {
@@ -65,28 +51,13 @@ public class SessionStats extends Stats implements CompositeDataView {
 	}
     }
 
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Attributes">
-
     private TransportStats transportStats;
-
     private ProtocolStats protocolStats;
-
     private StreamStats consumerStreamStats;
-
     private StreamStats producerStreamStats;
-
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Constructors">
 
     public SessionStats() {
     }
-
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Public Methods">
 
     public StreamStats getConsumerStreamStats() {
         return consumerStreamStats;
@@ -123,13 +94,15 @@ public class SessionStats extends Stats implements CompositeDataView {
     @Override
     public CompositeData toCompositeData(CompositeType ct) {
         try {
-            List<String> itemNames = new ArrayList<String>(ct.keySet());
-            List<String> itemDescriptions = new ArrayList<String>(itemNames.size());
-            List<OpenType<?>> itemTypes = new ArrayList<OpenType<?>>();
-            for (String item : itemNames) {
-                itemDescriptions.add(ct.getDescription(item));
-                itemTypes.add(ct.getType(item));
-            }
+            List<String> itemNames = new ArrayList<>(ct.keySet());
+            List<String> itemDescriptions = new ArrayList<>(itemNames.size());
+            List<OpenType<?>> itemTypes = new ArrayList<>();
+	    itemNames.stream().map((item) -> {
+		itemDescriptions.add(ct.getDescription(item));
+		return item;
+	    }).forEachOrdered((item) -> {
+		itemTypes.add(ct.getType(item));
+	    });
             if (transportStats == null) {
                 transportStats = new TransportStats();
             }
@@ -161,18 +134,4 @@ public class SessionStats extends Stats implements CompositeDataView {
             throw new RuntimeException(e);
         }
     }
-
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Protected Methods">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Package Methods">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Private Methods">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Inner Classes">
-    // </editor-fold>
 }

@@ -2,12 +2,6 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
-/*
- * ScheduledTask.java
- *
- * $Id: ScheduledTask.java,v 1.5 2011-03-31 10:32:03 vrotaru Exp $
- */
 package net.hades.fix.engine.scheduler;
 
 import java.util.Calendar;
@@ -21,10 +15,7 @@ import net.hades.fix.engine.exception.ProtocolException;
 import net.hades.fix.engine.mgmt.alert.Alert;
 import net.hades.fix.engine.mgmt.alert.AlertCode;
 import net.hades.fix.engine.mgmt.alert.BaseSeverityType;
-import net.hades.fix.engine.mgmt.alert.ComponentType;
-import net.hades.fix.engine.mgmt.data.ProcessStatus;
-import net.hades.fix.engine.process.command.Command;
-import net.hades.fix.engine.process.command.CommandType;
+import net.hades.fix.engine.process.TaskStatus;
 import net.hades.fix.engine.process.event.AlertEvent;
 import net.hades.fix.engine.process.session.SessionCoordinator;
 
@@ -32,15 +23,14 @@ import net.hades.fix.engine.process.session.SessionCoordinator;
  * Scheduler task set to be executed at a configured time.
  *
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
- * @version $Revision: 1.5 $
  */
 public class ScheduledTask implements Runnable {
 
     private static final Logger LOGGER = Logger.getLogger(ScheduledTask.class.getName());
 
-    private HadesInstance instance;
-    private SessionCoordinator coordinator;
-    private ScheduleTaskInfo configuration;
+    private final HadesInstance instance;
+    private final SessionCoordinator coordinator;
+    private final ScheduleTaskInfo configuration;
 
     public ScheduledTask(HadesInstance instance, SessionCoordinator coordinator, ScheduleTaskInfo configuration) {
         this.instance = instance;
@@ -56,14 +46,6 @@ public class ScheduledTask implements Runnable {
         if (configuration != null && configuration.getTaskType() != null) {
             try {
                 switch (configuration.getTaskType()) {
-                    case FreezeSession:
-                        freezeSession();
-                        break;
-
-                    case ThawSession:
-                        thawSession();
-                        break;
-
                     case StartSession:
                         startSession();
                         break;
@@ -89,147 +71,16 @@ public class ScheduledTask implements Runnable {
                         break;
 
                 }
-            } catch (Exception ex) {
-                String logErr = "Scheduled task [" + configuration.getName() + "] not able to execute task ["
-                        + configuration.getTaskType().name() + "]. Error eas : " + ex.getMessage();
-                LOGGER.severe(logErr);
-                if (instance != null) {
-                    instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
-                            BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, ex)));
-                }
-            }
-        }
-    }
-
-    private void freezeSession() {
-        if (instance != null) {
-            if (coordinator == null) {
-                if (configuration.getTaskParams() != null && configuration.getTaskParams().length > 0) {
-                    String cpty = configuration.getParameter(ScheduleFieldName.CptyAddress);
-                    String sess = configuration.getParameter(ScheduleFieldName.SessAddress);
-                    if (cpty != null && sess != null) {
-                        SessionCoordinator sessionCoordinator = instance.getSessionCoordinator(cpty, sess);
-                        if (sessionCoordinator != null) {
-                            if (ProcessStatus.ACTIVE.equals(sessionCoordinator.getProcessStatus())) {
-                                sessionCoordinator.execute(new Command(CommandType.Freeze));
-                            } else {
-                                String logErr = "Scheduled task [" + configuration.getName() + "] not able to freeze session ["
-                                        + sessionCoordinator.getSessionAddress() + "] in wrong state.";
-                                LOGGER.severe(logErr);
-                                if (instance != null) {
-                                    instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
-                                            BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
-                                }
-                            }
-                        } else {
-                            String logErr = "Scheduled task [" + configuration.getName() + "] not able to freeze session because no "
-                                    + "session exists for address [" + cpty + ":" + sess + "].";
-                            LOGGER.severe(logErr);
-                            if (instance != null) {
-                                instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
-                                        BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
-                            }
-                        }
-                    } else {
-                        String logErr = "Scheduled task [" + configuration.getName() + "] not able to freeze session because "
-                                + "no session address has been configured for this task.";
-                        LOGGER.severe(logErr);
-                        if (instance != null) {
-                            instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
-                                    BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
-                        }
-                    }
-                } else {
-                    String logErr = "Scheduled task [" + configuration.getName() + "] not able to freeze session because "
-                            + "no session address has been configured for this task.";
-                    LOGGER.severe(logErr);
-                    if (instance != null) {
-                        instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
-                                BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
-                    }
-                }
-            } else {
-                if (ProcessStatus.ACTIVE.equals(coordinator.getProcessStatus())) {
-                    coordinator.execute(new Command(CommandType.Freeze));
-                } else {
-                    String logErr = "Scheduled task [" + configuration.getName() + "] not able to freeze session ["
-                            + coordinator.getSessionAddress() + "].";
-                    LOGGER.severe(logErr);
-                    if (instance != null) {
-                        instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
-                                BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
-                    }
-                }
-            }
-        } else {
-            String logErr = "Instance not set for task [" + configuration.getName() + "].";
-            LOGGER.severe(logErr);
-        }
-    }
-
-    private void thawSession() {
-        if (instance != null) {
-            if (coordinator == null) {
-                if (configuration.getTaskParams() != null && configuration.getTaskParams().length > 0) {
-                    String cpty = configuration.getParameter(ScheduleFieldName.CptyAddress);
-                    String sess = configuration.getParameter(ScheduleFieldName.SessAddress);
-                    if (cpty != null && sess != null) {
-                        SessionCoordinator sessionCoordinator = instance.getSessionCoordinator(cpty, sess);
-                        if (sessionCoordinator != null) {
-                            if (ProcessStatus.FROZEN.equals(sessionCoordinator.getProcessStatus())) {
-                                sessionCoordinator.execute(new Command(CommandType.Thaw));
-                            } else {
-                                String logErr = "Scheduled task [" + configuration.getName() + "] not able to thaw session ["
-                                        + sessionCoordinator.getSessionAddress() + "] in wrong state.";
-                                LOGGER.severe(logErr);
-                                if (instance != null) {
-                                    instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
-                                            BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
-                                }
-                            }
-                        } else {
-                            String logErr = "Scheduled task [" + configuration.getName() + "] not able to thaw session because no "
-                                    + "session exists for address [" + cpty + ":" + sess + "].";
-                            LOGGER.severe(logErr);
-                            if (instance != null) {
-                                instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
-                                        BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
-                            }
-                        }
-                    } else {
-                        String logErr = "Scheduled task [" + configuration.getName() + "] not able to thaw session because "
-                                + "no session address has been configured for this task.";
-                        LOGGER.severe(logErr);
-                        if (instance != null) {
-                            instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
-                                    BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
-                        }
-                    }
-                } else {
-                    String logErr = "Scheduled task [" + configuration.getName() + "] not able to thaw session because "
-                            + "no session address has been configured for this task.";
-                    LOGGER.severe(logErr);
-                    if (instance != null) {
-                        instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
-                                BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
-                    }
-                }
-            } else {
-                if (ProcessStatus.FROZEN.equals(coordinator.getProcessStatus())) {
-                    coordinator.execute(new Command(CommandType.Thaw));
-                } else {
-                    String logErr = "Scheduled task [" + configuration.getName() + "] not able to thaw session ["
-                            + coordinator.getSessionAddress() + "].";
-                    LOGGER.severe(logErr);
-                    if (instance != null) {
-                        instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
-                                BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
-                    }
-                }
-            }
-        } else {
-            String logErr = "Instance not set for task [" + configuration.getName() + "].";
-            LOGGER.severe(logErr);
+	    } catch (Exception ex) {
+		String logErr = "Scheduled task [" + configuration.getName() + "] not able to execute task ["
+			+ configuration.getTaskType().name() + "]. Error eas : " + ex.getMessage();
+		LOGGER.severe(logErr);
+		if (instance != null) {
+		    instance.getEventProcessor().onAlertEvent(new AlertEvent(this,
+			    Alert.createAlert(configuration.getName(), ScheduledTask.class.getSimpleName(),
+				    BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, ex)));
+		}
+	    }
         }
     }
 
@@ -246,7 +97,7 @@ public class ScheduledTask implements Runnable {
                                 + cpty + ":" + sess + "].";
                         LOGGER.log(Level.SEVERE, "{0}. Error was : {1}", new Object[]{logErr, ex.getMessage()});
                         if (instance != null) {
-                            instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
+                            instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ScheduledTask.class.getSimpleName(),
                                     BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, ex)));
                         }
                     }
@@ -255,7 +106,7 @@ public class ScheduledTask implements Runnable {
                             + "no session address has been configured for this task.";
                     LOGGER.severe(logErr);
                     if (instance != null) {
-                        instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
+                        instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ScheduledTask.class.getSimpleName(),
                                 BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
                     }
                 }
@@ -264,7 +115,7 @@ public class ScheduledTask implements Runnable {
                         + "no session address has been configured for this task.";
                 LOGGER.severe(logErr);
                 if (instance != null) {
-                    instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
+                    instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ScheduledTask.class.getSimpleName(),
                             BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
                 }
             }
@@ -287,7 +138,7 @@ public class ScheduledTask implements Runnable {
                             String logErr = "Scheduled task [" + configuration.getName() + "] failed to start. Error was: " + ex.getMessage();
                             LOGGER.severe(logErr);
                             if (instance != null) {
-                                instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
+                                instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ScheduledTask.class.getSimpleName(),
                                         BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
                             }
                         }
@@ -296,7 +147,7 @@ public class ScheduledTask implements Runnable {
                                 + "no session address has been configured for this task.";
                         LOGGER.severe(logErr);
                         if (instance != null) {
-                            instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
+                            instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ScheduledTask.class.getSimpleName(),
                                     BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
                         }
                     }
@@ -305,19 +156,19 @@ public class ScheduledTask implements Runnable {
                             + "no session address has been configured for this task.";
                     LOGGER.severe(logErr);
                     if (instance != null) {
-                        instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
+                        instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ScheduledTask.class.getSimpleName(),
                                 BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
                     }
                 }
             } else {
-                if (!ProcessStatus.SHUTDOWN.equals(coordinator.getProcessStatus()) && !ProcessStatus.STOPPED.equals(coordinator.getProcessStatus())) {
-                    coordinator.execute(new Command(CommandType.Shutdown));
+                if (TaskStatus.Running.equals(coordinator.getStatus())) {
+                    coordinator.shutdownImmediate();
                 } else {
-                    String logErr = "Scheduled task [" + configuration.getName() + "] not able to freeze session ["
+                    String logErr = "Scheduled task [" + configuration.getName() + "] not able to stop session ["
                             + coordinator.getSessionAddress() + "].";
                     LOGGER.severe(logErr);
                     if (instance != null) {
-                        instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
+                        instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ScheduledTask.class.getSimpleName(),
                                 BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
                     }
                 }
@@ -337,13 +188,13 @@ public class ScheduledTask implements Runnable {
                     if (cpty != null && sess != null) {
                         SessionCoordinator sessionCoordinator = instance.getSessionCoordinator(cpty, sess);
                         if (sessionCoordinator != null) {
-                            sessionCoordinator.execute(new Command(CommandType.ConnectTransport));
+//                            sessionCoordinator.execute(new Command(CommandType.ConnectTransport));
                         } else {
                             String logErr = "Scheduled task [" + configuration.getName() + "] not able to connect session because no "
                                     + "session exists for address [" + cpty + ":" + sess + "].";
                             LOGGER.severe(logErr);
                             if (instance != null) {
-                                instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
+                                instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ScheduledTask.class.getSimpleName(),
                                         BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
                             }
                         }
@@ -352,7 +203,7 @@ public class ScheduledTask implements Runnable {
                                 + "no session address has been configured for this task.";
                         LOGGER.severe(logErr);
                         if (instance != null) {
-                            instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
+                            instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ScheduledTask.class.getSimpleName(),
                                     BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
                         }
                     }
@@ -361,12 +212,12 @@ public class ScheduledTask implements Runnable {
                             + "no configuration parameters are configured for this task.";
                     LOGGER.severe(logErr);
                     if (instance != null) {
-                        instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
+                        instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ScheduledTask.class.getSimpleName(),
                                 BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
                     }
                 }
             } else {
-                coordinator.execute(new Command(CommandType.ConnectTransport));
+//                coordinator.execute(new Command(CommandType.ConnectTransport));
             }
         } else {
             String logErr = "Instance not set for task [" + configuration.getName() + "].";
@@ -383,13 +234,13 @@ public class ScheduledTask implements Runnable {
                     if (cpty != null && sess != null) {
                         SessionCoordinator sessionCoordinator = instance.getSessionCoordinator(cpty, sess);
                         if (sessionCoordinator != null) {
-                            sessionCoordinator.execute(new Command(CommandType.DisconnectTransport));
+//                            sessionCoordinator.execute(new Command(CommandType.DisconnectTransport));
                         } else {
                             String logErr = "Scheduled task [" + configuration.getName() + "] not able to disconnect session because no "
                                     + "session exists for address [" + cpty + ":" + sess + "].";
                             LOGGER.severe(logErr);
                             if (instance != null) {
-                                instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
+                                instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ScheduledTask.class.getSimpleName(),
                                         BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
                             }
                         }
@@ -398,7 +249,7 @@ public class ScheduledTask implements Runnable {
                                 + "no session address has been configured for this task.";
                         LOGGER.severe(logErr);
                         if (instance != null) {
-                            instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
+                            instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ScheduledTask.class.getSimpleName(),
                                     BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
                         }
                     }
@@ -407,12 +258,12 @@ public class ScheduledTask implements Runnable {
                             + "no configuration parameters are configured for this task.";
                     LOGGER.severe(logErr);
                     if (instance != null) {
-                        instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
+                        instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ScheduledTask.class.getSimpleName(),
                                 BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
                     }
                 }
             } else {
-                coordinator.execute(new Command(CommandType.DisconnectTransport));
+//                coordinator.execute(new Command(CommandType.DisconnectTransport));
             }
         } else {
             String logErr = "Instance not set for task [" + configuration.getName() + "].";
@@ -431,7 +282,6 @@ public class ScheduledTask implements Runnable {
 
     private void sessionReset() {
         if (instance != null) {
-            try {
                 if (coordinator == null) {
                     if (configuration.getTaskParams() != null && configuration.getTaskParams().length > 0) {
                         String cpty = configuration.getParameter(ScheduleFieldName.CptyAddress);
@@ -439,13 +289,13 @@ public class ScheduledTask implements Runnable {
                         if (cpty != null && sess != null) {
                             SessionCoordinator sessionCoordinator = instance.getSessionCoordinator(cpty, sess);
                             if (sessionCoordinator != null) {
-                                sessionCoordinator.sessionReset();
+//                                sessionCoordinator.sessionReset();
                             } else {
                                 String logErr = "Scheduled task [" + configuration.getName() + "] not able to reset session because no "
                                         + "session exists for address [" + cpty + ":" + sess + "].";
                                 LOGGER.severe(logErr);
                                 if (instance != null) {
-                                    instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
+                                    instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ScheduledTask.class.getSimpleName(),
                                             BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
                                 }
                             }
@@ -454,7 +304,7 @@ public class ScheduledTask implements Runnable {
                                     + "no session address has been configured for this task.";
                             LOGGER.severe(logErr);
                             if (instance != null) {
-                                instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
+                                instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ScheduledTask.class.getSimpleName(),
                                         BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
                             }
                         }
@@ -463,21 +313,13 @@ public class ScheduledTask implements Runnable {
                                 + "no configuration parameters are configured for this task.";
                         LOGGER.severe(logErr);
                         if (instance != null) {
-                            instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
+                            instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ScheduledTask.class.getSimpleName(),
                                     BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
                         }
                     }
                 } else {
-                    coordinator.sessionReset();
+//                    coordinator.sessionReset();
                 }
-            } catch (ProtocolException ex) {
-                String logErr = "Error resetting session for task [" + configuration.getName() + "].";
-                LOGGER.log(Level.SEVERE, "{0}. Error was : {1}", new Object[]{logErr, ex.getMessage()});
-                if (instance != null) {
-                    instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
-                            BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, ex)));
-                }
-            }
         } else {
             String logErr = "Instance not set for task [" + configuration.getName() + "].";
             LOGGER.severe(logErr);
@@ -605,7 +447,7 @@ public class ScheduledTask implements Runnable {
                 String logErr = "Calendars are referenced in the schedule task but none is configired in instance configuration.";
                 LOGGER.severe(logErr);
                 if (instance != null) {
-                    instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ComponentType.SchedulerTask.name(),
+                    instance.getEventProcessor().onAlertEvent(new AlertEvent(this, Alert.createAlert(configuration.getName(), ScheduledTask.class.getSimpleName(),
                             BaseSeverityType.RECOVERABLE, AlertCode.SCHED_TASK_EXEC_ERROR, logErr, null)));
                 }
                 return false;
@@ -623,7 +465,6 @@ public class ScheduledTask implements Runnable {
                 }
             }
         }
-
         return false;
     }
 }

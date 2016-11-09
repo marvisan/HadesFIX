@@ -2,12 +2,6 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
-/*
- * ProtocolStats.java
- *
- * $Id: ProtocolStats.java,v 1.4 2011-04-03 08:00:08 vrotaru Exp $
- */
 package net.hades.fix.engine.mgmt.data;
 
 import java.io.ByteArrayOutputStream;
@@ -28,12 +22,8 @@ import javax.management.openmbean.SimpleType;
  * Stats collected by the FIX processes.
  * 
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
- * @version $Revision: 1.4 $
- * @created 27/04/2010
  */
 public class ProtocolStats extends Stats implements CompositeDataView {
-
-    // <editor-fold defaultstate="collapsed" desc="Constants">
 
     private static final long serialVersionUID = 1L;
 
@@ -42,10 +32,6 @@ public class ProtocolStats extends Stats implements CompositeDataView {
     private static final OpenType<?>[] PROTO_STATS_OPEN_TYPES;
 
     public static CompositeType DataType;
-
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Static Block">
 
     static {
 	try {
@@ -64,29 +50,15 @@ public class ProtocolStats extends Stats implements CompositeDataView {
 	}
     }
 
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Attributes">
-
-    private AtomicInteger totMsgInCount;
-
-    private AtomicInteger totMsgOutCount;
-
-    private AtomicInteger rejMsgCount;
-
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Constructors">
+    private final AtomicInteger totMsgInCount;
+    private final AtomicInteger totMsgOutCount;
+    private final AtomicInteger rejMsgCount;
 
     public ProtocolStats() {
         totMsgInCount = new AtomicInteger(0);
         totMsgOutCount = new AtomicInteger(0);
         rejMsgCount = new AtomicInteger(0);
     }
-
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Public Methods">
 
     public int getRejMsgCount() {
         return rejMsgCount.intValue();
@@ -115,9 +87,9 @@ public class ProtocolStats extends Stats implements CompositeDataView {
     @Override
     public CompositeData toCompositeData(CompositeType ct) {
         try {
-            List<String> itemNames = new ArrayList<String>(ct.keySet());
-            List<String> itemDescriptions = new ArrayList<String>(itemNames.size());
-            List<OpenType<?>> itemTypes = new ArrayList<OpenType<?>>();
+            List<String> itemNames = new ArrayList<>(ct.keySet());
+            List<String> itemDescriptions = new ArrayList<>(itemNames.size());
+            List<OpenType<?>> itemTypes = new ArrayList<>();
             for (String item : itemNames) {
                 itemDescriptions.add(ct.getDescription(item));
                 itemTypes.add(ct.getType(item));
@@ -138,17 +110,4 @@ public class ProtocolStats extends Stats implements CompositeDataView {
         }
     }
 
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Protected Methods">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Package Methods">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Private Methods">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Inner Classes">
-    // </editor-fold>
 }

@@ -2,12 +2,6 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
-/*
- * StreamProcessData.java
- *
- * $Id: StreamProcessData.java,v 1.4 2011-04-07 09:57:51 vrotaru Exp $
- */
 package net.hades.fix.engine.mgmt.data;
 
 import java.io.ByteArrayOutputStream;
@@ -27,12 +21,8 @@ import javax.management.openmbean.SimpleType;
  * Stream management data.
  * 
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
- * @version $Revision: 1.4 $
- * @created 28/04/2010
  */
 public class StreamProcessData extends ProcessData implements CompositeDataView {
-
-    // <editor-fold defaultstate="collapsed" desc="Constants">
 
     private static final long serialVersionUID = 1L;
 
@@ -41,10 +31,6 @@ public class StreamProcessData extends ProcessData implements CompositeDataView 
     private static final OpenType<?>[] STREAM_DATA_OPEN_TYPES;
 
     public static CompositeType DataType;
-
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Static Block">
 
     static {
 	try {
@@ -63,19 +49,8 @@ public class StreamProcessData extends ProcessData implements CompositeDataView 
 	}
     }
 
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Attributes">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Constructors">
-
     public StreamProcessData() {
     }
-
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Public Methods">
 
     @Override
     public CompositeData toCompositeData(CompositeType ct) {
@@ -103,17 +78,4 @@ public class StreamProcessData extends ProcessData implements CompositeDataView 
         }
     }
 
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Protected Methods">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Package Methods">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Private Methods">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Inner Classes">
-    // </editor-fold>
 }

@@ -2,13 +2,15 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
-/*
- * HadesFIXEngineMBean.java
- *
- * $Id: HadesFIXEngineMBean.java,v 1.25 2011-04-03 08:00:08 vrotaru Exp $
- */
 package net.hades.fix.engine.mgmt;
+
+import javax.management.*;
+import javax.management.openmbean.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import net.hades.fix.commons.exception.ExceptionUtil;
 import net.hades.fix.engine.HadesInstance;
@@ -18,20 +20,13 @@ import net.hades.fix.engine.config.model.SessionInfo;
 import net.hades.fix.engine.exception.ProtocolException;
 import net.hades.fix.engine.exception.ProtocolStatusException;
 import net.hades.fix.engine.mgmt.data.*;
+import net.hades.fix.engine.process.TaskStatus;
 import net.hades.fix.engine.process.event.AlertEvent;
 import net.hades.fix.engine.process.event.LifeCycleEvent;
 import net.hades.fix.engine.process.event.MessageEvent;
 import net.hades.fix.engine.process.session.ServerSessionCoordinator;
 import net.hades.fix.engine.process.session.SessionCoordinator;
 import net.hades.fix.engine.process.session.SessionType;
-
-import javax.management.*;
-import javax.management.openmbean.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Management bean for the Hades FIX engine.
@@ -200,38 +195,6 @@ public class HadesFIXEngineMBean extends NotificationBroadcasterSupport implemen
                 result = setTxSeq((String) params[0], (String) params[1], (Integer) params[2]);
             } catch (Exception e) {
                 throw new MBeanException(e, "invoking setTxSeq: " + e.getClass().getName() + " caught ["
-                        + e.getMessage() + "]");
-            }
-
-            return result;
-        } else if (actionName.equals("freezeSess")) {
-            CompositeData result;
-            if ((params.length != 2) || !(params[0] instanceof String || params[1] instanceof String)) {
-                throw new RuntimeOperationsException(
-                        new IllegalArgumentException("Cannot invoke [freezeSess] : expecting params[i] : "
-                                + "instanceof SimpleType.STRING for i = 0, instanceof SimpleType.STRING for i = 1 "),
-                        "Wrong content for array Object[] params to invoke freezeSess() method");
-            }
-            try {
-                result = freezeSess((String) params[0], (String) params[1]);
-            } catch (Exception e) {
-                throw new MBeanException(e, "invoking freezeSess: " + e.getClass().getName() + " caught ["
-                        + e.getMessage() + "]");
-            }
-
-            return result;
-        } else if (actionName.equals("thawSess")) {
-            CompositeData result;
-            if ((params.length != 2) || !(params[0] instanceof String || params[1] instanceof String)) {
-                throw new RuntimeOperationsException(
-                        new IllegalArgumentException("Cannot invoke [thawSess] : expecting params[i] : "
-                                + "instanceof SimpleType.STRING for i = 0, instanceof SimpleType.STRING for i = 1 "),
-                        "Wrong content for array Object[] params to invoke thawSess() method");
-            }
-            try {
-                result = thawSess((String) params[0], (String) params[1]);
-            } catch (Exception e) {
-                throw new MBeanException(e, "invoking thawSess: " + e.getClass().getName() + " caught ["
                         + e.getMessage() + "]");
             }
 
@@ -618,7 +581,7 @@ public class HadesFIXEngineMBean extends NotificationBroadcasterSupport implemen
                 sessMgmtData.setId(String.valueOf(fakeId--));
                 sessMgmtData.setName(configSession.getKey().getID());
                 sessMgmtData.setCounterparty(configSession.getKey().getRemoteID());
-                sessMgmtData.setStatus(ProcessStatus.SHUTDOWN);
+                sessMgmtData.setStatus(TaskStatus.Completed.Completed);
                 sessMgmtData.setConfig(configSession.toString());
                 ProtocolProcessData protocolMgmtData = new ProtocolProcessData();
                 if (configSession.getKey() instanceof ServerSessionInfo) {
@@ -626,7 +589,7 @@ public class HadesFIXEngineMBean extends NotificationBroadcasterSupport implemen
                 } else {
                     protocolMgmtData.setSessionType(SessionType.BUY);
                 }
-                protocolMgmtData.setStatus(ProcessStatus.SHUTDOWN);
+                protocolMgmtData.setStatus(TaskStatus.Completed);
                 protocolMgmtData.setRxSeqNo(0);
                 protocolMgmtData.setTxSeqNo(0);
                 sessMgmtData.setProtocolProcessData(protocolMgmtData);
@@ -642,7 +605,7 @@ public class HadesFIXEngineMBean extends NotificationBroadcasterSupport implemen
         OutcomeData result;
         SessionCoordinator sessionCoordinator = fixEngine.getSessionCoordinator(cptyAddr, sessAddr);
         if (sessionCoordinator != null) {
-            if (ProcessStatus.ACTIVE.equals(sessionCoordinator.getProcessStatus())) {
+            if (TaskStatus.Running.equals(sessionCoordinator.getStatus())) {
                 result = new OutcomeData(false);
                 result.setErrMsg("Could not change incoming messages expected sequence while the session is active.");
             } else {
@@ -665,7 +628,7 @@ public class HadesFIXEngineMBean extends NotificationBroadcasterSupport implemen
         OutcomeData result;
         SessionCoordinator sessionCoordinator = fixEngine.getSessionCoordinator(cptyAddr, sessAddr);
         if (sessionCoordinator != null) {
-            if (ProcessStatus.ACTIVE.equals(sessionCoordinator.getProcessStatus())) {
+            if (TaskStatus.Running.equals(sessionCoordinator.getStatus())) {
                 result = new OutcomeData(false);
                 result.setErrMsg("Could not change outgoing messages expected sequence while the session is active.");
             } else {
@@ -675,44 +638,6 @@ public class HadesFIXEngineMBean extends NotificationBroadcasterSupport implemen
                     --seqNum;
                 }
                 sessionCoordinator.getProtocol().setTxSeqNo(seqNum);
-            }
-        } else {
-            result = new OutcomeData(false);
-            result.setErrMsg("Could not found a session with address [" + cptyAddr + ":" + sessAddr + "].");
-        }
-
-        return result.toCompositeData(OutcomeData.DataType);
-    }
-
-    private CompositeData freezeSess(String cptyAddr, String sessAddr) {
-        OutcomeData result;
-        SessionCoordinator sessionCoordinator = fixEngine.getSessionCoordinator(cptyAddr, sessAddr);
-        if (sessionCoordinator != null) {
-            try {
-                result = new OutcomeData(true);
-                sessionCoordinator.freezeProtocol();
-            } catch (ProtocolStatusException ex) {
-                result = new OutcomeData(false);
-                result.setErrMsg(ex.getMessage());
-            }
-        } else {
-            result = new OutcomeData(false);
-            result.setErrMsg("Could not found a session with address [" + cptyAddr + ":" + sessAddr + "].");
-        }
-
-        return result.toCompositeData(OutcomeData.DataType);
-    }
-
-    private CompositeData thawSess(String cptyAddr, String sessAddr) {
-        OutcomeData result;
-        SessionCoordinator sessionCoordinator = fixEngine.getSessionCoordinator(cptyAddr, sessAddr);
-        if (sessionCoordinator != null) {
-            try {
-                result = new OutcomeData(true);
-                sessionCoordinator.thawProtocol();
-            } catch (ProtocolStatusException ex) {
-                result = new OutcomeData(false);
-                result.setErrMsg(ex.getMessage());
             }
         } else {
             result = new OutcomeData(false);
@@ -733,7 +658,7 @@ public class HadesFIXEngineMBean extends NotificationBroadcasterSupport implemen
 //                        + "] that is smaller than current expected sequence [" + expSeqNo + "]");
             } else {
                 try {
-                    sessionCoordinator.sendResetSequenceMessage(newSeqNum);
+                    sessionCoordinator.getProtocol().sendResetSequenceMessage(newSeqNum);
                     result = new OutcomeData(true);
                 } catch (InterruptedException | ProtocolException ex) {
                     result = new OutcomeData(false);
@@ -749,7 +674,7 @@ public class HadesFIXEngineMBean extends NotificationBroadcasterSupport implemen
     }
 
     /**
-     * Mught return null if session does not exist anymore
+     * Might return null if session does not exist anymore
      *
      * @param cptyAddr remote counterparty address
      * @param sessAddr local counterparty address
@@ -846,7 +771,7 @@ public class HadesFIXEngineMBean extends NotificationBroadcasterSupport implemen
         if (sessionCoordinator != null) {
             try {
                 result = new OutcomeData(true);
-                sessionCoordinator.sessionReset();
+                sessionCoordinator.getProtocol().sessionReset();
             } catch (ProtocolException ex) {
                 result = new OutcomeData(false);
                 result.setErrMsg(ex.getMessage());

@@ -2,12 +2,6 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
-/*
- * ProtocolProcessData.java
- *
- * $Id: ProtocolProcessData.java,v 1.6 2011-04-07 09:57:51 vrotaru Exp $
- */
 package net.hades.fix.engine.mgmt.data;
 
 import net.hades.fix.engine.process.session.SessionType;
@@ -29,12 +23,8 @@ import javax.management.openmbean.SimpleType;
  * FIX process management data.
  *
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
- * @version $Revision: 1.6 $
- * @created 28/04/2010
  */
 public class ProtocolProcessData extends ProcessData implements CompositeDataView {
-
-    // <editor-fold defaultstate="collapsed" desc="Constants">
 
     private static final long serialVersionUID = 1L;
 
@@ -43,10 +33,6 @@ public class ProtocolProcessData extends ProcessData implements CompositeDataVie
     private static final OpenType<?>[] PROTO_DATA_OPEN_TYPES;
 
     public static CompositeType DataType;
-
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Static Block">
 
     static {
 	try {
@@ -66,26 +52,14 @@ public class ProtocolProcessData extends ProcessData implements CompositeDataVie
 	}
     }
 
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Attributes">
-
     private int rxSeqNo;
 
     private int txSeqNo;
 
     private SessionType sessionType;
 
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Constructors">
-
     public ProtocolProcessData() {
     }
-
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Public Methods">
 
     public int getRxSeqNo() {
         return rxSeqNo;
@@ -114,9 +88,9 @@ public class ProtocolProcessData extends ProcessData implements CompositeDataVie
     @Override
     public CompositeData toCompositeData(CompositeType ct) {
         try {
-            List<String> itemNames = new ArrayList<String>(ct.keySet());
-            List<String> itemDescriptions = new ArrayList<String>(itemNames.size());
-            List<OpenType<?>> itemTypes = new ArrayList<OpenType<?>>();
+            List<String> itemNames = new ArrayList<>(ct.keySet());
+            List<String> itemDescriptions = new ArrayList<>(itemNames.size());
+            List<OpenType<?>> itemTypes = new ArrayList<>();
             for (String item : itemNames) {
                 itemDescriptions.add(ct.getDescription(item));
                 itemTypes.add(ct.getType(item));
@@ -138,18 +112,4 @@ public class ProtocolProcessData extends ProcessData implements CompositeDataVie
             throw new RuntimeException(e);
         }
     }
-
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Protected Methods">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Package Methods">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Private Methods">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Inner Classes">
-    // </editor-fold>
 }

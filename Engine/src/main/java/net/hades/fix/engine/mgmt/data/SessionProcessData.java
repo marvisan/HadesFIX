@@ -2,12 +2,6 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-
-/*
- * SessionData.java
- *
- * $Id: SessionProcessData.java,v 1.7 2011-04-07 09:57:51 vrotaru Exp $
- */
 package net.hades.fix.engine.mgmt.data;
 
 import java.io.ByteArrayOutputStream;
@@ -27,12 +21,8 @@ import javax.management.openmbean.SimpleType;
  * Session management data.
  * 
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
- * @version $Revision: 1.7 $
- * @created 28/04/2010
  */
 public class SessionProcessData extends ProcessData implements CompositeDataView {
-
-    // <editor-fold defaultstate="collapsed" desc="Constants">
 
     private static final long serialVersionUID = 1L;
 
@@ -41,10 +31,6 @@ public class SessionProcessData extends ProcessData implements CompositeDataView
     private static final OpenType<?>[] SESS_DATA_OPEN_TYPES;
 
     public static CompositeType DataType;
-
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Static Block">
 
     static {
 	try {
@@ -66,30 +52,15 @@ public class SessionProcessData extends ProcessData implements CompositeDataView
 	}
     }
 
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Attributes">
-
     private String counterparty;
 
     private TransportProcessData transportProcessData;
-
     private ProtocolProcessData protocolProcessData;
-
     private StreamProcessData consumerProcessData;
-
     private StreamProcessData producerProcessData;
-
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Constructors">
 
     public SessionProcessData() {
     }
-
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Public Methods">
 
     public String getCounterparty() {
         return counterparty;
@@ -134,9 +105,9 @@ public class SessionProcessData extends ProcessData implements CompositeDataView
     @Override
     public CompositeData toCompositeData(CompositeType ct) {
         try {
-            List<String> itemNames = new ArrayList<String>(ct.keySet());
-            List<String> itemDescriptions = new ArrayList<String>(itemNames.size());
-            List<OpenType<?>> itemTypes = new ArrayList<OpenType<?>>();
+            List<String> itemNames = new ArrayList<>(ct.keySet());
+            List<String> itemDescriptions = new ArrayList<>(itemNames.size());
+            List<OpenType<?>> itemTypes = new ArrayList<>();
             for (String item : itemNames) {
                 itemDescriptions.add(ct.getDescription(item));
                 itemTypes.add(ct.getType(item));
@@ -160,18 +131,4 @@ public class SessionProcessData extends ProcessData implements CompositeDataView
             throw new RuntimeException(e);
         }
     }
-
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Protected Methods">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Package Methods">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Private Methods">
-    // </editor-fold>
-
-    // <editor-fold defaultstate="collapsed" desc="Inner Classes">
-    // </editor-fold>
 }
