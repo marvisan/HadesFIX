@@ -10,7 +10,7 @@
 
 <hadesInstance xmlns="http://www.marvisan.com/schema/hades-engine-config-1-0"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-               xsi:schemaLocation="http://www.marvisan.com/schema/hades-engine-config-1-0 HadesEngineConfig.xsd"
+               xsi:schemaLocation="http://www.marvisan.com/schema/hades-engine-config-2-0 HadesEngineConfig.xsd"
                name="Sell Side" 
                description="A sample sell side engine"
                mgmtPort="33333"
@@ -28,15 +28,22 @@
         <counterparty compID="CLIENT">
             <sessions>
                 <session type="server" compID="SERVER" fixVersion="4.4" heartBtInt="60">
-                    <tcpServerConnection port="27008" name="TST_SRV" />
-                    <authInfo loginUsername="sampleuser" loginPassword="samplepass" />
+		    <tcpServerConnection id="TCP_SRV_LOCALHOST:27008" port="27008" name="TST_SRV"/>
+		    <authInfo loginUsername="sampleuser" loginPassword="samplepass" />
+		    <next>
+			<handler id="PRNT_RAW_C" />
+		    </next>
                     <stream type="prod" id="PROD_STREAM">
 			<handler id="GENERATOR" name="RandomMessageHandler">
 			    <next>
 				<handler id="PRNT_RAW_P" />
 			    </next>
 			</handler>
-			<handler id="PRNT_RAW_P" name="PrintRawMessageHandler"/>
+			<handler id="PRNT_RAW_P" name="PrintRawMessageHandler">
+			    <next>
+				<handler id="TCP_SRV_LOCALHOST:27008" />
+			    </next>
+			</handler>
                     </stream>
                     <stream type="cons" id="CONS_STREAM">
 			<handler id="PRNT_RAW_C" name="PrintRawMessageHandler">
