@@ -1,0 +1,180 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format xhtml
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Standard
+To quickly install the HadesFIX engine and run the sample configurations
+ follow the following simple steps:
+\end_layout
+
+\begin_layout Enumerate
+Unzip 
+\series bold
+HadesFIX_RELEASE_NO.zip
+\series default
+ file in directory of your choice on the disk.
+ We will refer to this directory as 
+\emph on
+HADESFIX_INSTALL_DIR
+\emph default
+.
+ 
+\end_layout
+
+\begin_layout Enumerate
+Create a Hades instance directory on disk where the instance scripts and
+ configuration files will reside.
+ We will refer to this directory as 
+\emph on
+HADESFIX_INSTANCE_DIR.
+
+\emph default
+ 
+\end_layout
+
+\begin_layout Enumerate
+Copy the content of the 
+\series bold
+bin/
+\series default
+ and 
+\series bold
+config/
+\series default
+ directories from the 
+\emph on
+HADESFIX_INSTALL_DIR 
+\emph default
+into the 
+\emph on
+HADESFIX_INSTANCE_DIR
+\emph default
+ directory.
+ 
+\end_layout
+
+\begin_layout Enumerate
+Edit 
+\series bold
+env.cmd/env.sh
+\series default
+ file and change the values of the following settings:
+\emph on
+ JAVA_HOME
+\emph default
+ - to the location of you java installation 
+\emph on
+HADES_HOME
+\emph default
+ - to the location of your HadesFIX installation 
+\emph on
+JAVA_OPTS
+\emph default
+ - set the values you need for your JVM
+\end_layout
+
+\begin_layout Enumerate
+Open 2 command/shell windows - start the test FIX sell side: 
+\series bold
+startServer.cmd/startServer.sh
+\series default
+ in the first window - start the test FIX buy side: 
+\series bold
+startClient.cmd/startClient.sh
+\series default
+ in the second window Both the sell and buy side application instances will
+ send random FIX messages to each other at fix intervals of time.
+ The consumer handler configured on both sides will only dump the message
+ to the console window.
+\end_layout
+
+\begin_layout Enumerate
+Use the command/shell scripts and the configuration files 
+\series bold
+(SampleServer.hades.xml
+\series default
+ and 
+\series bold
+SampleClient.hades.xml
+\series default
+) as a starting point for configuring your instance.
+ You can find the configuration file schema in the 
+\series bold
+HadesEngineConfig.xsd
+\series default
+ file.
+ Most likely you will need to write your handlers in order to do something
+ meaningful with the FIX messages.
+ 
+\end_layout
+
+\begin_layout Enumerate
+HadesFIX instances can be managed using the "HadesConsole" GUI tool.
+ Just type: hadesconsole in a command window started in <i>HADESFIX_INSTANCE_DIR.
+</i> folder.
+ The default configuration has 2 connections auto started to the sell and
+ buy side HadesFIX instances.
+ See the HadesFIX administration console tool documentation for details
+ to use this utility.
+\end_layout
+
+\end_body
+\end_document

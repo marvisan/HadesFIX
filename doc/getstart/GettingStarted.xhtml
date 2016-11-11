@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1 plus MathML 2.0//EN" "http://www.w3.org/TR/MathML2/dtd/xhtml-math11-f.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta name="GENERATOR" content="LyX 2.0.1" />
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8" />
+<title>LyX Document</title>
+
+<!-- Text Class Preamble -->
+<style type="text/css">
+div.toc {
+margin: 2em 0em;
+border-style: solid;
+border-width: 2px 0px;
+padding: 1em 0em;
+}
+div.tochead { font-size: x-large; font-weight: bold; }
+div.lyxtoc-0 {
+margin: 2em 0em 0em 0em;
+font-size: xx-large;
+font-weight: bold;
+}
+div.lyxtoc-1 {
+margin: 1em 0em 0em 0em;
+font-size: x-large;
+font-weight: bold;
+}
+div.lyxtoc-2 {
+margin: 0em 0em 0em 1em;
+font-size: large;
+font-weight: normal;
+}
+div.lyxtoc-3 { margin: 0em 0em 0em 0.5em; font-size: medium; }
+div.lyxtoc-4 { margin: 0em 0em 0em 0.5em; }
+div.lyxtoc-5 { margin: 0em 0em 0em 0.5em; }
+div.lyxtoc-6 { margin: 0em 0em 0em 0.5em; }
+a.tocentry {
+text-decoration: none;
+color: black;
+}
+a.tocentry:visited { color: black; }
+a.tocarrow {
+font-weight: bold;
+text-decoration: none;
+color: #909090;
+}
+a.tocarrow:visited { color: #C0C0C0; }
+</style>
+
+<!-- Preamble Snippets -->
+
+<!-- Layout-provided Styles -->
+<style type='text/css'>
+div.standard {
+margin-bottom: 2ex;
+}
+ol.enumerate {
+margin-top: 0.7ex;
+margin-bottom: 0.7ex;
+margin-left: 3ex;
+text-align: left;
+
+}
+</style>
+</head>
+<body>
+<div class="standard"><a id='magicparlabel-3' />
+To quickly install the HadesFIX engine and run the sample configurations follow the following simple steps:</div>
+
+<ol class="enumerate"><li class="enumerate_item"><a id='magicparlabel-4' />
+Unzip <strong>HadesFIX_RELEASE_NO.zip</strong> file in directory of your choice on the disk. We will refer to this directory as <em>HADESFIX_INSTALL_DIR</em>. </li>
+<li class="enumerate_item"><a id='magicparlabel-5' />
+Create a Hades instance directory on disk where the instance scripts and configuration files will reside. We will refer to this directory as <em>HADESFIX_INSTANCE_DIR.</em> </li>
+<li class="enumerate_item"><a id='magicparlabel-6' />
+Copy the content of the <strong>bin/</strong> and <strong>config/</strong> directories from the <em>HADESFIX_INSTALL_DIR </em>into the <em>HADESFIX_INSTANCE_DIR</em> directory. </li>
+<li class="enumerate_item"><a id='magicparlabel-7' />
+Edit <strong>env.cmd/env.sh</strong> file and change the values of the following settings:<em> JAVA_HOME</em> - to the location of you java installation <em>HADES_HOME</em> - to the location of your HadesFIX installation <em>JAVA_OPTS</em> - set the values you need for your JVM</li>
+<li class="enumerate_item"><a id='magicparlabel-8' />
+Open 2 command/shell windows - start the test FIX sell side: <strong>startServer.cmd/startServer.sh</strong> in the first window - start the test FIX buy side: <strong>startClient.cmd/startClient.sh</strong> in the second window Both the sell and buy side application instances will send random FIX messages to each other at fix intervals of time. The consumer handler configured on both sides will only dump the message to the console window.</li>
+<li class="enumerate_item"><a id='magicparlabel-9' />
+Use the command/shell scripts and the configuration files <strong>(SampleServer.hades.xml</strong> and <strong>SampleClient.hades.xml</strong>) as a starting point for configuring your instance. You can find the configuration file schema in the <strong>HadesEngineConfig.xsd</strong> file. Most likely you will need to write your handlers in order to do something meaningful with the FIX messages. </li>
+<li class="enumerate_item"><a id='magicparlabel-10' />
+HadesFIX instances can be managed using the "HadesConsole" GUI tool. Just type: hadesconsole in a command window started in &lt;i&gt;HADESFIX_INSTANCE_DIR.&lt;/i&gt; folder. The default configuration has 2 connections auto started to the sell and buy side HadesFIX instances. See the HadesFIX administration console tool documentation for details to use this utility.</li>
+</ol>
+</body>
+</html>

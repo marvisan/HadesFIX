@@ -1,0 +1,3194 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass extbook
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding utf8
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize a4paper
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 2
+\paperpagestyle headings
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Standard
+\begin_inset CommandInset toc
+LatexCommand tableofcontents
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Part
+Introduction
+\end_layout
+
+\begin_layout Chapter
+Engine Architecture
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+HadesFIX
+\series default
+ engine architecture is based on the concept of FIX session connected to
+ a counter-party.
+ Each configured session will have its Session Coordinator thread started.
+ It is the responsibility of the Session Coordinator to manage all the processes
+ involved in the FIX session connection setup.
+ There can be only two types of session:
+\end_layout
+
+\begin_layout Itemize
+client session - corresponds to the FIX session initiator (buy side).
+ The client session attempts to connect to a server (FIX acceptor) using
+ the TCP transport and logs in and establish a session with the server.
+ 
+\end_layout
+
+\begin_layout Itemize
+server session - corresponds to the FIX session acceptor (sell side).
+ The server session wait for client(s) session to connect using the TCP
+ transport, authenticates the client and starts a FIX session.
+\end_layout
+
+\begin_layout Standard
+A 
+\series bold
+HadesFIX
+\series default
+ instance can host multiple client or server sessions configured and running
+ at one time that are connecting to the same or different counter-parties.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename HadesInstance.jpg
+	groupId UserGuide
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+A 
+\series bold
+HadesFIX
+\series default
+ instance is configured using a XML file.
+ The schema of the XML configuration file can be found in the distribution's
+ "config" directory - 
+\emph on
+HadesEngineConfig.xsd
+\emph default
+ file.
+ The instance configuration file is a mandatory parameter in order to start
+ a 
+\series bold
+HadesFIX
+\series default
+ engine.
+\end_layout
+
+\begin_layout Standard
+Each FIX session, whether client or server, contains two Streams: a 
+\emph on
+Consumer Stream
+\emph default
+ and a 
+\emph on
+Producer Stream
+\emph default
+.
+\end_layout
+
+\begin_layout Section
+Client/Server Stream
+\end_layout
+
+\begin_layout Standard
+A 
+\emph on
+Client/Server Session
+\emph default
+ has two Streams configured: a 
+\emph on
+Consumer Stream
+\emph default
+ and a 
+\emph on
+Producer Stream
+\emph default
+, each of them running in their own threads.
+ The 
+\emph on
+Consumer Stream
+\emph default
+ is reading messages received from the counter-party using the connected
+ FIX session and deliver these messages to the business application layer.
+ The 
+\emph on
+Producer Stream
+\emph default
+ on the other side takes the messages produced by the business tier and
+ send them to the counter-party using the connected FIX session
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename ClientSession.png
+	groupId UserGuide
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Client/Server Flow
+\end_layout
+
+\begin_layout Standard
+There can be multiple 
+\emph on
+Consumer Flows
+\emph default
+ configured for a 
+\emph on
+Consumer Stream
+\emph default
+.
+ The Consumer Flows can have 
+\emph on
+Filters
+\emph default
+ configured.
+ A default message type filter can be configured using the "msgFilter" attribute
+ on the 
+\emph on
+Consumer Flow
+\emph default
+ in which case only the message types specified in the comma separated list
+ will be relayed.
+ If more complex filtering is required then a custom 
+\emph on
+Filter
+\emph default
+ can be configured.
+ The class implementing the 
+\emph on
+Filter
+\emph default
+ functionality must implement 
+\series bold
+com.marvisan.hades.fix.engine.process.stream.Filter
+\series default
+ interface.
+ The 
+\emph on
+Consumer Flow
+\emph default
+ "msgFilterClass" attribute configures a custom filter for the flow.
+ If N 
+\emph on
+Consumer Flows
+\emph default
+ are configured in a 
+\emph on
+Stream
+\emph default
+ then at least N - 1 
+\emph on
+Filters
+\emph default
+ must be specified otherwise all the messages will be consumed by the first
+ flow configured.
+ If a message is filtered then it will be passed to the next flow configured
+ or discarded if no 
+\emph on
+Consumer Flow
+\emph default
+ exists.
+ The 
+\emph on
+Consumer Flows
+\emph default
+ are running in the Consumer Stream thread.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename ClientConsumerStream.png
+	groupId UserGuide
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+A Producer Stream on the other hand can have only one Producer Flow configured.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename ClientProducerStream.png
+	groupId UserGuide
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Client/Server Handlers
+\end_layout
+
+\begin_layout Standard
+The messages received by the 
+\emph on
+Consumer Flow
+\emph default
+ from their
+\emph on
+ Consumer Stream
+\emph default
+ are relayed to the chain of custom message 
+\emph on
+Handlers
+\emph default
+.
+ Handlers are the customization points of the engine.
+ The Handlers are created for the purpose of processing incoming FIX messages
+ and deliver them to the business layer.
+ The last 
+\emph on
+Handler
+\emph default
+ in the configured chain is the pivot 
+\emph on
+Handler
+\emph default
+ and it is responsible with the delivery of the message to the 
+\emph on
+Application Layer
+\emph default
+ using whatever chosen technology.
+ Any 
+\emph on
+Handler
+\emph default
+ in the chain can discard the received message if required.
+ If the message is discarded by a 
+\emph on
+Handler
+\emph default
+ in the chain, the subsequent Handler will not receive the message and the
+ message will not be delivered to the 
+\emph on
+Application Layer
+\emph default
+.
+ The 
+\emph on
+Handlers
+\emph default
+ configured in the 
+\emph on
+Consumer Flows
+\emph default
+ are running in the 
+\emph on
+Consumer Stream
+\emph default
+ thread.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename ClientConsumerFlow.png
+	groupId UserGuide
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The 
+\emph on
+Handlers
+\emph default
+ configured in a 
+\emph on
+Producer Flow
+\emph default
+ will receive the messages from the 
+\emph on
+Application Layer
+\emph default
+ and deliver them to the counter-party via the fix session.
+ The 
+\emph on
+Handlers
+\emph default
+ configured in the 
+\emph on
+Producer Flows
+\emph default
+ are running in the 
+\emph on
+Consumer Stream
+\emph default
+ thread.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename ClientProducerFlow.png
+	groupId UserGuide
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+There are 3 types of custom Handlers that can be developed: 
+\end_layout
+
+\begin_layout Enumerate
+Consumer Handler that needs to extend 
+\series bold
+com.marvisan.hades.fix.engine.handler.AbstractConsumerHandler
+\series default
+ class.
+ This handler types can only be configured inside a 
+\emph on
+Consumer Flow
+\emph default
+ and must override the "consume" method.
+ A 
+\emph on
+Consumer Handler
+\emph default
+ implementation will have an instance created inside the 
+\emph on
+Consumer Stream
+\emph default
+ thread and will be able to create its own threads.
+ The 
+\emph on
+Handler
+\emph default
+ implementation is responsible for managing its own created threads.
+ In order for the processed message to be forwarded to the next message
+ in chain the "super.consume()" method must be called before exiting the
+ "consume" method, otherwise the message will be discarded.
+ 
+\end_layout
+
+\begin_layout Enumerate
+Producer Handler that needs to extend 
+\series bold
+com.marvisan.hades.fix.engine.handler.AbstractProducerHandler
+\series default
+ class.
+ This handler types can only be configured inside a 
+\emph on
+Producer Flow
+\emph default
+ and must override the "produce" method.
+ A 
+\emph on
+Producer Handler
+\emph default
+ implementation will have an instance created inside the 
+\emph on
+Producer Stream
+\emph default
+ thread and will be able to create its own threads.
+ The 
+\emph on
+Handler
+\emph default
+ implementation is responsible for managing the created threads.
+ In order for the processed message to be forwarded to the next message
+ in chain the "super.produce()" method must be called before exiting the
+ "produce" method, otherwise the message will be discarded.
+\end_layout
+
+\begin_layout Enumerate
+Producer/Consumer Handler that needs to extend 
+\series bold
+com.marvisan.hades.fix.engine.handler.AbstractProducerConsumerHandler
+\series default
+ class.
+ This handler types can be configured in both Producer and Consumer Flows.
+ The handlers will have a shared instance created in the Session Coordinator
+ thread that will be called by the Consumer and Producer Flows.
+ Thread safety must be taken care of for this handler type implementation
+ as different threads will call the "consume" and "produce" methods.
+\end_layout
+
+\begin_layout Section
+Event Model
+\end_layout
+
+\begin_layout Standard
+HadesFIX component are reporting/consuming 
+\series bold
+alerts
+\series default
+ and 
+\series bold
+life cycle
+\series default
+ events.
+ These events are relayed to the parent components: Handlers, Flows, Streams,
+ Session Coordinator, Hades Instance.
+ A graphical representation of the event model is depicted bellow.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename EventModel.png
+	groupId UserGuide
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Life Cycle events are reported by all the components and are used internally
+ by the engine.
+ A Handler can subscribe to this type of events by registering with the
+ Session Coordinator - 
+\emph on
+attachAsLifeCycleEventListener()
+\series bold
+.
+\end_layout
+
+\begin_layout Standard
+A Handler can also receive FIX protocol level messages (Login, Logout,...)
+ by registering with the Session Coordinator - 
+\emph on
+attachAsMessageEventListener().
+\end_layout
+
+\begin_layout Standard
+Handlers can only generate Alert messages which are relayed to the Session
+ Coordinator and Hades Instance - 
+\emph on
+sendAlertEvent(AlertEvent event).
+\end_layout
+
+\begin_layout Part
+FIX Engine Configuration
+\end_layout
+
+\begin_layout Chapter
+Setting up engine configuration
+\end_layout
+
+\begin_layout Section
+Prerequisites
+\end_layout
+
+\begin_layout Standard
+Hades engine is highly configurable.
+ All the configuration for a Hades instance - Java process - is hold in
+ a configuration file.
+ This configuration file must be specified as a java environment parameter
+ in the script file that starts the engine.
+ The parameter name is 
+\emph on
+hades.engine.config.file.
+
+\emph default
+ This parameter must contain the full OS path of the file.
+ The directory where this file is placed is considered as a base for all
+ the other configuration data needed.
+ The configuration file is a XML file.
+ Its schema is placed in the distribution archive in the 
+\series bold
+docs/schema
+\series default
+ folder and it is named 
+\emph on
+HadesEngineConfig.xsd
+\emph default
+.
+ You will be able to validate your configuration using this XML schema file.
+ The engine itself is doing the same thing when it starts up.
+\end_layout
+
+\begin_layout Standard
+A HadesFIX engine can run multiple FIX sessions at a time, either client
+ or server, for each counter-party and each of them having its own FIX version.
+ 
+\end_layout
+
+\begin_layout Standard
+Secured messages and handler definitions can be specified at the engine,
+ counter-party and session level.
+ The settings at the counter-party level will override the settings at the
+ engine level if using the same names.
+ The same happens with the settings at the session level that will override
+ the counter-party and engine level settings.
+\end_layout
+
+\begin_layout Section
+HadesFIX engine instance
+\end_layout
+
+\begin_layout Standard
+The configuration of the engine is specified as attributes of the
+\emph on
+ <hadesInstance>
+\emph default
+ element of the configuration file.
+ The configuration parameters of the engine are described bellow:
+\end_layout
+
+\begin_layout Itemize
+name - instance name is a required attribute and it must be unique for each
+ engine instance running in the network.
+ It can be a string containing any printable character.
+\end_layout
+
+\begin_layout Itemize
+mgmtHost - this is the host IP address of the host on which the engine is
+ running.
+ Must be specified if the host has multiple network interfaces.
+\end_layout
+
+\begin_layout Itemize
+mgmtPort - the port on which the remote management agent is running.
+ If not specified defaults to 33333.
+\end_layout
+
+\begin_layout Itemize
+mgmtUseAuth - flag indicating if the remote access to this engine management
+ interface is protected by a password.
+ This parameter defaults to false and as the result the management remote
+ access
+\series bold
+ it is not restricted by defaul
+\series default
+t.
+ If this parameter is enabled then a user name password must be created
+ using the password bank utility.
+ 
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+A simple digest authentication mechanism is used.
+ It is recommended that in the cases the administrative connection is made
+ over public networks the TCP connection be encrypted (SSL).
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+mgmtUseSSL - flag indicating that the management interface connection must
+ use SSL.
+ Defaults to false.If this parameter is set to true then and mgmtKeystorePasswd
+ config parameters will allow
+\end_layout
+
+\begin_layout Itemize
+mgmtKeystoreFile - path to the key store file.
+ If not provided and 
+\emph on
+mgmtUseSSL
+\emph default
+ is set to true this parameter defaults to
+\series bold
+ 
+\begin_inset Quotes eld
+\end_inset
+
+hadesfix-mgmt-key.ks
+\begin_inset Quotes erd
+\end_inset
+
+
+\series default
+ which must be always located relative to the engine configuration directory.
+\end_layout
+
+\begin_layout Itemize
+mgmtKeystorePasswd - key-store password.
+ If not provided and 
+\emph on
+mgmtUseSSL
+\emph default
+ is set to true this parameter defaults to
+\series bold
+ 
+\begin_inset Quotes eld
+\end_inset
+
+hadesfix
+\begin_inset Quotes erd
+\end_inset
+
+
+\series default
+.
+ This is the password entry name as it is stored in the HadesFIX engine
+ password bank.
+ See the HadesFIX password bank utility documentation.
+\end_layout
+
+\begin_layout Itemize
+mgmtUseSSLCliAuth - flag indicating that the SSL connection will use client
+ authentication.
+ Defaults to false.
+ If this flag is set to true then the trust store file name and password
+ can be configured using the following two parameters: 
+\emph on
+mgmtTruststoreFile
+\emph default
+ and 
+\emph on
+mgmtTruststorePasswd
+\emph default
+.
+ If this parameter is enabled then the 
+\emph on
+mgmtUseAuth
+\emph default
+ parameter is disabled.
+\end_layout
+
+\begin_layout Itemize
+mgmtTruststoreFile - path to the trust-store file.
+ Must be always located relative to the engine configuration directory.
+\end_layout
+
+\begin_layout Itemize
+mgmtTruststorePasswd - key-store password.
+ This is the password entry name as it is stored in the HadesFIX engine
+ password bank.
+ See the HadesFIX password bank utility documentation.
+ 
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+It is assumed that the key-store/trust-store passwords will always be the
+ same with the keys passwords
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+clustered - this flag enable clustering for the HadesFIX servers.
+ defaults to false.
+\end_layout
+
+\begin_layout Itemize
+description - textual description of the engine.
+ Optional.
+\end_layout
+
+\begin_layout Section
+Counter-party session configuration
+\end_layout
+
+\begin_layout Standard
+Multiple sessions can be configured for a counter-party.
+ The configuration for a counter-party consists of the FIX counter-party
+ identification fields: 
+\emph on
+compID
+\emph default
+, 
+\emph on
+subID
+\emph default
+ and 
+\emph on
+locationID
+\emph default
+.
+ Form these 3 the only required one is the 
+\emph on
+compID
+\emph default
+ attribute.
+ The 
+\emph on
+side
+\emph default
+ attribute is only used when HadesFIX is used as a router.
+ The valid values for 
+\emph on
+side
+\emph default
+ attribute are: 
+\series bold
+Buy
+\series default
+, 
+\series bold
+B
+\series default
+ for buy side respectively 
+\series bold
+Sell
+\series default
+, 
+\series bold
+S
+\series default
+ for the sell side.
+\end_layout
+
+\begin_layout Subsection
+TCP connection configuration
+\end_layout
+
+\begin_layout Standard
+The server or client TCP connection data required fields by the HadesFIX
+ engine are the 
+\emph on
+host
+\emph default
+ and 
+\emph on
+port
+\emph default
+ attributes on the 
+\emph on
+tcpConnection
+\emph default
+ element.
+ For a server connection if 
+\emph on
+host
+\emph default
+ is specified then it must be the local bind address (hosts with multiple
+ addresses).
+ The other configuration attributes are optional and have default values.
+ The optional configuration parameters set at the 
+\emph on
+tcpConnection
+\emph default
+ element level are:
+\end_layout
+
+\begin_layout Itemize
+soLinger - if greater than 0 this option sets the time in seconds the socket
+ close() method will wait for delivery of remaining packets before shutting
+ down the connection.
+ By default the close() method returns immediately and if soLinger is set
+ to 0 all the remaining packets will be discarded.
+ Defaults to the specific platform value.
+\end_layout
+
+\begin_layout Itemize
+tcpNodelay - this is a flag that if set to true disables buffering at the
+ socket level ensuring that the packets are sent to the destination as soon
+ as they are delivered to the socket regardless of their size.
+ In the normal scenario the small packets are combined into large packets
+ before being sent.
+ The Nagle algorithm used when tcpNodely is disabled waits for a confirmation
+ from the remote host before sending another packet.
+ This might hamper the steady transfer of data between the client and the
+ server.
+ Defaults to false.
+\end_layout
+
+\begin_layout Itemize
+rxBufferSize - this sets the size of the received messages buffer.
+ After the buffer is filled the messages will be either drooped or saved
+ in a disk buffer, depending of the value of the parameter value.
+ Default value is 500.
+\end_layout
+
+\begin_layout Itemize
+txBufferSize - this sets the size of the transmitted messages buffer.
+ After the buffer is filled the messages will be either dropped or saved
+ in a disk buffer, depending of the value of the parameter value.
+ Default value is 500.
+\end_layout
+
+\begin_layout Itemize
+soTimeout - used to tune how many milliseconds the read method blocks waiting
+ for data.
+ Default value is 3 milliseconds.
+\end_layout
+
+\begin_layout Itemize
+soRcvbuf - size in bytes of the receive buffer.
+ Platform specific.
+\end_layout
+
+\begin_layout Itemize
+soSndbuf - size in bytes of the transmission buffer.
+ Platform specific.
+\end_layout
+
+\begin_layout Itemize
+sendKeepAlive - if set to true will set SO_KEEPALIVE on the socket.
+ The default value is false.
+\end_layout
+
+\begin_layout Itemize
+sslData - this optional element is used in configuring TCP transport SSL
+ values.
+ The values for 
+\emph on
+keyStoreLoc
+\emph default
+, 
+\emph on
+keyStorePasswd
+\emph default
+ are required.
+ 
+\emph on
+keyStoreLoc 
+\emph default
+is always relative to the configuration directory - the directory where
+ the instance configuration file is placed.
+ If 
+\emph on
+useCliAuth 
+\emph default
+is set to true (default to false) then the truststore location 
+\emph on
+trustStoreLoc
+\emph default
+ together with the trust-store password 
+\emph on
+trustStorePasswd
+\emph default
+ are required.
+ If the key password 
+\emph on
+keyPasswd
+\emph default
+ is not given it will default to 
+\emph on
+keyStorePasswd.
+\end_layout
+
+\begin_layout Standard
+The optional configuration parameters set at the 
+\emph on
+clientTcpConnection
+\emph default
+ element level are:
+\end_layout
+
+\begin_layout Itemize
+numOfRetries - (used in client side only) sets the number of connection
+ retries attempted by the client for the configured connections in case
+ the connection with the server fails.
+ After the number of attempts is exhausted the connections defined in the
+ 
+\emph on
+backupConnections
+\emph default
+ element are used to try to reconnect using the same value as number of
+ retries.
+ Default value is 3 reconnection attempts.
+ If set to 0 the number of retries will be unlimited.
+\end_layout
+
+\begin_layout Itemize
+retrySecondsToWait - (used in client side only) is setting the number of
+ seconds to wait until another reconnection attempt is made on the next
+ configured connection.
+ Default is 3 seconds.
+\end_layout
+
+\begin_layout Itemize
+proxyHost - proxy server host.
+\end_layout
+
+\begin_layout Itemize
+proxyPort - proxy server port number.
+\end_layout
+
+\begin_layout Itemize
+backupConnections - this element keeps a list of backup FIX connections.
+ Each connection is defined by the host, port pair.
+ This element is optional.
+\end_layout
+
+\begin_layout Standard
+The configuration parameters set at the 
+\emph on
+serverTcpConnection
+\emph default
+ level are:
+\end_layout
+
+\begin_layout Itemize
+name - name of the server.
+ It must be different for each server configured on the same Hades instance.
+\end_layout
+
+\begin_layout Itemize
+hostsRestrictedList- comma-delimited list of IP addresses for allowed incoming
+ connections.
+ Counter-parties trying to connect from other IP addresses than the one
+ configured will not be allowed to logon.
+\end_layout
+
+\begin_layout Subsection
+Session Configuration
+\end_layout
+
+\begin_layout Subsubsection
+Client and Server common parameters
+\end_layout
+
+\begin_layout Itemize
+compID - session comp ID.
+ This field is required for any session.
+\end_layout
+
+\begin_layout Itemize
+subID - subscriber identifier that might be used to identify a session together
+ with compID field.
+\end_layout
+
+\begin_layout Itemize
+locationID - location identifier that might be used to identify a session
+ together with compID and subID fields.
+\end_layout
+
+\begin_layout Itemize
+rxBufferSize - the incoming messages buffer size.
+ Defaults to 1000.
+\end_layout
+
+\begin_layout Itemize
+txBufferSize - the outgoing messages buffer size.
+ Defaults to 1000.
+\end_layout
+
+\begin_layout Itemize
+deliverToCompID - FIX message header value used to identify the firm targeted
+ to receive the message if the message is delivered by a third party.
+\end_layout
+
+\begin_layout Itemize
+deliverToSubID - FIX message header value used to identify specific message
+ recipient if the message is delivered by a third party.
+\end_layout
+
+\begin_layout Itemize
+deliverToLocationID - FIX message header value used to identify specific
+ message recipient's location if the message was delivered by a third party.
+\end_layout
+
+\begin_layout Itemize
+onBehalfOfCompID - FIX message header value used to identify firm originating
+ message if the message was delivered by a third party.
+\end_layout
+
+\begin_layout Itemize
+messageEncoding - message encoding character set.
+\end_layout
+
+\begin_layout Itemize
+logonTimeout - in client side this value specifies the interval of time
+ in seconds for which the client waits for a Logon response from the server.
+ If this time expire the session is stopped.
+ On the server side this parameter is only used if the 
+\emph on
+enableLogonPassThrough
+\emph default
+ parameter is set to true.
+\end_layout
+
+\begin_layout Itemize
+heartBtInt - interval of time after which a inactive session (that didn't
+ sent/received any messages) will send an Heartbeat message to the Counterpary.
+\end_layout
+
+\begin_layout Itemize
+heartBtOffset - value on top of the 
+\emph on
+heartBtInt
+\emph default
+ that is accepted as offset before the session is restarted.
+\end_layout
+
+\begin_layout Itemize
+description - text description of the session configured.
+\end_layout
+
+\begin_layout Itemize
+disableGapDetection - disable incoming messages sequence gap detection.
+ All the incoming messages are accepted if the sequence number is greater
+ than expected sequence number.
+ Out of sequence messages are discarded.
+\end_layout
+
+\begin_layout Itemize
+enableResendTimeout - this is a FIX non standard option that resets the
+ sequence in the gap immediately after the resend response exceeds the 
+\emph on
+resendTimeout
+\emph default
+ value.
+ Default is "false".
+\end_layout
+
+\begin_layout Itemize
+resendTimeout - the value of the timeout interval in milliseconds for the
+ 
+\emph on
+enableResendTimeout
+\emph default
+ option.
+ Default value is 3000 ms.
+\end_layout
+
+\begin_layout Itemize
+testMessageIndicator - indicates that the session is a test session.
+ Defaults to false.
+\end_layout
+
+\begin_layout Itemize
+resendEndSeqNum - if specified this value will be set as the EndSeqNum on
+ the ResendRequest message.
+ It may be set to 0 or other custom party agreed value to indicate that
+ all the messages to the current one should be resent.
+\end_layout
+
+\begin_layout Itemize
+resetSeqAtStartup - flag indicating that session sequences will be reset
+ at start-up of the session.
+ Defaults to "true".
+\end_layout
+
+\begin_layout Itemize
+resetSeqAtLogon - flag indicating that session sequences will be reset at
+ each session login.
+ Defaults to "false".
+\end_layout
+
+\begin_layout Itemize
+resetSeqAtLogout - flag indicating that session sequences will be reset
+ at each session logout received.
+ Defaults to "false".
+\end_layout
+
+\begin_layout Itemize
+resetSeqAtDisconnect - flag indicating that session sequences will be reset
+ at each transport disconnection.
+ Defaults to "false".
+\end_layout
+
+\begin_layout Itemize
+validateIncomingFIXML - turns the FIXML schema validation on for all incoming
+ messages.
+ Defaults to "false".
+\end_layout
+
+\begin_layout Itemize
+validateOutgoingFIXML - turns the FIXML schema validation on for all outgoing
+ messages.
+ Defaults to "false".
+\end_layout
+
+\begin_layout Itemize
+abortFIXMLValidationOnError - stops the validation on error and throws a
+ validation error message.
+\end_layout
+
+\begin_layout Subsubsection
+Server specific parameters
+\end_layout
+
+\begin_layout Itemize
+enableLogonPassThrough - Logon messages are passed to the business application
+ which is responsible with authentication and generation of the Logon response
+ message.
+\end_layout
+
+\begin_layout Subsubsection
+Client specific parameters
+\end_layout
+
+\begin_layout Itemize
+maxNumLogonRetries - when this parameter is greater than 0 it specifies
+ the maximum number of logon attempts that will be performed by the FIX
+ session.
+ The session will be disconnected after this value is reached.
+ Default value of 0 means there is no limit on the number of logon attempts.
+\end_layout
+
+\begin_layout Itemize
+doNotReconnWhenSeqNumTooLow - if this parameter is set to false, the client
+ will stop making outbound logon attempts if a logon fails with 
+\begin_inset Quotes eld
+\end_inset
+
+Sequence Numbers too low
+\begin_inset Quotes erd
+\end_inset
+
+ error.
+ Defaults to "false".
+\end_layout
+
+\begin_layout Itemize
+connectOnStartup - the Session Coordinator will attempt to initiate a connection
+ with the counter-party when it is started.
+ Defaults to "true".
+\end_layout
+
+\begin_layout Itemize
+reconnectDelay - if a session connection fails this value in milliseconds
+ is used as a delay before Session Coordinator retries again.
+ Defaults to 10000 (10 seconds).
+\end_layout
+
+\begin_layout Part
+FIX Object Model
+\end_layout
+
+\begin_layout Standard
+HadesFIX object model class diagram is depicted bellow.
+ For simplicity only the NewOrderSingleMsg class is shown.
+ All the FIX messages are inheriting from the FIXMsg class ad has to implement
+ a contract in order to be encoded and decoded.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename FIXMessage.png
+	groupId UserGuide
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The FIX Components and Groups class diagrams as shown bellow.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename GroupsComponents.png
+	groupId UserGuide
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Message creation is using factories.
+ Obtaining a new message is a matter of calling:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+NewOrderSingleMsg msg = (NewOrderSingleMsg) FIXMsgBuilder.build(MsgType.NewOrderSi
+ngle.getValue(), BeginString.FIX_4_4);
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The call will create a NewOrderSingle FIX message for the FIX version 4.4.
+ The Components and Groups for this release will not be pre-populated.
+ It is the responsibility of the user to populate them.
+ After the object is populate calling the 
+\emph on
+encode()
+\emph default
+ method on the message will return a byte array representation of the FIX
+ message.
+\end_layout
+
+\begin_layout Standard
+Obtaining an Object message from the FIX encoded byte array can be obtain
+ from the same factory by calling:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+NewOrderSingleMsg dmsg = (NewOrderSingleMsg) FIXMsgBuilder.build(byte[] fixMsg);
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Only the header fields will be decoded.
+ In order to have all the message decoded the 
+\emph on
+decode()
+\emph default
+ message must be called on the fix message.
+\end_layout
+
+\begin_layout Standard
+The class diagram for the message factory is shown bellow.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename MessageFactory.png
+	groupId UserGuide
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+HadesFIX allows for the extension of the FIX model in order to cater for
+ custom tags and custom messages.
+ The mechanism used to extend the custom tags and messages is presented
+ bellow.
+\end_layout
+
+\begin_layout Chapter
+Custom tags and message handling
+\end_layout
+
+\begin_layout Standard
+Custom tags are supported in two ways.
+ 
+\end_layout
+
+\begin_layout Itemize
+The first method is to use the Map of custom messages that is contained
+ in the 
+\series bold
+com.marvisan.hades.fix.message.FIXMsg
+\series default
+ super-class.
+ This class has methods to add, retrieve and remove custom tags from the
+ message custom map.
+ The 
+\emph on
+getCustomTag, addCustomTag, removeCustomTag 
+\emph default
+and 
+\emph on
+clearCustomTags 
+\emph default
+methods (see javadoc) can be used to manage the custom tags set for encoding
+ or decoded.
+ The limitation of this methods is that all the custom tags values must
+ be represented as a java.lang.String class.
+\end_layout
+
+\begin_layout Itemize
+The second method is overwriting the HadesFIX message implementation and
+ adding to the extended message all the custom tags, groups and components
+ required.
+ The overriding mechanism requires, apart of the overriding class message
+ implementation, the writing of a custom message factory class which must
+ be configured in a property file.
+ This is also the mechanism used to create custom messages.
+ The next section describes how to extend or write a new FIX message.
+\end_layout
+
+\begin_layout Section
+Writing a custom message
+\end_layout
+
+\begin_layout Standard
+Writing a custom new message requires the following steps:
+\end_layout
+
+\begin_layout Subsection
+Create a new message class that extends 
+\series bold
+com.marvisan.hades.fix.message.FIXMsg
+\end_layout
+
+\begin_layout Standard
+All HadesFIX messages are extending 
+\series bold
+com.marvisan.hades.fix.message.FIXMsg 
+\series default
+class that in its turns extends the 
+\series bold
+com.marvisan.hades.fix.message.Fragment
+\series default
+ class.
+ The abstract interface is defined in the Fragment class (see javadoc for
+ further explanations).
+ The contracts defined by the Fragment class contains
+\end_layout
+
+\begin_layout Itemize
+methods that return the FIX tags in the message/component/group : 
+\emph on
+getFragmentTags(), getFragmentAllTags(), getFragmentDataTags(), getFragmentCompT
+ags(), getFragmentSecuredTags()
+\end_layout
+
+\begin_layout Itemize
+method to validate a FIX message/component/group:
+\emph on
+ validateRequiredTags() throws TagNotPresentException
+\end_layout
+
+\begin_layout Itemize
+methods to set the tag value when the FIX message/component/group is decoded
+ from the byte array: 
+\emph on
+setFragmentTagValue(Tag tag), setFragmentCompTagValue(Tag tag, ByteBuffer
+ message), setFragmentDataTagValue(Tag tag, ByteBuffer message)
+\end_layout
+
+\begin_layout Itemize
+methods to encode the FIX object message/component/group in a wire FIX message:
+ 
+\emph on
+encodeFragmentAll(), encodeFragmentSecured(boolean secured)
+\end_layout
+
+\begin_layout Standard
+When extending an existing message these methods might need to be implemented.
+ If pre FIX4.4 version message encryption is used then the appropriate secured
+ related methods need to be implemented too.
+\end_layout
+
+\begin_layout Subsection
+Create enclosed components and groups
+\end_layout
+
+\begin_layout Standard
+Component classes need to extend the abstract 
+\series bold
+com.marvisan.hades.fix.message.component.Component 
+\series default
+class.
+ this class extends also the Fragment class and must satisfy the contract
+ defined by this class.
+ Further the Component class define a supplementary interface method 
+\emph on
+getFirstTag() 
+\emph default
+that needs to return the first tag in a repeating component/group.
+\end_layout
+
+\begin_layout Standard
+Repeating groups need to extend the 
+\series bold
+com.marvisan.hades.fix.message.group.Group 
+\series default
+class.
+ Group class extends the Component class and has the same contract to be
+ fulfilled.
+ The subtle difference between the two sits only in the fact that a component
+ might not be and by the FIX protocol standard allows the fields in the
+ component to be 
+\begin_inset Quotes eld
+\end_inset
+
+scattered
+\begin_inset Quotes erd
+\end_inset
+
+ all over the message.
+\end_layout
+
+\begin_layout Subsection
+Create a custom factory class
+\end_layout
+
+\begin_layout Standard
+HadesFIX messages are encoded/decoded using a generic message factory 
+\series bold
+com.marvisan.hades.fix.message.builder.FIXMsgBuilder
+\series default
+.
+ The generic message factory uses message builders for each of the FIX messages.
+ A FIX message builder class must extend 
+\series bold
+com.marvisan.hades.fix.message.builder.MsgBuilder
+\series default
+ class and implement the abstract interface defined by that class.
+ The method to implement are 
+\emph on
+build(MsgVersionType msgType, byte[] message)
+\emph default
+ for decoding a message and 
+\emph on
+build(BeginString version, ApplVerID applVerID)
+\emph default
+ for building an empty FIX message used for encoding.
+ Please bear in mind that the message builder class must be thread safe.
+ See javadoc for supplementary information
+\end_layout
+
+\begin_layout Subsection
+Make the class visible to the FIXMsgBuilder
+\end_layout
+
+\begin_layout Standard
+FIXMsgBuilder class can be configured at run-time or using a configuration
+ file placed in the root classspath named 
+\emph on
+HadesMsgBuilderClasses.properties.
+ 
+\emph default
+An example of message builder configuration would be:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+# Example HadesMsgBuilderClasses.properties file (see samples)
+\end_layout
+
+\begin_layout Plain Layout
+
+AZ=com.marvisan.hades.fix.sample.message.builder.CustomNewMessageBuilder
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This file contains entries made from the message type and the message builder
+ implementation class that.
+\end_layout
+
+\begin_layout Standard
+It is possible to have multiple 
+\emph on
+HadesMsgBuilderClasses.properties
+\emph default
+ files placed in different locations.
+ In order for this files to be recognized by the run-time a System property
+ named 
+\series bold
+hades.model.build.file.location
+\series default
+ must be set.
+ This property contains a colon separated list of packages that contain
+ the custom message builder config file 
+\end_layout
+
+\begin_layout Standard
+E.g.
+ -Dhades.model.build.file.location=com.marvisan.hades.fix.sample.builder1:com.marvisan.hade
+s.fix.sample.builder2
+\end_layout
+
+\begin_layout Standard
+The files must contain builders for different messages as the later loaded
+ files will override the previous settings obviously.
+\end_layout
+
+\begin_layout Standard
+FIXMsgBuilder can also be setup at run-time using the following methods:
+ 
+\emph on
+addMsgBuilder(String msgType, MsgBuilder builder), addMsgBuilders(Map<String,
+ MsgBuilder> builders), 
+\emph default
+and 
+\emph on
+clearMsgBuilder(String msgType).
+ 
+\emph default
+See javadoc for further information.
+\end_layout
+
+\begin_layout Subsection
+Add JAXB annotations to the class (only if FIXML support is required)
+\end_layout
+
+\begin_layout Standard
+FIXML support in 
+\series bold
+HadesFIX
+\series default
+ is done using JAXB.
+ The class message together with enclosed components and group must be annotated
+ in order to have XML generated.
+ At this point schema validation of the messages for inbound/outbound messages
+ is supported.
+ Schema validation is done using standard FIXML schema files which are stored
+ in FIXMLSchema.jar.
+ In order to be able to validate your messages you need to add your custom
+ message schema data to the existing FIXML schema files.
+ The sample message 
+\series bold
+com.marvisan.hades.fix.sample.message.CustomNewMsg
+\series default
+ offer a good starting point for using annotations to create custom FIXML
+ messages.
+\end_layout
+
+\begin_layout Subsection
+Make the packages holding messages/components/groups visible to the FIXMLBuilder
+\end_layout
+
+\begin_layout Standard
+This is done by using a configuration file placed in the root classspath
+ named 
+\emph on
+HadesJAXBPackages.properties.
+ 
+\emph default
+The format of this file has as a key the 
+\emph on
+ApplVerID
+\emph default
+ number and the value is the colon separated list of packages containing
+ the classes part of the FIXML message.
+ An example file would look like:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+# File entries format is ApplVerId=colon separated packages
+\end_layout
+
+\begin_layout Plain Layout
+
+6=com.marvisan.hades.fix.sample.message:com.marvisan.hades.fix.sample.message.group
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Chapter
+Writing a Handler
+\end_layout
+
+\begin_layout Standard
+In order for the HadesFIX engine to work it will need custom message handlers
+ to be written.
+ The class diagram for HadesFIX handlers is depicted bellow.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename Handler.png
+	groupId UserGuide
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Each of the 3 types of Handlers: Consumer, Producer and ConsumerProducer
+ have corresponding Abstract classes from which they must inherit.
+ 
+\end_layout
+
+\begin_layout Standard
+The life cycle of the Handler is controlled by the engine.
+ There are 3 methods that are called by the engine.
+ At the creation time the default constructor is used to create the Handler.
+ Immediatelly after the Flow calls the 
+\series bold
+init()
+\series default
+ method.
+ If custom 
+\lang british
+initialisation
+\lang english
+ is necessary then the 
+\series bold
+init()
+\series default
+ method can be overwritten with the custom implementation.
+ When the session is closed the 
+\series bold
+close()
+\series default
+ method is called and if needed the method can be overwritten.
+ The default implementations of these 2 methods do nothing.
+ 
+\end_layout
+
+\begin_layout Standard
+The third method is the most important one and must be overwritten: 
+\series bold
+consume()
+\series default
+ for a Consumer Handler, 
+\series bold
+produce()
+\series default
+ for a Producer Handler and both 
+\series bold
+consume() and produce()
+\series default
+ for a ConsumerProducer Handler.
+ This methods are called by the engine every time a message is relayed through
+ the Handlers chain.
+ The custom implementation must call the super-class same method if the
+ message is to be passed to the next handler in chain.
+\end_layout
+
+\begin_layout Standard
+If the Handler needs to receive engine Life Cycle events or protocol messages
+ then the handler must register itself with the Session Coordinator by calling
+ 
+\emph on
+attachAsLifeCycleEventListener() / attachAsMessageEventListener().
+\end_layout
+
+\begin_layout Standard
+The Handler can send alerts to the Session Coordinator by calling 
+\emph on
+sendAlertEvent()
+\emph default
+.
+\end_layout
+
+\begin_layout Standard
+Configured parameters are retrieved by using 
+\emph on
+getParameters()
+\emph default
+ method that returns a Map populated with the Handler parameters.
+\end_layout
+
+\begin_layout Standard
+A Handler can be temporarily disabled.
+ A disabled Handler is 
+\begin_inset Quotes eld
+\end_inset
+
+skipped
+\begin_inset Quotes erd
+\end_inset
+
+ and the message is passed to the next Handler in chain.
+\end_layout
+
+\begin_layout Standard
+If a received message needs to be rejected at the FIX session level then
+ the Handler must throw a 
+\series bold
+com.marvisan.hades.fix.engine.exception.HandlerException
+\series default
+ exception.
+ The exception message text will fill the 
+\emph on
+Text
+\emph default
+ field in the FIX Reject message.
+\end_layout
+
+\begin_layout Chapter
+FIXML Support
+\end_layout
+
+\begin_layout Standard
+HadesFIX supports FIXML starting with FIX version 4.4.
+ FIXML encoding/decoding is done at this point using JAXB.
+ In order for a FIX message to be encoded in FIXML the
+\emph on
+ toFixml()
+\emph default
+ method must be called on the FIX message.
+ The method will return the FIXML message representation of the FIX message
+ as a String object.
+ 
+\end_layout
+
+\begin_layout Standard
+To decode a FIXML message 
+\emph on
+fromFixml()
+\emph default
+ method must be called of the FIX message.
+ It is assumed that the message type is the same as the FIXML message string
+ passed as a parameter.
+ In order to improve performance the FixmlCoded instance is stored in the
+ 
+\emph on
+ThreadLocal
+\emph default
+ context.
+ The FIXML encoding/decoding options (validation, error behavior, XML printable
+ format) are in this case set using the 
+\emph on
+SessionContext
+\emph default
+ thread local object.
+ (See javadoc for 
+\series bold
+com.marvisan.hades.fix.message.config.SessionContext
+\series default
+ and 
+\series bold
+com.marvisan.hades.fix.message.config.SessionContextKey
+\series default
+ classes ).
+\end_layout
+
+\begin_layout Standard
+Another way of creating FIXML messages is to use the 
+\emph on
+FixmlCodec
+\emph default
+ class directly (see 
+\series bold
+com.marvisan.hades.fix.message.xml.codec.FixmlCodec
+\series default
+ interface javadoc).
+ To obtain a code instance it is easy, all you need is: 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+ServiceLoader<FixmlCodec> codec = ServiceLoader.load(FixmlCodec.class);
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In this case you will need to cache yourself the 
+\emph on
+FixmlCodec
+\emph default
+ instance and set the desired encoding/decoding parameters.
+ The FixmlCodec implementation is thread safe.
+ In order to encode a message you will need to call the 
+\emph on
+marshall() 
+\emph default
+method passing the FIX message as parameter.
+ The returned String object will contain the FIXML message.
+ 
+\end_layout
+
+\begin_layout Standard
+To decode a message call the
+\emph on
+ unmarshall()
+\emph default
+ method.
+ The first parameter is the FIXML String object.
+ The second parameter is the FIX message and it is optional.
+ If the second parameter is provided then the message object will have the
+ values populated from the FIXML data and returned as result.
+ If second parameters is set to null then this method will create a new
+ FIX message object and populate it with the FIXML data.
+\end_layout
+
+\begin_layout Standard
+AN example of FIX message supporting XML can be found in distribution 
+\series bold
+sample
+\series default
+ directory.
+\end_layout
+
+\begin_layout Standard
+Batch messages support is achieved by using a surrogate FIX message : 
+\series bold
+com.marvisan.hades.fix.message.BatchSetMsg
+\end_layout
+
+\begin_layout Standard
+This message class can only be used in a FIXML context.
+ FIX encoding/decoding of this message will fail.
+\end_layout
+
+\begin_layout Standard
+Obtaining an instance of the class for a specific FIX version is done as
+ per normal:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+BatchSetMsg batchSet = (BatchSetMsg) FIXMsgBuilder.build(MsgType.BatchSet.getValue(
+), BeginString.FIX_4_4);
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+BatchSetMsg is a wrapper for a collection of Batch objects.
+ Batch objects are modeled as FIX components (see 
+\series bold
+com.marvisan.hades.fix.message.comp.Batch
+\series default
+).
+ Batch component contains a collection of FIX messages and an optional Header
+ for the containing messages.
+\end_layout
+
+\begin_layout Standard
+After populating the BatchSet message with Batch components encoding to
+ FIXM/decoding from FIXML uses the same mechanism as described above.
+ 
+\end_layout
+
+\begin_layout Chapter
+Scheduler
+\end_layout
+
+\begin_layout Standard
+The HadesFIX scheduler runs in the same process as the engine and only manages
+ of the instance is running in.
+ Scheduled tasks can be configured at the instance and session level.
+ The scheduler is activated when an entry is present in the configuration
+ file at the instance level (see configuration schema for details): 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+<scheduler> 	
+\end_layout
+
+\begin_layout Plain Layout
+
+	<calendars />      
+\end_layout
+
+\begin_layout Plain Layout
+
+</scheduler>
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The configuration above enable the scheduler only.
+ In order to have date exclusions calendar entries are required.
+ A calendar entry allows the definition of a set of dates that will disable
+ the execution of tasks that refers that calendar entry.
+ An example of calendar exclusion is shown bellow: 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+<calendars>              	
+\end_layout
+
+\begin_layout Plain Layout
+
+	<calendar name="PublicHolidays">                  		
+\end_layout
+
+\begin_layout Plain Layout
+
+		<excludes>                      			
+\end_layout
+
+\begin_layout Plain Layout
+
+			<date dayOfMonth="1" month="3" year="2011" /> 			
+\end_layout
+
+\begin_layout Plain Layout
+
+			<date dayOfMonth="25-27" month="12" year="2011" />                 		
+\end_layout
+
+\begin_layout Plain Layout
+
+		</excludes>              	
+\end_layout
+
+\begin_layout Plain Layout
+
+	</calendar>          
+\end_layout
+
+\begin_layout Plain Layout
+
+</calendars>
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Calendar name attribute is required and will be referenced from the schedule
+ task configuration if needed.
+ 
+\end_layout
+
+\begin_layout Standard
+A schedule task can be defined at the instance and session level.
+ If the task is defined at the instance level and the task operates on a
+ session then extra parameters are required in order to identify the session
+ it will operate on.
+ An example schedule set of tasks defined at the instance level is presented
+ bellow: 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+<tasks>              	
+\end_layout
+
+\begin_layout Plain Layout
+
+	<task name="SHUTDOWN" taskType="shutdown">                  		
+\end_layout
+
+\begin_layout Plain Layout
+
+		<date dayOfWeek="2-6" year="2011" hour="23" minute="30" /> 	
+\end_layout
+
+\begin_layout Plain Layout
+
+	</task> 	
+\end_layout
+
+\begin_layout Plain Layout
+
+	<task name="STOP_SESSION" taskType="stop">                  		
+\end_layout
+
+\begin_layout Plain Layout
+
+		<date dayOfWeek="2-6" hour="17" minute="30" />                  		
+\end_layout
+
+\begin_layout Plain Layout
+
+		<taskParams> 			
+\end_layout
+
+\begin_layout Plain Layout
+
+			<taskParam name="cptyAddress" value="CLIENT" /> 			
+\end_layout
+
+\begin_layout Plain Layout
+
+			<taskParam name="sessAddress" value="SERVER" />                  		
+\end_layout
+
+\begin_layout Plain Layout
+
+		</taskParams>              	
+\end_layout
+
+\begin_layout Plain Layout
+
+	</task> 	
+\end_layout
+
+\begin_layout Plain Layout
+
+	<calendars> 		
+\end_layout
+
+\begin_layout Plain Layout
+
+		<calendarRef name="PublicHolidays" /> 	
+\end_layout
+
+\begin_layout Plain Layout
+
+	</calendars> 
+\end_layout
+
+\begin_layout Plain Layout
+
+</tasks>
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Of course the task parameters for STOP_SESSION schedule are not required
+ if the task would have been defined at the session level.
+\end_layout
+
+\begin_layout Standard
+A task definition has a required name.
+ The name must be unique across all the engine tasks.
+ Task type is one of the following key words: 
+\end_layout
+
+\begin_layout Description
+start - starts a stopped (shutdown) session 
+\end_layout
+
+\begin_layout Description
+stop - stops a running session and destroys all the memory structures for
+ that session
+\end_layout
+
+\begin_layout Description
+freeze - freezes an active session thaw - 
+\end_layout
+
+\begin_layout Description
+thaws an already frozen session connect - 
+\end_layout
+
+\begin_layout Description
+connects the transport of an initiator (buy side) session that was previously
+ disconnected 
+\end_layout
+
+\begin_layout Description
+disconnect - disconnects the transport of a session 
+\end_layout
+
+\begin_layout Description
+reset - resets the expected sequence numbers of a session to 1.
+ Sends a Logon message with ResetSeqNumFlag field set to true to the counter-par
+ty 
+\end_layout
+
+\begin_layout Description
+shutdown - shuts down the HadesFIX instance gracefully 
+\end_layout
+
+\begin_layout Standard
+The task parameters names are at this point the following values: 
+\end_layout
+
+\begin_layout Itemize
+cptyAddress - counter-party address in the format compID.subID.LocationID
+ 
+\end_layout
+
+\begin_layout Itemize
+sessAddress - session address in the format compID.subID.LocationID 
+\end_layout
+
+\begin_layout Part
+Utilities
+\end_layout
+
+\begin_layout Chapter
+Password Bank Utility
+\end_layout
+
+\begin_layout Standard
+The Password Bank utility is used by the HadesFIX engine as an encrypted
+ password store.
+ All the passwords used in configuring the engine are stored in this password
+ container and referenced by an entry name.
+\end_layout
+
+\begin_layout Standard
+The utility application that manages the password store is located in the
+ bin directory and can be run by typing passwdbank.cmd/passwdbank.sh in a
+ command shell window.
+ The 
+\series bold
+pwdbank>
+\series default
+ prompt shell is displayed.
+ 
+\end_layout
+
+\begin_layout Standard
+Use 
+\series bold
+help
+\series default
+ command to get all the available commands and 
+\series bold
+help <command_name>
+\series default
+ for help regarding a specific command.
+\end_layout
+
+\begin_layout Standard
+One of the first steps in setting up the HadesFIX engine is to create a
+ password bank file.
+ This is achieved by using the Password Bank application 
+\emph on
+new
+\emph default
+ command.
+ The 
+\emph on
+new
+\emph default
+ command will create a new password bank file named 
+\series bold
+password.bank
+\series default
+ which will be saved in the same directory where the passwdbank command/shell
+ is run.
+ This file must be placed in the same directory where the Hades engine configura
+tion file is located.
+ 
+\emph on
+Do not change the name of the file
+\emph default
+!!! 
+\end_layout
+
+\begin_layout Standard
+If an existing file password bank file exists it will be backed up in a
+ file with extension yyyymmddhhmmss.
+ 
+\end_layout
+
+\begin_layout Standard
+Adding an entry to the password bank is a matter of running the 
+\emph on
+add
+\emph default
+ command.
+ E.g.
+ 
+\series bold
+add test password
+\series default
+ This will create an entry with the name test and the password set as password.
+ From now on the HadesFIX config file the password will be referenced by
+ the entry name.
+ 
+\end_layout
+
+\begin_layout Standard
+To list all the entries in the password store the list command can be used.
+ 
+\end_layout
+
+\begin_layout Standard
+To check a password bank entry the check command can be used.
+ E.g 
+\series bold
+check test password
+\series default
+ will return "Matches the store value" message if the password value matches.
+ The message returned for a password that does not match the password bank
+ password is "Does not match the store value".
+ 
+\end_layout
+
+\begin_layout Standard
+Removing a password from the password bank is done by running the remove
+ command.
+ E.g 
+\series bold
+remove test
+\series default
+ will remove the password with the password bank entry name test.
+\end_layout
+
+\begin_layout Chapter
+Management Console Application
+\end_layout
+
+\begin_layout Standard
+The management console application allows the management of multiple HadesFIX
+ instances.
+ It also provides one point entry screen able to display the alerts generated
+ by all the managed engines.
+ Configuration data is saved in a file that can be made known to the application
+ by specifying it using a java environment entry passed on the command line:
+ -Dhades.engine.config.file=PATH_TO_YOUR_CONFIG_FILE.
+ If the environment entry is not specified then the application will create
+ a configuration file named: 
+\emph on
+HadesAdminConfig.xml
+\emph default
+ and it will place this file in the directory where the Management Console
+ has been started.
+\end_layout
+
+\begin_layout Standard
+The application contains 4 frames as show bellow.
+ 
+\end_layout
+
+\begin_layout Enumerate
+The first frame, 
+\begin_inset Quotes eld
+\end_inset
+
+Configured Connections
+\begin_inset Quotes erd
+\end_inset
+
+ displays the configured connections created and saved in the config file
+ and the status of the connection.
+ The 
+\begin_inset Quotes eld
+\end_inset
+
+Engine Name
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+Engine Description
+\begin_inset Quotes erd
+\end_inset
+
+ columns are populated with the values retrieved from the engine.
+\end_layout
+
+\begin_layout Enumerate
+Bellow the 
+\begin_inset Quotes eld
+\end_inset
+
+Configured Connections
+\begin_inset Quotes erd
+\end_inset
+
+ is the 
+\begin_inset Quotes eld
+\end_inset
+
+Session Information
+\begin_inset Quotes erd
+\end_inset
+
+ frame.
+ It displays the Counter-party and Party addresses as well as the type of
+ session (Buy/Sell), session transmission and receive sequence number and
+ the status of the session.
+ 
+\end_layout
+
+\begin_layout Enumerate
+The frame bellow the 
+\begin_inset Quotes eld
+\end_inset
+
+Session Information
+\begin_inset Quotes erd
+\end_inset
+
+ is the 
+\begin_inset Quotes eld
+\end_inset
+
+Session Events
+\begin_inset Quotes erd
+\end_inset
+
+ frame.
+ It displays for now only the alerts generated by the engines
+\end_layout
+
+\begin_layout Enumerate
+The last frame is the 
+\begin_inset Quotes eld
+\end_inset
+
+Session Statistics
+\begin_inset Quotes erd
+\end_inset
+
+ frame which display message statistics
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename consoleConnMenu.png
+	scale 80
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Creating a connection to a HadesFIX engine
+\end_layout
+
+\begin_layout Standard
+To create a new connection to a configured engine select from 
+\begin_inset Quotes eld
+\end_inset
+
+Connection
+\begin_inset Quotes erd
+\end_inset
+
+ menu 
+\begin_inset Quotes eld
+\end_inset
+
+Create
+\begin_inset Quotes erd
+\end_inset
+
+ option.
+ The 
+\begin_inset Quotes eld
+\end_inset
+
+Engine Connection Info
+\begin_inset Quotes erd
+\end_inset
+
+ dialog is displayed as shown bellow.
+ The Host and TCP Port number correspond to the HadesFIX engine location
+ and must be filled.
+ 
+\end_layout
+
+\begin_layout Standard
+By checking the 
+\begin_inset Quotes eld
+\end_inset
+
+Authentication Enabled
+\begin_inset Quotes erd
+\end_inset
+
+ check box the SASL authentication mechanism is enabled.
+ The user name is the entry name stored in the Password Bank (see password
+ bank utility) for the password used for authentication.
+ On the engine side the 
+\begin_inset Quotes eld
+\end_inset
+
+mgmtUseAuth
+\begin_inset Quotes erd
+\end_inset
+
+ Hades instance attribute must be set to "true" and an entry must exist
+ in the engine Password Bank with the user name and password as set on the
+ Management Console.
+\end_layout
+
+\begin_layout Standard
+If the security requirements are tighter then SSL can be employed (the SASL
+ authentication mechanism sends the password unencrypted across the connection).
+ If SSL is enabled then the 
+\begin_inset Quotes eld
+\end_inset
+
+Trust-store Location
+\begin_inset Quotes erd
+\end_inset
+
+ must be provided and the Key/Trusts-tore password must be filled.
+ The password it is not the actual password but its entry name in the Password
+ Bank.
+ On the engine side the SSL must be using the Hades instance attributes:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+mgmtUseSSL="true"
+\end_layout
+
+\begin_layout Plain Layout
+
+mgmtKeystoreFile="server.keystore" 
+\end_layout
+
+\begin_layout Plain Layout
+
+mgmtKeystorePasswd="mgmtuser"
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+SSL Client Authentication could be used in which case the key-store location
+ must be provided.
+ It is considered that both trust and key stores have the same password.
+ On the engine side the corresponding attributes on the Hades instance must
+ be added:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+mgmtTruststoreFile="server.truststore" 
+\end_layout
+
+\begin_layout Plain Layout
+
+mgmtTruststorePasswd="mgmtuser" 
+\end_layout
+
+\begin_layout Plain Layout
+
+mgmtUseSSLCliAuth="true"
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+If it is desirable for the connection to be started when the Admin Console
+ starts then the 
+\begin_inset Quotes eld
+\end_inset
+
+Connect At Startup
+\begin_inset Quotes erd
+\end_inset
+
+ check box must be checked.
+\end_layout
+
+\begin_layout Standard
+The 
+\begin_inset Quotes eld
+\end_inset
+
+Display Color
+\begin_inset Quotes erd
+\end_inset
+
+ is used as foreground color for the text displayed for the created connection.
+\end_layout
+
+\begin_layout Standard
+If the HadesFIX instance is running then the connection setup can be tested
+ using the 
+\begin_inset Quotes eld
+\end_inset
+
+Test Connection
+\begin_inset Quotes erd
+\end_inset
+
+ button.
+ The 
+\begin_inset Quotes eld
+\end_inset
+
+Save
+\begin_inset Quotes erd
+\end_inset
+
+ button saves the configured connection in the local configuration file.
+ 
+\begin_inset Quotes eld
+\end_inset
+
+Cancel
+\begin_inset Quotes erd
+\end_inset
+
+ is of course discarding all the changes made.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename consoleCreateConnection.png
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Configured Connections Frame
+\end_layout
+
+\begin_layout Standard
+This frame displays and manages the configured engine connections and the
+ status of the connection to the engine.
+ A contextual menu is displayed when right click on a entry with multiple
+ options, enabled or disabled based on the status of the connection.
+ The connection contextual menu options are:
+\end_layout
+
+\begin_layout Itemize
+Edit - this option is only available if the engine connection is disconnected.
+ It will launch the 
+\emph on
+Engine Connection Info
+\emph default
+ dialog allowing for the connection parameters to be viewed/changed.
+\end_layout
+
+\begin_layout Itemize
+Delete - deletes the connection from the Console permanently.
+ This option is available only if the engine connection is disconnected.
+ 
+\end_layout
+
+\begin_layout Itemize
+Connect - connects the Management Console to the HadesFIX engine.
+ Available for a disconnected connection.
+\end_layout
+
+\begin_layout Itemize
+Disconnect - for a established connection will disconnect the Management
+ Console from the HadesFIX engine
+\end_layout
+
+\begin_layout Itemize
+Session Info - this option available only for a established connection will
+ populate the 
+\emph on
+Session Information
+\emph default
+ frame with the engine sessions information
+\end_layout
+
+\begin_layout Itemize
+Shutdown - shuts down the HadesFIX engine waiting for all the messages to
+ be cleared from queues
+\end_layout
+
+\begin_layout Itemize
+Shutdown Now - shuts down the HadesFIX engine destroying all the existing
+ data not delivered to the counter-parties
+\end_layout
+
+\begin_layout Section
+Session Information Frame
+\end_layout
+
+\begin_layout Standard
+
+\emph on
+Session Information Frame 
+\emph default
+manages the sessions running on a HadesFIX instance.
+ A HadesFIX session can be in a couple of different states described as
+ follows:
+\end_layout
+
+\begin_layout Description
+ACTIVE - Session is logged in and exchanges messages in sync
+\end_layout
+
+\begin_layout Description
+INACTIVE - Session is not logged in to the counter-party but is created
+\end_layout
+
+\begin_layout Description
+DISCONNECTED - The transport layer has been disconnected manually
+\end_layout
+
+\begin_layout Description
+FROZEN - Session is logged in to the counter-party but is in a state that
+ only responds to Heartbeat and TestRequest messages received from the counter-p
+arty.
+ All the other messages are rejected.
+\end_layout
+
+\begin_layout Description
+SHUTDOWN - The session is not running (not in the memory anymore)
+\end_layout
+
+\begin_layout Standard
+The contextual menu is displayed when right click on a session (see below).
+ The contextual menu options are enabled/disabled based on the session status.
+ The session contextual menu options are:
+\end_layout
+
+\begin_layout Itemize
+Refresh - Updates the current session Status and receive/transmit sequence
+ numbers.
+ This option is available in all the session states.
+\end_layout
+
+\begin_layout Itemize
+Transport Disconnect - Disconnects the transport layer.
+ This will work different on the Sell compare with Buy engine session type.
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+For a Sell session the TCP server worker will be shutdown but the session
+ state will be preserved.
+ When the Buy side reconnects it will continue the normal flow of messages
+ assuming it has kept its session state
+\end_layout
+
+\begin_layout Itemize
+For a Buy session the TCP client will be shutdown.
+ The client can reconnect automatically if configured to do so or may be
+ reconnected manually.
+ In both cases the session state is preserved.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Transport Connect - Attempts to manually connect a disconnected transport.
+ The option is only available in DISCONNECTED state.
+\end_layout
+
+\begin_layout Itemize
+Sequence Reset - Sends a SequenceReset message to the counter-party.
+ Prior the Rx sequence number must be set to a sequence number greater than
+ the current sequence.
+ If the request is successful the remote session Tx sequence number is synchroni
+ze to the value of the local set Rx sequence number.
+ The option is available only in ACTIVE state.
+\end_layout
+
+\begin_layout Itemize
+Session Reset - Sends a Login reset message that resets both Rx and Tx sequence
+ numbers to 1.
+ The option is available only in ACTIVE state.
+\end_layout
+
+\begin_layout Itemize
+Froze - Sets the current session in FROZEN state.
+ All the messages other then Heartbeat and TestRequest are rejected by a
+ Reject message sent back to the Counter-party.
+ The option is available only in ACTIVE state.
+\end_layout
+
+\begin_layout Itemize
+Thaw - Unset the FROZEN state of the session and resume the normal message
+ flow.
+ The option is available only in FROZEN state.
+\end_layout
+
+\begin_layout Itemize
+Stop - Kills the selected session and destroys all the data structures of
+ this session.
+ The option is available only in ACTIVE state.
+\end_layout
+
+\begin_layout Itemize
+Start - Starts a session that has been killed manually or died unexpectedly.
+ The option is available only in SHUTDOWN state.
+\end_layout
+
+\begin_layout Itemize
+Session Stats - Populates the 
+\emph on
+Session Statistics 
+\emph default
+frame with session data since the session has been started.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename consoleSessMenu.png
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+An snapshot of a session statistics data is presented bellow.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename consoleSessStats.png
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Session Events Frame
+\end_layout
+
+\begin_layout Standard
+This frame displays the events send by a HadesFIX running instance that
+ require attention.
+ At this point only the Alerts are displayed as these type of events are
+ mostly required in engine supervision.
+\end_layout
+
+\begin_layout Standard
+Session alert information is composed of:
+\end_layout
+
+\begin_layout Enumerate
+time stamp when alert occurred
+\end_layout
+
+\begin_layout Enumerate
+session identifier
+\end_layout
+
+\begin_layout Enumerate
+software component that raised the alert (enumeration - 
+\series bold
+com.marvisan.hades.fix.engine.mgmt.alert.ComponentType
+\series default
+)
+\end_layout
+
+\begin_layout Enumerate
+internal engine error code (enumeration -
+\series bold
+ com.marvisan.hades.fix.engine.mgmt.alert.AlertCode
+\series default
+)
+\end_layout
+
+\begin_layout Enumerate
+error message textual representation.
+ 
+\end_layout
+
+\begin_layout Enumerate
+if an exception was attached to the alert it can be displayed from the contextua
+l menu - 
+\emph on
+View Exception Detail
+\emph default
+ menu item.
+\end_layout
+
+\begin_layout Standard
+The frame toolbar allows for the removal of all the alerts and an alert
+ filter.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename consoleAlertMenu.png
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Chapter
+Administration Command Line
+\end_layout
+
+\begin_layout Verse
+
+\color red
+Starting with release 1.1.0 the command line management application has been
+ deprecated and replaced by a Swing Management GUI.
+\end_layout
+
+\begin_layout Standard
+HadesAdmin is a command line utility tool that connect to the HadesFIX instance
+ JMX server and remotely administer the server.
+ The command line utility is configured using Java system properties.
+\end_layout
+
+\begin_layout Standard
+The following are the system properties used to configure the HadesAdmin
+ utility:
+\end_layout
+
+\begin_layout Itemize
+hadesfix.remotejmx.host - HadesFIX instance host - REQUIRED parameter
+\end_layout
+
+\begin_layout Itemize
+hadesfix.remotejmx.port - HadesFIX management point as configured in the instance
+ configuration file - REQUIRED parameter
+\end_layout
+
+\begin_layout Itemize
+hadesfix.remotejmx.useauth - flag indicating that the JMX access uses SASL
+ authentication.
+ The server side must be configured for the same type of authentication.
+ 
+\end_layout
+
+\begin_layout Itemize
+hadesfix.remotejmx.username - user name.
+ The value of the parameter is the entry name in Password Bank.
+ The corresponing password is send over the wire to the HadesFIX management
+ server HadesAdmin expects that a Password Bank file exists in the same
+ directory the utility is run from.
+ 
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+The password and username will be transmitted in clear text.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+hadesfix.remotejmx.usessl - Flag indicating that the transport layer is using
+ SSL.
+ Server side must be configured for SSL too.
+\end_layout
+
+\begin_layout Itemize
+hadesfix.remotejmx.ssl.keystore - the key store file name as an absolute filesystem
+ path
+\end_layout
+
+\begin_layout Itemize
+hadesfix.remotejmx.ssl.keystore.passwd - the key store password.
+ This is the entry name for the password stored in the Password Bank.
+\end_layout
+
+\begin_layout Itemize
+hadesfix.remotejmx.ssl.cliauth - flag indicating the client uses trust authenticati
+on
+\end_layout
+
+\begin_layout Itemize
+hadesfix.remotejmx.ssl.truststore - the trusstore store file name as an absolute
+ filesystem path
+\end_layout
+
+\begin_layout Itemize
+hadesfix.remotejmx.ssl.truststore.passwd - the trust store password.
+ This is the entry name for the password stored in the Password Bank.
+\end_layout
+
+\begin_layout Standard
+After successful connection to the management server the console prompt:
+ 
+\series bold
+hadesadmin>
+\series default
+ is displayed together with information about the server it connected to.
+\end_layout
+
+\begin_layout Standard
+Type help for a summary list of commands.
+\end_layout
+
+\begin_layout Standard
+The commands supported at this point are listed bellow: 
+\end_layout
+
+\begin_layout Description
+seslst [<session_id>] - <session_id> parameter is optional.
+ If not present all the session configured on the instance will be listed.
+ The <session_id> parameter is either the number ID value of the session
+ or the session string which is formed as: COUNTERPARTY_ADDREES:SESSION_ADDRESS
+ where counterparty and session address are the concatenated values of CompID,
+ SubID and LocationID separated by a ’.’ character (e.g.
+ yourcomp:yoursub:yourloc:mycomp.mysub.myloc).
+ The output of the command looks like the screenshot bellow: 
+\end_layout
+
+\begin_layout Description
+\begin_inset Graphics
+	filename SesslistCommandOutput.png
+	groupId UserGuide
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Where the columns in the output significations is: 
+\end_layout
+
+\begin_layout Itemize
+ID - Session unique identifier
+\end_layout
+
+\begin_layout Itemize
+Cpty Addr - Counter-party address in the format explained above 
+\end_layout
+
+\begin_layout Itemize
+Sess Addr - Current session address in the format explained above 
+\end_layout
+
+\begin_layout Itemize
+Type - type of session.
+ One of the 2 values: 
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+CLNT - initiator (buy side)
+\end_layout
+
+\begin_layout Standard
+SRVR - acceptor (sell side) 
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Stat - Status of the session.
+ One of the values: 
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+RUNNING - session connected and active if Client or ready to accept connection
+ if Server 
+\end_layout
+
+\begin_layout Standard
+FROZEN - session connected but frozen (responds only to Heartbeat and TestReques
+t messages and reject all the others)
+\end_layout
+
+\begin_layout Standard
+BLOCKED - session not connected 
+\end_layout
+
+\begin_layout Standard
+STOPPED - session is shutdown (no processes exists in memory) 
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Rx Seq/Tx Seq - receive and transmit sequence numbers at the time the command
+ is run 
+\end_layout
+
+\begin_layout Description
+sesfrz <session_id> - “freezes” a session.
+ A frozen session responds only to Heartbeat and TestRequest messages and
+ reject all the other messages.
+ 
+\end_layout
+
+\begin_layout Description
+sesthw <session_id> - “thaws” a session already frozen.
+ Activates the session and relay/responds to all the messages received.
+ 
+\end_layout
+
+\begin_layout Description
+seskil <session_id> - disconnect the session and distroys the memory structures.
+ The session can be restarted using the sesrun command.
+ 
+\end_layout
+
+\begin_layout Description
+sesrun <session_id> - creates the session data structures and attempts to
+ connect the session transport for the Client side.
+ For the Server side the session is ready to accept incoming connections.
+ 
+\end_layout
+
+\begin_layout Description
+sesdis <session_id> - disconnects session’s transport.
+ A client session can be reconnected using the sescon command.
+ For the Server side the session is ready to accept incoming connections.
+ 
+\end_layout
+
+\begin_layout Description
+sescon <session_id> - connects session’s transport.
+ A client session will attempt to reconnect as per configuration.
+ The Server side does not use this command.
+ 
+\end_layout
+
+\begin_layout Description
+sesrst <session_id> - resets the Rx and Tx sequence numbers to 1 by sending
+ a Logon message with ResetSeqNumFlag field set to true.
+ 
+\end_layout
+
+\begin_layout Description
+sessta <session_id> - retrieve statistics data for the transport, session
+ and streams.
+ 
+\end_layout
+
+\begin_layout Description
+seqrst <session_id> 
+\series bold
+<new_seq_num>
+\series default
+ - sends a SequenceReset message in Reset mode (the GapFillFlag set to N)
+ in order to reestablish a session after a unrecoverable error.
+ The new_seq_num parameter needs to be greater than the current Rx sequence
+ number and will become the current Rx sequence number.
+ 
+\end_layout
+
+\begin_layout Description
+srvdwn shutsdown the HadesFIX instance gracefully allowing for the messages
+ buffered to be transmitted/relayed.
+ 
+\end_layout
+
+\begin_layout Description
+srvkil abruptly shutsdown the HadesFIX instance.
+ All the messages that were not transmitted/relayed will be lost.
+ 
+\end_layout
+
+\begin_layout Description
+sessrx <session_id> 
+\series bold
+<new_seq_num>
+\series default
+ - this command should be only used for debugging the protocol.
+ It sets directly the Rx sequence number in the Protocol layer.
+ The session needs to be “frozen” before using the command.
+ 
+\end_layout
+
+\begin_layout Description
+sesstx <session_id> 
+\series bold
+<new_seq_num>
+\series default
+ - this command should be only useed for debugging the protocol.
+ It sets directly the Tx sequenece number in the Protocol layer.
+ The session needs to be “frozen” before using the command.
+ 
+\end_layout
+
+\end_body
+\end_document

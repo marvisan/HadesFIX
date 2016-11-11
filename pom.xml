@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>net.hades.fix</groupId>
+    <artifactId>HadesFIX</artifactId>
+    <version>2.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <modules>
+	<module>Model</module>
+	<module>Commons</module>
+	<module>Engine</module>
+	<module>Console</module>
+	<module>Sample</module>
+    </modules>
+    
+        
+    <properties>
+	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	<maven.compiler.source>1.8</maven.compiler.source>
+	<maven.compiler.target>1.8</maven.compiler.target>
+	<junit.version>4.12</junit.version>
+	<qucikfix.version>1.6.2</qucikfix.version>
+	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    
+    <build>
+	<pluginManagement>
+	    <plugins>
+		<plugin>
+		    <groupId>org.apache.maven.plugins</groupId>
+		    <artifactId>maven-compiler-plugin</artifactId>
+		    <version>3.1</version>
+		    <configuration>
+			<source>${maven.compiler.source}</source>
+			<target>${maven.compiler.target}</target>
+			<encoding>${project.build.sourceEncoding}</encoding>
+		    </configuration>
+		</plugin>
+		<plugin>
+		    <groupId>org.apache.maven.plugins</groupId>
+		    <artifactId>maven-surefire-plugin</artifactId>
+		    <version>2.10</version>
+		</plugin>
+	    </plugins>
+	</pluginManagement>
+    </build>
+    
+    <dependencies>
+	<dependency>
+	    <groupId>junit</groupId>
+	    <artifactId>junit</artifactId>
+	    <version>${junit.version}</version>
+	    <scope>test</scope>
+	</dependency>
+    </dependencies>
+    
+    <profiles>
+	<profile>
+	    <id>dev</id>
+	    <activation>
+		<property>
+		    <name>env</name>
+		    <value>dev</value>
+		</property>
+	    </activation>
+	    <properties>
+	    </properties>
+	</profile>
+	<profile>
+	    <id>rel</id>
+	    <activation>
+		<property>
+		    <name>env</name>
+		    <value>rel</value>
+		</property>
+	    </activation>
+	    <properties>
+		<commander.release.tag>Rel: 2.0.0 on 3 Oct 2016</commander.release.tag>
+	    </properties>
+	    <distributionManagement>
+		<repository>
+		    <id>archiva.internal</id>
+		    <name>Archiva Internal Repository</name>
+		    <url>http://tesla:8080/archiva/repository/internal/</url>
+		</repository>
+		<snapshotRepository>
+		    <id>archiva.snapshots</id>
+		    <name>Archiva Snapshot Repository</name>
+		    <url>http://tesla:8080/archiva/repository/snapshots/</url>
+		</snapshotRepository>
+	    </distributionManagement>
+	</profile>
+    </profiles>
+
+</project>

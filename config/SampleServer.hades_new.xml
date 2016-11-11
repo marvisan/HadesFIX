@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<!--
+    Document   : ServerTest.hades.xml
+    Created on : 10 August 2009, 10:00 AM
+    Author     : vrotaru
+    Description:
+        Configuration for unit test.
+-->
+
+<hadesInstance xmlns="http://www.marvisan.com/schema/hades-engine-config-1-0"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://www.marvisan.com/schema/hades-engine-config-2-0 HadesEngineConfig.xsd"
+               name="Sell Side" 
+               description="A sample sell side engine"
+               mgmtPort="33333"
+               mgmtUseAuth="true">
+                   <!--
+                   mgmtUseAuth="true"
+                   mgmtUseSSL="true"
+                   mgmtTruststoreFile="server.truststore"
+                   mgmtTruststorePasswd="mgmtuser"
+                   mgmtUseSSLCliAuth="true"
+                   mgmtKeystoreFile="server.keystore"
+                   mgmtKeystorePasswd="mgmtuser"
+                   -->
+    <counterparties>
+        <counterparty compID="CLIENT">
+            <sessions>
+                <session type="server" compID="SERVER" fixVersion="4.4" heartBtInt="60">
+		    <tcpServerConnection id="TCP_SRV_LOCALHOST:27008" port="27008" name="TST_SRV"/>
+		    <authInfo loginUsername="sampleuser" loginPassword="samplepass" />
+		    <next>
+			<handler id="PRNT_RAW_C" />
+		    </next>
+                    <stream type="prod" id="PROD_STREAM">
+			<handler id="GENERATOR" name="RandomMessageHandler">
+			    <next>
+				<handler id="PRNT_RAW_P" />
+			    </next>
+			</handler>
+			<handler id="PRNT_RAW_P" name="PrintRawMessageHandler">
+			    <next>
+				<handler id="TCP_SRV_LOCALHOST:27008" />
+			    </next>
+			</handler>
+                    </stream>
+                    <stream type="cons" id="CONS_STREAM">
+			<handler id="PRNT_RAW_C" name="PrintRawMessageHandler">
+			    <next>
+				<handler id="DUMP" />
+			    </next>
+			</handler>
+                         <handler id="DUMP" name="DumpHandler" />
+                    </stream>
+                    <handlerDefs>
+                        <handlerDef name="PrintRawMessageHandler" implClass="net.hades.fix.engine.handler.pass.PassThroughHandler" />
+                        <handlerDef name="RandomMessageHandler" implClass="net.hades.fix.engine.handler.random.RandomMessageProducerHandler">
+                            <parameters>
+                                <parameter name="interval" value="10" />
+                            </parameters>
+                        </handlerDef>
+                    </handlerDefs>
+                </serverSession>
+            </session>
+        </counterparty>
+    </counterparties>
+    <handlerDefs>
+        <handlerDef name="DumpHandler" implClass="net.hades.fix.engine.handler.dump.DumpHandler" />
+    </handlerDefs>
+    <alertListeners>
+        <listener className="net.hades.fix.engine.process.listener.alert.DefaultAlertListener" />
+    </alertListeners>
+    <lifeCycleListeners>
+        <listener className="net.hades.fix.engine.process.listener.lifecycle.DefaultLifecycleListener" />
+    </lifeCycleListeners>
+    <messageListeners>
+        <listener className="net.hades.fix.engine.process.listener.message.DefaultMessageListener" />
+    </messageListeners>
+</hadesInstance>

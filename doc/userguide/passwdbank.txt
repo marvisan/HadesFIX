@@ -1,0 +1,15 @@
+Password Bank
+The Password Bank utility is used by the HadesFIX engine as an ecrypted password store. All the passwords used in configuring the engine are stored in this password container and referenced by the entry name.
+The utility application that manages the password store is located in the bin directory and can be run by typing passwdbank.cmd/passwdbank.sh in a command shell window.
+The pwdbank> prompt shell is displayed. Use help command to get all the available commands and help <command_name> for help concerning a specific command.
+One of the first steps in settining up the HadesFIX engine is to create a pwassword bank. This is achieved by using the paswdbank apllciation new command. The new command will create a new password bank file named password.bank which will be saved in the same directory where the passwdbank shell is run. This file must be placed in the same directory where the Hades engine configuration file is located. Do not change the name of the file!!! If an existing file password bank file exists it wil be backed up in a file with extension yyyymmddhhmmss.
+Adding an entry to the password bank is a matter of runing the add command: 
+add test password 
+This will create an entry with the name test and the password set as password. From now on the HadesFIX config file the password will be referenced by the entry name.
+To list all the entries in the password store the list command can be used.
+To check a paswword bank entry the check command can be used:
+check test password
+will return "Matches the store value" message as the password value matches. The message return for a password that does not match the pasword bank password is "Does not match the store value".
+Removing a password from the password bank is done by running the remove command:
+remove test
+will remove the password with the password bank entry name test

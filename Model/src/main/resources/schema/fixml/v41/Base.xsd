@@ -1,0 +1,1817 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Revision: 1.2.0
+  Date:  25 Aug 2000
+  FIX Protocol Base.dtd 
+  Copyright 2000 FIX Protocol Limited.  All rights reserved.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+  <xs:include schemaLocation="Instrument.xsd"/>
+  <xs:element name="FIXML">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" ref="FIXMLMessage"/>
+      </xs:sequence>
+      <xs:attribute name="DTDVersion" default="1.2.0">
+        <xs:simpleType>
+          <xs:restriction base="xs:NMTOKEN">
+            <xs:enumeration value="1.2.0"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="FIXVersion" default="4.1">
+        <xs:simpleType>
+          <xs:restriction base="xs:NMTOKEN">
+            <xs:enumeration value="4.1"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="FIXMLMessage">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Header"/>
+        <xs:element ref="ApplicationMessage"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="ApplicationMessage">
+    <xs:complexType>
+      <xs:choice>
+        <xs:element ref="Advertisement"/>
+        <xs:element ref="Indication"/>
+        <xs:element ref="News"/>
+        <xs:element ref="Email"/>
+        <xs:element ref="QuoteReq"/>
+        <xs:element ref="Quote"/>
+        <xs:element ref="Order"/>
+        <xs:element ref="NewOrderList"/>
+        <xs:element ref="ExecutionReport"/>
+        <xs:element ref="DK_Trade"/>
+        <xs:element ref="OrderModificationRequest"/>
+        <xs:element ref="OrderCancelRequest"/>
+        <xs:element ref="OrderCancelReject"/>
+        <xs:element ref="OrderStatusRequest"/>
+        <xs:element ref="Allocation"/>
+        <xs:element ref="AllocationACK"/>
+        <xs:element ref="SettlementInstructions"/>
+        <xs:element ref="ListStatus"/>
+        <xs:element ref="ListExecute"/>
+        <xs:element ref="ListCancelRequest"/>
+        <xs:element ref="ListStatusRequest"/>
+        <xs:element ref="Custom"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+  <!--
+    
+    The entity Empty[application message] is used to conditionally 
+    include a declaration for an empty element when a message
+    is not implemented by a particular application.
+    
+    Each file that is combined to make the complete FIXML DTD 
+    contains an entity declaration like:
+    
+       <!ENTITY % EmptyAdvertisement 'IGNORE' > 
+    
+    for each message that is defined in the file.  This effectively
+    eliminates the empty element definition contained in this file.
+    It is an error for a DTD to contain more than one ELEMENT declaration
+    with the same name.
+    
+    For this to work correctly, the contents of this file must appear
+    at the end of the DTD declaration.  It is not an error to redefine
+    an ENTITY.  The first declaration encountered is used throughout the
+    document.  Parsers may issue a warning when duplicate ENTITY definitions
+    are encountered.
+    
+    In practice, when a FIXML application receives a ApplicationMessage that it does not
+    support, and the application uses a validating parser, the message will
+    be rejected because it will not conform to the empty content declaration.
+    
+  -->
+  <xs:element name="Custom">
+    <xs:complexType/>
+  </xs:element>
+  <!-- *** Header Information -->
+  <xs:complexType name="HeaderContent">
+    <xs:sequence>
+      <xs:element ref="Sender"/>
+      <xs:element minOccurs="0" ref="OnBehalfOf"/>
+      <xs:element ref="Target"/>
+      <xs:element minOccurs="0" ref="DeliverTo"/>
+      <xs:element minOccurs="0" ref="SendingTime"/>
+      <xs:element minOccurs="0" ref="PossDupFlag"/>
+      <xs:element minOccurs="0" ref="PossResend"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="Header" type="HeaderContent"/>
+  <xs:element name="Sender">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="CompID"/>
+        <xs:element minOccurs="0" ref="SubID"/>
+        <xs:element minOccurs="0" ref="LocationID"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Target">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="CompID"/>
+        <xs:element minOccurs="0" ref="SubID"/>
+        <xs:element minOccurs="0" ref="LocationID"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="OnBehalfOf">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="CompID"/>
+        <xs:element minOccurs="0" ref="SubID"/>
+        <xs:element minOccurs="0" ref="LocationID"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DeliverTo">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="CompID"/>
+        <xs:element minOccurs="0" ref="SubID"/>
+        <xs:element minOccurs="0" ref="LocationID"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <!-- Generalized Firm identifier -->
+  <xs:element name="CompID">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="49-56-115-128">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="49-56-115-128"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="SenderFIXTag" default="49">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="49"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="TargetFIXTag" default="56">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="56"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="OnBehalfOfFIXTag" default="115">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="115"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DeliverToFIXTag" default="128">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="128"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <!-- Generalized Firm Secondary Identifier (desk, trader, etc.) -->
+  <xs:element name="SubID">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="50-57-116-129">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="50-57-116-129"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="SenderFIXTag" default="50">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="50"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="TargetFIXTag" default="57">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="57"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="OnBehalfOfFIXTag" default="116">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="116"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DeliverToFIXTag" default="129">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="129"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <!-- Generalized "On Behalf Of" Identifier -->
+  <xs:element name="LocationID">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="142-143-144-145">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="142-143-144-145"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="SenderFIXTag" default="142">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="142"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="TargetFIXTag" default="143">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="143"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="OnBehalfOfFIXTag" default="144">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="144"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DeliverToFIXTag" default="145">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="145"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <!-- Time of Message Transmission - always expressed in GMT -->
+  <xs:element name="SendingTime">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="52">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="52"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="time">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="time"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="PossDupFlag">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="43">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="43"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="Y"/>
+            <xs:enumeration value="N"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="SDValue">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="Yes"/>
+            <xs:enumeration value="No"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="PossResend">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="97">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="97"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="Y"/>
+            <xs:enumeration value="N"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="SDValue">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="Yes"/>
+            <xs:enumeration value="No"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <!-- Header Information *** -->
+  <!-- *** General Entities -->
+  <xs:simpleType name="currCodes">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="AED"/>
+      <xs:enumeration value="AFA"/>
+      <xs:enumeration value="ALL"/>
+      <xs:enumeration value="ANG"/>
+      <xs:enumeration value="AOK"/>
+      <xs:enumeration value="ARP"/>
+      <xs:enumeration value="ATS"/>
+      <xs:enumeration value="AUD"/>
+      <xs:enumeration value="BBD"/>
+      <xs:enumeration value="BDT"/>
+      <xs:enumeration value="BEC"/>
+      <xs:enumeration value="BEF"/>
+      <xs:enumeration value="BEL"/>
+      <xs:enumeration value="BGL"/>
+      <xs:enumeration value="BHD"/>
+      <xs:enumeration value="BIF"/>
+      <xs:enumeration value="BMD"/>
+      <xs:enumeration value="BOP"/>
+      <xs:enumeration value="BRC"/>
+      <xs:enumeration value="BSD"/>
+      <xs:enumeration value="BUK"/>
+      <xs:enumeration value="BWP"/>
+      <xs:enumeration value="BZD"/>
+      <xs:enumeration value="CAD"/>
+      <xs:enumeration value="CHF"/>
+      <xs:enumeration value="CLP"/>
+      <xs:enumeration value="CNY"/>
+      <xs:enumeration value="COP"/>
+      <xs:enumeration value="CRC"/>
+      <xs:enumeration value="CSK"/>
+      <xs:enumeration value="CUP"/>
+      <xs:enumeration value="CVE"/>
+      <xs:enumeration value="CYP"/>
+      <xs:enumeration value="DDM"/>
+      <xs:enumeration value="DEM"/>
+      <xs:enumeration value="DJF"/>
+      <xs:enumeration value="DKK"/>
+      <xs:enumeration value="DOP"/>
+      <xs:enumeration value="DZD"/>
+      <xs:enumeration value="ECS"/>
+      <xs:enumeration value="EGP"/>
+      <xs:enumeration value="ESA"/>
+      <xs:enumeration value="ESB"/>
+      <xs:enumeration value="ESP"/>
+      <xs:enumeration value="ETB"/>
+      <xs:enumeration value="FIM"/>
+      <xs:enumeration value="FJD"/>
+      <xs:enumeration value="FKP"/>
+      <xs:enumeration value="FRF"/>
+      <xs:enumeration value="GBP"/>
+      <xs:enumeration value="GHC"/>
+      <xs:enumeration value="GIP"/>
+      <xs:enumeration value="GMD"/>
+      <xs:enumeration value="GNS"/>
+      <xs:enumeration value="GQE"/>
+      <xs:enumeration value="GRD"/>
+      <xs:enumeration value="GTQ"/>
+      <xs:enumeration value="GWP"/>
+      <xs:enumeration value="GYD"/>
+      <xs:enumeration value="HKD"/>
+      <xs:enumeration value="HNL"/>
+      <xs:enumeration value="HTG"/>
+      <xs:enumeration value="HUF"/>
+      <xs:enumeration value="IDR"/>
+      <xs:enumeration value="IEP"/>
+      <xs:enumeration value="ILS"/>
+      <xs:enumeration value="INR"/>
+      <xs:enumeration value="IQD"/>
+      <xs:enumeration value="IRR"/>
+      <xs:enumeration value="ISK"/>
+      <xs:enumeration value="ITL"/>
+      <xs:enumeration value="JMD"/>
+      <xs:enumeration value="JOD"/>
+      <xs:enumeration value="JPY"/>
+      <xs:enumeration value="KES"/>
+      <xs:enumeration value="KHR"/>
+      <xs:enumeration value="KMF"/>
+      <xs:enumeration value="KPQ"/>
+      <xs:enumeration value="KRW"/>
+      <xs:enumeration value="KWD"/>
+      <xs:enumeration value="KYD"/>
+      <xs:enumeration value="LAK"/>
+      <xs:enumeration value="LBP"/>
+      <xs:enumeration value="LKR"/>
+      <xs:enumeration value="LRD"/>
+      <xs:enumeration value="LSM"/>
+      <xs:enumeration value="LUF"/>
+      <xs:enumeration value="LYD"/>
+      <xs:enumeration value="MAD"/>
+      <xs:enumeration value="MGF"/>
+      <xs:enumeration value="MLF"/>
+      <xs:enumeration value="MNT"/>
+      <xs:enumeration value="MOP"/>
+      <xs:enumeration value="MRO"/>
+      <xs:enumeration value="MTP"/>
+      <xs:enumeration value="MUR"/>
+      <xs:enumeration value="MVR"/>
+      <xs:enumeration value="MWK"/>
+      <xs:enumeration value="MXP"/>
+      <xs:enumeration value="MYR"/>
+      <xs:enumeration value="MZM"/>
+      <xs:enumeration value="NGN"/>
+      <xs:enumeration value="NIC"/>
+      <xs:enumeration value="NLG"/>
+      <xs:enumeration value="NOK"/>
+      <xs:enumeration value="NPR"/>
+      <xs:enumeration value="NZD"/>
+      <xs:enumeration value="OMR"/>
+      <xs:enumeration value="PAB"/>
+      <xs:enumeration value="PES"/>
+      <xs:enumeration value="PGK"/>
+      <xs:enumeration value="PHP"/>
+      <xs:enumeration value="PKR"/>
+      <xs:enumeration value="PLZ"/>
+      <xs:enumeration value="PTE"/>
+      <xs:enumeration value="PYG"/>
+      <xs:enumeration value="QAR"/>
+      <xs:enumeration value="ROL"/>
+      <xs:enumeration value="RWF"/>
+      <xs:enumeration value="SAR"/>
+      <xs:enumeration value="SBD"/>
+      <xs:enumeration value="SCR"/>
+      <xs:enumeration value="SDP"/>
+      <xs:enumeration value="SEK"/>
+      <xs:enumeration value="SGD"/>
+      <xs:enumeration value="SHP"/>
+      <xs:enumeration value="SLL"/>
+      <xs:enumeration value="SOS"/>
+      <xs:enumeration value="SRG"/>
+      <xs:enumeration value="STD"/>
+      <xs:enumeration value="SUR"/>
+      <xs:enumeration value="SVC"/>
+      <xs:enumeration value="SYP"/>
+      <xs:enumeration value="SZL"/>
+      <xs:enumeration value="THB"/>
+      <xs:enumeration value="TND"/>
+      <xs:enumeration value="TOP"/>
+      <xs:enumeration value="TPE"/>
+      <xs:enumeration value="TRL"/>
+      <xs:enumeration value="TTD"/>
+      <xs:enumeration value="TWD"/>
+      <xs:enumeration value="TZS"/>
+      <xs:enumeration value="UGS"/>
+      <xs:enumeration value="USD"/>
+      <xs:enumeration value="USN"/>
+      <xs:enumeration value="USS"/>
+      <xs:enumeration value="UYP"/>
+      <xs:enumeration value="VEB"/>
+      <xs:enumeration value="VND"/>
+      <xs:enumeration value="VUV"/>
+      <xs:enumeration value="WST"/>
+      <xs:enumeration value="XAF"/>
+      <xs:enumeration value="XAU"/>
+      <xs:enumeration value="YDD"/>
+      <xs:enumeration value="YER"/>
+      <xs:enumeration value="YUD"/>
+      <xs:enumeration value="ZAL"/>
+      <xs:enumeration value="ZAR"/>
+      <xs:enumeration value="ZMK"/>
+      <xs:enumeration value="ZRZ"/>
+      <xs:enumeration value="ZWD"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="exchanges">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="AL"/>
+      <xs:enumeration value="A"/>
+      <xs:enumeration value="AM"/>
+      <xs:enumeration value="AS"/>
+      <xs:enumeration value="AX"/>
+      <xs:enumeration value="BH"/>
+      <xs:enumeration value="BS"/>
+      <xs:enumeration value="BC"/>
+      <xs:enumeration value="MC"/>
+      <xs:enumeration value="BE"/>
+      <xs:enumeration value="BN"/>
+      <xs:enumeration value="BL"/>
+      <xs:enumeration value="BO"/>
+      <xs:enumeration value="BD"/>
+      <xs:enumeration value="B"/>
+      <xs:enumeration value="BM"/>
+      <xs:enumeration value="BR"/>
+      <xs:enumeration value="W"/>
+      <xs:enumeration value="C"/>
+      <xs:enumeration value="CM"/>
+      <xs:enumeration value="CO"/>
+      <xs:enumeration value="d"/>
+      <xs:enumeration value="D"/>
+      <xs:enumeration value="E"/>
+      <xs:enumeration value="FL"/>
+      <xs:enumeration value="F"/>
+      <xs:enumeration value="FU"/>
+      <xs:enumeration value="G"/>
+      <xs:enumeration value="GE"/>
+      <xs:enumeration value="H"/>
+      <xs:enumeration value="HA"/>
+      <xs:enumeration value="HE"/>
+      <xs:enumeration value="HI"/>
+      <xs:enumeration value="HK"/>
+      <xs:enumeration value="IB"/>
+      <xs:enumeration value="IS"/>
+      <xs:enumeration value="JK"/>
+      <xs:enumeration value="Q"/>
+      <xs:enumeration value="J"/>
+      <xs:enumeration value="KA"/>
+      <xs:enumeration value="KS"/>
+      <xs:enumeration value="KL"/>
+      <xs:enumeration value="KY"/>
+      <xs:enumeration value="LG"/>
+      <xs:enumeration value="LA"/>
+      <xs:enumeration value="LI"/>
+      <xs:enumeration value="L"/>
+      <xs:enumeration value="LU"/>
+      <xs:enumeration value="LY"/>
+      <xs:enumeration value="MA"/>
+      <xs:enumeration value="MC"/>
+      <xs:enumeration value="MS"/>
+      <xs:enumeration value="MT"/>
+      <xs:enumeration value="I"/>
+      <xs:enumeration value="MX"/>
+      <xs:enumeration value="MW"/>
+      <xs:enumeration value="MI"/>
+      <xs:enumeration value="p"/>
+      <xs:enumeration value="M"/>
+      <xs:enumeration value="MU"/>
+      <xs:enumeration value="OM"/>
+      <xs:enumeration value="NC"/>
+      <xs:enumeration value="NG"/>
+      <xs:enumeration value="NR"/>
+      <xs:enumeration value="NT"/>
+      <xs:enumeration value="NA"/>
+      <xs:enumeration value="O"/>
+      <xs:enumeration value="OI"/>
+      <xs:enumeration value="OB"/>
+      <xs:enumeration value="N"/>
+      <xs:enumeration value="NZ"/>
+      <xs:enumeration value="NI"/>
+      <xs:enumeration value="OS"/>
+      <xs:enumeration value="OL"/>
+      <xs:enumeration value="P"/>
+      <xs:enumeration value="PL"/>
+      <xs:enumeration value="PA"/>
+      <xs:enumeration value="PH"/>
+      <xs:enumeration value="X"/>
+      <xs:enumeration value="RO"/>
+      <xs:enumeration value="SA"/>
+      <xs:enumeration value="SP"/>
+      <xs:enumeration value="SI"/>
+      <xs:enumeration value="SS"/>
+      <xs:enumeration value="SZ"/>
+      <xs:enumeration value="O"/>
+      <xs:enumeration value="ST"/>
+      <xs:enumeration value="SG"/>
+      <xs:enumeration value="Z"/>
+      <xs:enumeration value="TW"/>
+      <xs:enumeration value="TA"/>
+      <xs:enumeration value="BK"/>
+      <xs:enumeration value="TH"/>
+      <xs:enumeration value="T"/>
+      <xs:enumeration value="K"/>
+      <xs:enumeration value="TO"/>
+      <xs:enumeration value="TR"/>
+      <xs:enumeration value="TN"/>
+      <xs:enumeration value="TU"/>
+      <xs:enumeration value="V"/>
+      <xs:enumeration value="VE"/>
+      <xs:enumeration value="VI"/>
+      <xs:enumeration value="ZI"/>
+      <xs:enumeration value="Z"/>
+      <xs:enumeration value="0"/>
+      <xs:enumeration value="1"/>
+      <xs:enumeration value="2"/>
+      <xs:enumeration value="3"/>
+      <xs:enumeration value="4"/>
+      <xs:enumeration value="5"/>
+      <xs:enumeration value="6"/>
+      <xs:enumeration value="7"/>
+      <xs:enumeration value="8"/>
+      <xs:enumeration value="9"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <!-- *** General Entities -->
+  <!-- *** General Elements -->
+  <xs:element name="MonthYear">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="200">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="200"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="month-year">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="month-year"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Day">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="205">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="205"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="day-of-month">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="day-of-month"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Shares">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="53">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="53"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="int">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="int"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Min" default="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="0"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Max" default="1000000000">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="1000000000"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Price">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="44">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="44"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="float">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="float"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Min" default="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="0"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Max" default="99999999.9999">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="99999999.9999"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Currency">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="15">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="15"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" use="required" type="currCodes"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MiscFeeCurr">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="138">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="138"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" use="required" type="currCodes"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SettCurrency">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="120">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="120"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" use="required" type="currCodes"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="TradeDate">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="75">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="75"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="date">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="date"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="TransactTime">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="60">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="60"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="time">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="time"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Text">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="58">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="58"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="LinesOfText">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" ref="NoLinesOfText"/>
+        <xs:element maxOccurs="unbounded" ref="Text"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="NoLinesOfText">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="33">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="33"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="int">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="int"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="URLLink">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="149">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="149"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="LastMkt">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="30">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="30"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" use="required" type="exchanges"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="ExecDestination">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="100">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="100"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" use="required" type="exchanges"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="ValidUntilTime">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="62">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="62"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="time">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="time"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="OrigTime">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="42">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="42"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="time">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="time"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="OrderID">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="37">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="37"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="ClOrdID">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="11">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="11"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="PrevClosePx">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="140">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="140"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="float">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="float"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Min" default="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="0"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Max" default="99999999.9999">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="99999999.9999"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="OrderQty">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="38">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="38"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="int">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="int"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Min" default="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="0"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Max" default="1000000000">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="1000000000"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="FutSettDate">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="64">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="64"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="date">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="date"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="FutSettDate2">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="193">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="193"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="date">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="date"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="OrderQty2">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="192">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="192"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="float">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="float"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Min" default="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="0"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Max" default="1000000000">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="1000000000"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="QuoteID">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="117">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="117"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="IOI_ID">
+    <xs:sequence>
+      <xs:element ref="IOI_ID"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="IOI_ID">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="23">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="23"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Side">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="54">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="54"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="1"/>
+            <xs:enumeration value="2"/>
+            <xs:enumeration value="3"/>
+            <xs:enumeration value="4"/>
+            <xs:enumeration value="5"/>
+            <xs:enumeration value="6"/>
+            <xs:enumeration value="7"/>
+            <xs:enumeration value="8"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="SDValue">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="Buy"/>
+            <xs:enumeration value="Sell"/>
+            <xs:enumeration value="BuyMin"/>
+            <xs:enumeration value="SellPlus"/>
+            <xs:enumeration value="SellSht"/>
+            <xs:enumeration value="SellShtEx"/>
+            <xs:enumeration value="Undisc"/>
+            <xs:enumeration value="Cross"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="LocateReq">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="114">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="114"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="Y"/>
+            <xs:enumeration value="N"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="SDValue">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="Yes"/>
+            <xs:enumeration value="No"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Settlement">
+    <xs:complexType>
+      <xs:choice>
+        <xs:element ref="SettType"/>
+        <xs:element ref="FutureSettlement"/>
+        <xs:element ref="SellersOptSettlement"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SettType">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" ref="FutSettDate"/>
+      </xs:sequence>
+      <xs:attribute name="FIXTag" default="63">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="63"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="0"/>
+            <xs:enumeration value="1"/>
+            <xs:enumeration value="2"/>
+            <xs:enumeration value="3"/>
+            <xs:enumeration value="4"/>
+            <xs:enumeration value="5"/>
+            <xs:enumeration value="7"/>
+            <xs:enumeration value="9"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="SDValue">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="Regular"/>
+            <xs:enumeration value="Cash"/>
+            <xs:enumeration value="NextDay"/>
+            <xs:enumeration value="T2"/>
+            <xs:enumeration value="T3"/>
+            <xs:enumeration value="T4"/>
+            <xs:enumeration value="WhenIssued"/>
+            <xs:enumeration value="T5"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="FutureSettlement">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="FutSettDate"/>
+      </xs:sequence>
+      <xs:attribute name="FIXTag" default="63">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="63"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" default="6">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="6"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="SDValue" default="Future">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="Future"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SellersOptSettlement">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="FutSettDate"/>
+      </xs:sequence>
+      <xs:attribute name="FIXTag" default="63">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="63"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" default="8">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="8"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="SDValue" default="SellersOpt">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="SellersOpt"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="OrderType">
+    <xs:complexType>
+      <xs:choice>
+        <xs:element ref="MarketOrder"/>
+        <xs:element ref="LimitOrder"/>
+        <xs:element ref="StopOrder"/>
+        <xs:element ref="StopLimitOrder"/>
+        <xs:element ref="PrevQuotedOrder"/>
+        <xs:element ref="PrevIndicatedOrder"/>
+        <xs:element ref="ForexSwapOrder"/>
+        <xs:element ref="PeggedOrder"/>
+        <xs:element ref="ForexOrder"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MarketOrder">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="40">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="40"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="1"/>
+            <xs:enumeration value="5"/>
+            <xs:enumeration value="6"/>
+            <xs:enumeration value="9"/>
+            <xs:enumeration value="A"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="SDValue">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="Market"/>
+            <xs:enumeration value="MarketOnClose"/>
+            <xs:enumeration value="WithOrWithout"/>
+            <xs:enumeration value="OnBasis"/>
+            <xs:enumeration value="OnClose"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="LimitOrder">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Price"/>
+      </xs:sequence>
+      <xs:attribute name="FIXTag" default="40">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="40"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="2"/>
+            <xs:enumeration value="7"/>
+            <xs:enumeration value="8"/>
+            <xs:enumeration value="B"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="SDValue">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="Limit"/>
+            <xs:enumeration value="LimitOrBetter"/>
+            <xs:enumeration value="LimitWithOrWithout"/>
+            <xs:enumeration value="LimitOnClose"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="StopOrder">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="StopPx"/>
+      </xs:sequence>
+      <xs:attribute name="FIXTag" default="40">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="40"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" default="3">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="3"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="SDValue" default="Stop">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="Stop"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="StopLimitOrder">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Price"/>
+        <xs:element ref="StopPx"/>
+      </xs:sequence>
+      <xs:attribute name="FIXTag" default="40">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="40"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" default="4">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="4"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="SDValue" default="StopLimit">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="StopLimit"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="PrevQuotedOrder">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="QuoteID"/>
+      </xs:sequence>
+      <xs:attribute name="FIXTag" default="40">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="40"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" default="D">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="D"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="SDValue">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="PrevQuoted"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="PrevIndicatedOrder">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="IOI_ID">
+          <xs:attribute name="FIXTag" default="40">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="40"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="DataType" default="char">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="char"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="Value" default="E">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="E"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="SDValue" default="PrevInd">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="PrevInd"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="ForexSwapOrder">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" ref="OrderQty2"/>
+        <xs:element minOccurs="0" ref="FutSettDate2"/>
+      </xs:sequence>
+      <xs:attribute name="FIXTag" default="40">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="40"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" default="G">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="G"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="SDValue" default="FXSwap">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="FXSwap"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="PeggedOrder">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="PegDifference">
+          <xs:attribute name="FIXTag" default="40">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="40"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="DataType" default="char">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="char"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="Value" default="P">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="P"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="SDValue" default="PegDiff">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:enumeration value="PegDiff"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="StopPx">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="99">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="99"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="float">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="float"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Min" default="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="0"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Max" default="99999999.9999">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="99999999.9999"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="ForexOrder">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" ref="FutSettDate"/>
+      </xs:sequence>
+      <xs:attribute name="FIXTag" default="40">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="40"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="C"/>
+            <xs:enumeration value="F"/>
+            <xs:enumeration value="H"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="SDValue">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="FXMarket"/>
+            <xs:enumeration value="FXLimit"/>
+            <xs:enumeration value="FXPrevQt"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <!-- Note: probably should use NOTATION, but what is the appropriate identifier for "base64? -->
+  <xs:element name="RawData">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="96">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="96"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="packed">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="base64"/>
+            <xs:enumeration value="none"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="packedFIXTag" default="XXX">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="XXX"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <!-- General Elements *** -->
+  <!-- Include the Instrument DTD -->
+</xs:schema>

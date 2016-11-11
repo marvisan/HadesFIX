@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+	- - - - - - - - - - - - - - - - - - - - - - - - - -
+    Generated 20070103
+	- - - - - - - - - - - - - - - - - - - - - - - - - -
+	-->
+<!--
+    FIXML 5.0
+    Copyright 2003-2007 FIX Protocol Limited.  All rights reserved.
+
+    This Schema represents FIXML vocabulary based on version 5.0 of the FIX Protocol
+
+    Comments should be posted on the FIX protocol web-site at www.fixprotocol.org
+
+-->
+<xs:schema targetNamespace="http://www.fixprotocol.org/FIXML-5-0/METADATA"
+	xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	xmlns="http://www.fixprotocol.org/FIXML-5-0/METADATA"	
+		elementFormDefault="qualified" attributeFormDefault="unqualified">
+<!--FIXML meta data-->
+	<xs:element name="Xref">
+		<xs:complexType>
+			<xs:attribute name="Protocol" type="xs:string" use="optional"/>
+			<xs:attribute name="name" type="xs:string" use="optional"/>
+			<xs:attribute name="tag" type="xs:positiveInteger" use="optional"/>
+			<xs:attribute name="datatype" type="xs:string" use="optional"/>
+			<xs:attribute name="ComponentType" type="xs:string" use="optional"/>
+			<xs:attribute name="StdAbbrev" type="xs:string" use="optional"/>
+			<xs:attribute name="Category" type="xs:string" use="optional"/>
+			<xs:attribute name="CategoryAbbrev" type="xs:string" use="optional"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="EnumDoc">
+		<xs:complexType>
+			<xs:attribute name="value" type="xs:string" use="required"/>
+			<xs:attribute name="text" type="xs:string" use="optional"/>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

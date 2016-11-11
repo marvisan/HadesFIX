@@ -1,0 +1,31 @@
+<!--starthtml-->
+<div class="Unindented">
+To quickly install the HadesFIX engine and run the sample configurations follow the following simple steps:
+</div>
+<ol>
+<li>
+Unzip <b>HadesFIX_RELEASE_NO.zip</b> file in directory of your choice on the disk. We will refer to this directory as <i>HADESFIX_INSTALL_DIR</i>. 
+</li>
+<li>
+Create a Hades instance directory on disk where the instance scripts and configuration files will reside. We will refer to this directory as <i>HADESFIX_INSTANCE_DIR.</i> 
+</li>
+<li>
+Copy the content of the <b>bin/</b> and <b>config/</b> directories from the <i>HADESFIX_INSTALL_DIR </i>into the <i>HADESFIX_INSTANCE_DIR</i> directory. 
+</li>
+<li>
+Edit <b>env.cmd/env.sh</b> file and change the values of the following settings:<i> JAVA_HOME</i> - to the location of you java installation <i>HADES_HOME</i> - to the location of your HadesFIX installation <i>JAVA_OPTS</i> - set the values you need for your JVM
+</li>
+<li>
+Open 2 command/shell windows - start the test FIX sell side: <b>startServer.cmd/startServer.sh</b> in the first window - start the test FIX buy side: <b>startClient.cmd/startClient.sh</b> in the second window Both the sell and buy side application instances will send random FIX messages to each other at fix intervals of time. The consumer handler configured on both sides will only dump the message to the console window.
+</li>
+<li>
+Use the command/shell scripts and the configuration files <b>(SampleServer.hades.xml</b> and <b>SampleClient.hades.xml</b>) as a starting point for configuring your instance. You can find the configuration file schema in the <b>HadesEngineConfig.xsd</b> file. Most likely you will need to write your handlers in order to do something meaningful with the FIX messages. 
+</li>
+<li>
+In order to connect to HadesFIX instances using the "hfadmin" command tool just type: - for the sell side - <b>hfadmin 33333</b> - for the buy side - <b>hfadmin 33332</b> where 33333 and 33332 are the administration ports for the two HadesFIX instances. See the HadesFIX admin tool documentation for details of using this utility.
+</li>
+
+</ol>
+
+
+<!--endhtml-->

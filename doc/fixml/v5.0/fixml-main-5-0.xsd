@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    FIXML 5.0
+    Copyright 2003-2007 FIX Protocol Limited.  All rights reserved.
+
+    This Schema represents FIXML vocabulary based on version 5.0 of the FIX Protocol
+
+    Comments should be posted on the FIX protocol web-site at www.fixprotocol.org
+
+-->
+<xs:schema targetNamespace="http://www.fixprotocol.org/FIXML-5-0"
+	xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	xmlns="http://www.fixprotocol.org/FIXML-5-0"
+	xmlns:fm="http://www.fixprotocol.org/FIXML-5-0/METADATA"	
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.fixprotocol.org/FIXML-5-0/METADATA fixml-metadata-5-0.xsd"	
+		elementFormDefault="qualified" attributeFormDefault="unqualified">
+
+	<xs:include schemaLocation="fixml-pretrade-5-0.xsd"/>
+	<xs:include schemaLocation="fixml-trade-5-0.xsd"/>
+	<xs:include schemaLocation="fixml-posttrade-5-0.xsd"/>
+</xs:schema>

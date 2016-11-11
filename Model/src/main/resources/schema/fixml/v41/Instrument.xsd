@@ -1,0 +1,718 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Revision: 1.2.0
+  Date:  25 Aug 2000
+  FIX Protocol Base.dtd 
+  Copyright 2000 FIX Protocol Limited.  All rights reserved.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+  <xs:group name="instrdetails">
+    <xs:sequence>
+      <xs:element minOccurs="0" ref="SymbolSfx"/>
+      <xs:element minOccurs="0" ref="SecurityID"/>
+      <xs:element minOccurs="0" ref="IDSource"/>
+      <xs:element minOccurs="0" ref="SecurityType"/>
+      <xs:element minOccurs="0" ref="SecurityExch"/>
+      <xs:element minOccurs="0" ref="Issuer"/>
+      <xs:element minOccurs="0" ref="SecurityDesc"/>
+    </xs:sequence>
+  </xs:group>
+  <xs:element name="Instrument">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Symbol"/>
+        <xs:group ref="instrdetails"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <!-- RelInstrument contains RelatedSym which is only in News and Email -->
+  <xs:element name="InstrumentList">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" ref="RelInstrument"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="RelInstrument">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" ref="NoRelatedSym"/>
+        <xs:element ref="RelatedSym"/>
+        <xs:group ref="instrdetails"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="NoRelatedSym">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="146">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="146"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="int">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="int"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="RelSecurityInfo">
+    <xs:complexType>
+      <xs:choice>
+        <xs:element ref="Future"/>
+        <xs:element ref="Option"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+  <!-- SISecType supports required (example: SettlementInstructions) when all security info isn't) -->
+  <xs:element name="SISecType">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="167">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="167"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="BA"/>
+            <xs:enumeration value="CD"/>
+            <xs:enumeration value="CMO"/>
+            <xs:enumeration value="CORP"/>
+            <xs:enumeration value="CP"/>
+            <xs:enumeration value="CPP"/>
+            <xs:enumeration value="CS"/>
+            <xs:enumeration value="FHA"/>
+            <xs:enumeration value="FHL"/>
+            <xs:enumeration value="FN"/>
+            <xs:enumeration value="FOR"/>
+            <xs:enumeration value="FUT"/>
+            <xs:enumeration value="GN"/>
+            <xs:enumeration value="GOVT"/>
+            <xs:enumeration value="IET"/>
+            <xs:enumeration value="MF"/>
+            <xs:enumeration value="MIO"/>
+            <xs:enumeration value="MPO"/>
+            <xs:enumeration value="MPP"/>
+            <xs:enumeration value="MPT"/>
+            <xs:enumeration value="MUNI"/>
+            <xs:enumeration value="NONE"/>
+            <xs:enumeration value="OPT"/>
+            <xs:enumeration value="PS"/>
+            <xs:enumeration value="RP"/>
+            <xs:enumeration value="RVRP"/>
+            <xs:enumeration value="SL"/>
+            <xs:enumeration value="TD"/>
+            <xs:enumeration value="USTB"/>
+            <xs:enumeration value="WAR"/>
+            <xs:enumeration value="ZOO"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SecurityType">
+    <xs:complexType>
+      <xs:choice>
+        <xs:element ref="Equity"/>
+        <xs:element ref="MutualFund"/>
+        <xs:element ref="ForeignExchange"/>
+        <xs:element ref="FixedIncome"/>
+        <xs:element ref="Warrant"/>
+        <xs:element ref="Option"/>
+        <xs:element ref="Future"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+  <!--
+    Security types are taken from the ISITC spec,
+    default value is CS (Common Stock)
+  -->
+  <xs:element name="Option">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="PutCall"/>
+        <xs:element minOccurs="0" ref="Cover"/>
+        <xs:element minOccurs="0" ref="CustomerFirm"/>
+        <xs:element minOccurs="0" ref="OpenClose"/>
+        <xs:element ref="Maturity"/>
+        <xs:element ref="StrikePx"/>
+        <xs:element minOccurs="0" ref="OptAttribute"/>
+      </xs:sequence>
+      <xs:attribute name="FIXTag" default="167">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="167"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" default="OPT">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="OPT"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Future">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Maturity"/>
+      </xs:sequence>
+      <xs:attribute name="FIXTag" default="167">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="167"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" default="FUT">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="FUT"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MutualFund">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="167">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="167"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" default="MF">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="MF"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="ForeignExchange">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="167">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="167"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" default="FOR">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="FOR"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="FixedIncome">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="167">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="167"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="BA"/>
+            <xs:enumeration value="CD"/>
+            <xs:enumeration value="CMO"/>
+            <xs:enumeration value="COPR"/>
+            <xs:enumeration value="CP"/>
+            <xs:enumeration value="CPP"/>
+            <xs:enumeration value="FHA"/>
+            <xs:enumeration value="FHL"/>
+            <xs:enumeration value="FN"/>
+            <xs:enumeration value="GN"/>
+            <xs:enumeration value="GOVT"/>
+            <xs:enumeration value="IET"/>
+            <xs:enumeration value="MPO"/>
+            <xs:enumeration value="MPP"/>
+            <xs:enumeration value="MPT"/>
+            <xs:enumeration value="MUNI"/>
+            <xs:enumeration value="RP"/>
+            <xs:enumeration value="RVRP"/>
+            <xs:enumeration value="SL"/>
+            <xs:enumeration value="TD"/>
+            <xs:enumeration value="USTB"/>
+            <xs:enumeration value="ZOO"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Equity">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="167">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="167"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="CS"/>
+            <xs:enumeration value="PS"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Warrant">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="167">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="167"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" default="WAR">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="WAR"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="PutCall">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="201">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="201"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="int">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="int"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="0"/>
+            <xs:enumeration value="1"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="SDValue">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="Put"/>
+            <xs:enumeration value="Call"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Cover">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="203">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="203"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="0"/>
+            <xs:enumeration value="1"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="SDValue">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="Covered"/>
+            <xs:enumeration value="Uncovered"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="CustomerFirm">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="204">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="204"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="0"/>
+            <xs:enumeration value="1"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="SDValue">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="Customer"/>
+            <xs:enumeration value="Firm"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="OpenClose">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="77">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="77"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="O"/>
+            <xs:enumeration value="C"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="SDValue">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="Open"/>
+            <xs:enumeration value="Close"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Symbol">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="55">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="55"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="RelatedSym">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="46">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="46"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SymbolSfx">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="65">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="65"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="IDSource">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="22">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="22"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="1"/>
+            <xs:enumeration value="2"/>
+            <xs:enumeration value="3"/>
+            <xs:enumeration value="4"/>
+            <xs:enumeration value="5"/>
+            <xs:enumeration value="6"/>
+            <xs:enumeration value="7"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="SDValue">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="CUSIP"/>
+            <xs:enumeration value="SEDOL"/>
+            <xs:enumeration value="QUIK"/>
+            <xs:enumeration value="ISIN"/>
+            <xs:enumeration value="RIC"/>
+            <xs:enumeration value="ISOCurr"/>
+            <xs:enumeration value="ISOCountry"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SecurityID">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="48">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="48"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SecurityExch">
+    <xs:complexType>
+      <xs:attribute name="FIXTag" default="207">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="207"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Value" use="required" type="exchanges"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Issuer">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="106">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="106"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SecurityDesc">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="107">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="107"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="Maturity">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="MonthYear"/>
+        <xs:element minOccurs="0" ref="Day"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="StrikePx">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="202">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="202"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="float">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="float"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Min" default="0">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="0"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="Max" default="99999999.9999">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="99999999.9999"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="OptAttribute">
+    <xs:complexType mixed="true">
+      <xs:attribute name="FIXTag" default="206">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="206"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="DataType" default="char">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="char"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
