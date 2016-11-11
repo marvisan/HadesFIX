@@ -9,9 +9,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -23,7 +27,10 @@ import net.hades.fix.engine.config.model.HandlerRefInfo;
 import net.hades.fix.engine.config.model.StreamInfo;
 import net.hades.fix.engine.exception.ConfigurationException;
 import net.hades.fix.engine.handler.Handler;
+import net.hades.fix.engine.process.EngineTask;
+import net.hades.fix.engine.process.ExecutionResult;
 import net.hades.fix.engine.process.session.SessionCoordinator;
+
 
 /**
  * Generic class for a message stream container.
@@ -36,47 +43,30 @@ public abstract class Stream {
 
     protected SessionCoordinator sessionCoordinator;
     protected StreamInfo configuration;
-    protected List<Handler> handlers;
+    protected LinkedHashMap<String, Handler> handlers;
     protected List<HandlerDefInfo> handlerDefs;
-
+    protected Map<String, ExecutionResult> results;
+   
     protected Stream(SessionCoordinator sessionCoordinator, StreamInfo configuration, HandlerDefInfo[] handlerDefs) throws ConfigurationException {
         this.sessionCoordinator = sessionCoordinator;
 	this.configuration = configuration;
 	this.handlerDefs = Arrays.asList(handlerDefs);
 	createHandlers();
 	wireupHandlers();
-    }
-    
-    public Handler getFirstHandler() {
-	Handler result = null;
-	for (Handler handler : handlers) {
-	    result = handler;
-	    String id = handler.getId();
-	    boolean found = false;
-	    for (Handler other : handlers) {
-//		for (Handler h : other.getNextHandlers()) {
-//		    if (h.getId().equals(id)) {
-//			found = true;
-//			break;
-//		    }
-//		}
-		if (found) {
-		    break;
-		}
-	    }
-	}
-	return result;
-    }
-    
-    public Handler getLastHandler() {
-	for (Handler handler : handlers) {
-	    if (handler.getNextHandlers() == null || handler.getNextHandlers().isEmpty()) {
-		return handler;
-	    }
-	}
-	return null;
+	results = new HashMap<>();
     }
 
+    public Handler findHandlerById(String id) {
+	return handlers.get(id);
+    }
+    
+    public void start(ExecutorService executor) {
+	for (Map.Entry<String, Handler> handlerEntry : handlers.entrySet()) {
+	    EngineTask<ExecutionResult> task = new EngineTask<>(Thread.NORM_PRIORITY, handlerEntry.getValue());
+	    results.put(task.getName(), (ExecutionResult) executor.submit(task));
+	}
+    }
+ 
     //---------------------------------------------------------------------------------------------
     
     private void wireupHandlers() throws ConfigurationException {
@@ -96,24 +86,16 @@ public abstract class Stream {
 	    }
 	}
     }
-    
-    private Handler findHandlerById(String id) {
-	for (Handler handler : handlers) {
-	    if (id.equals(handler.getId())) {
-		return handler;
-	    }
-	}
-	return null;
-    }
 
     private void createHandlers() throws ConfigurationException {
-	handlers = new ArrayList<>();
+	List<Handler> handlersList = new ArrayList<>();
 	for (HandlerInfo handlerInfo : configuration.getHandlers()) {
 	    Handler handler = getConfiguredHandler(handlerInfo.getId(), handlerInfo.getName());
 	    if (handler != null) {
-		handlers.add(handler);
+		handlersList.add(handler);
 	    }
 	}
+	orderHandlers(handlersList);
     }
    
     private Handler getConfiguredHandler(String id, String name) throws ConfigurationException {
@@ -174,5 +156,62 @@ public abstract class Stream {
         }
         return result;
     }
+
+    private void orderHandlers(List<Handler> handlersList) throws ConfigurationException {
+	Map<String, VisitedStatus> visited = initialiseVisited(handlersList);
+        for (Handler handler : handlersList) {
+            if (VisitedStatus.No.equals(visited.get(handler.getId()))) {
+                dfs(handlersList, visited, handler);
+            }
+        }
+        Set<String> keys = handlers.keySet();
+	if (configuration.getFirstHandlerId().equals(getLast(keys))) {
+	    LinkedHashMap reversed = new LinkedHashMap();
+	    List<String> l = new ArrayList<>(handlers.keySet());
+	    for (int i = l.size() - 1; i >=0; i--) {
+		String id = l.get(i);
+                reversed.put(id, handlers.get(id));
+            }
+	    handlers = reversed;
+	} else if (!configuration.getFirstHandlerId().equals(getFirst(keys))) {
+	    throw new ConfigurationException("First handler does not match the ordered list");
+	}
+    }
+    
+    private String getFirst(Set<String> values) {
+	return values.iterator().next();
+    }
+    
+    private String getLast(Set<String> values) {
+	String last = null;
+	for (String s : values) {
+	    last = s;
+	}
+	return last;
+    }
+    
+    private Map<String, VisitedStatus> initialiseVisited(List<Handler> handlers) {
+        Map<String, VisitedStatus> visited = new HashMap<>(handlers.size());
+        handlers.forEach((handler) -> {
+            visited.put(handler.getId(), VisitedStatus.No);
+        });
+        return visited;
+    }
+
+    
+    private void dfs(List<Handler> handlersList, Map<String, VisitedStatus> visited, Handler handler) throws ConfigurationException {
+        visited.put(handler.getId(), VisitedStatus.Started);
+	for (Iterator<Handler> it = handler.getNextHandlers().iterator(); it.hasNext();) {
+	    Handler h = it.next();
+            if (visited.get(h.getId()).equals(VisitedStatus.No)) {
+                dfs(handlersList, visited, h);
+            } else if (visited.get(h.getId()).equals(VisitedStatus.Started)) {
+                throw new ConfigurationException(String.format("Graph circular reference found for handler vertex [%s] --> [%s] ", handler.getId(), h.getId()));
+            }
+        }
+        handlers.put(handler.getId(), handler);
+        visited.put(handler.getId(), VisitedStatus.Done);
+    }
+
 
 }

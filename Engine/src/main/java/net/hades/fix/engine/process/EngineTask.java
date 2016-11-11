@@ -13,19 +13,19 @@ import net.hades.fix.engine.handler.Handler;
  *
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
  */
-public class EngineTask extends FutureTask implements PriorityNamedTask {
+public class EngineTask<T extends ExecutionResult> extends FutureTask<ExecutionResult> implements PriorityNamedTask {
 
     private int threadPiority;
     private String threadName;
 
-    public EngineTask(Callable callable) {
+    public EngineTask(Callable<ExecutionResult> callable) {
 	super(callable);
 	if (callable instanceof Handler) {
 	    threadName = ((Handler) callable).getId();
 	}
     }
 
-    public EngineTask(int threadPiority, Callable callable) {
+    public EngineTask(int threadPiority, Callable<ExecutionResult> callable) {
 	this(callable);
 	this.threadPiority = threadPiority;
     }

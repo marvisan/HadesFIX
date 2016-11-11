@@ -28,11 +28,11 @@ public interface Handler<T extends Message,U extends ExecutionResult> extends Ca
     String getId();
     void write(T message);
     boolean tryWrite(T message, int waitMillis);
-    void addNextHandler(String id, Handler next);
+    void addNextHandler(String id, Handler<T,U> next);
     Map<String, String> getStatistics();
     void shutdown();
     void shutdownImmediate();
-    List<Handler> getNextHandlers();
+    List<Handler<T,U>> getNextHandlers();
 
     /**
      * Enables/Disable a handler. By default the handler is enabled.
