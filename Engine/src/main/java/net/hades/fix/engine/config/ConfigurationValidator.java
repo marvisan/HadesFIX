@@ -7,7 +7,6 @@ package net.hades.fix.engine.config;
 import java.util.Map;
 
 import net.hades.fix.engine.config.model.HadesInstanceInfo;
-import net.hades.fix.engine.exception.ConfigurationException;
 import net.hades.fix.engine.validator.Validator;
 import net.hades.fix.engine.validator.ValidatorType;
 

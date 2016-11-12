@@ -16,7 +16,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.concurrent.ArrayBlockingQueue;
 
-import net.hades.fix.engine.exception.ConfigurationException;
+import net.hades.fix.engine.config.ConfigurationException;
 import net.hades.fix.engine.process.event.LifeCycleEvent;
 import net.hades.fix.engine.process.event.MessageEvent;
 import net.hades.fix.engine.mgmt.alert.SystemAlerts;

@@ -10,8 +10,8 @@
  */
 package net.hades.fix.engine.process.session.persist;
 
-import net.hades.fix.engine.exception.ConfigurationException;
-import net.hades.fix.engine.exception.SeqNoPersistenceException;
+import net.hades.fix.engine.config.ConfigurationException;
+import net.hades.fix.engine.process.protocol.SeqNoPersistenceException;
 
 import java.util.logging.Logger;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -60,7 +60,7 @@ public abstract class SessSeqPersister {
      * Getter for the next RX sequence number. The engine RX sequence number is incremented and
      * persisted locally.
      * @return next seq number
-     * @throws net.hades.fix.engine.exception.SeqNoPersistenceException
+     * @throws net.hades.fix.engine.process.protocol.SeqNoPersistenceException
      */
     public abstract int getNextRxSeqNo() throws SeqNoPersistenceException;
 

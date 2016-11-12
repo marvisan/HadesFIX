@@ -36,8 +36,8 @@ import net.hades.fix.engine.config.Configurator;
 import net.hades.fix.engine.config.model.BackupConnectionInfo;
 import net.hades.fix.engine.config.model.ClientTcpConnectionInfo;
 import net.hades.fix.engine.config.model.SSLInfo;
-import net.hades.fix.engine.exception.ConnectionException;
-import net.hades.fix.engine.exception.UnrecoverableException;
+import net.hades.fix.engine.process.protocol.UnrecoverableException;
+import net.hades.fix.engine.process.TaskStartException;
 import net.hades.fix.engine.process.session.ClientSessionCoordinator;
 
 /**
@@ -100,11 +100,16 @@ public final class TcpClient implements ManagedTask {
 			if (retryCycleOrQuit()) {
 			    connected = false;
 			}
+		    } catch (TaskStartException ex) {
+			Log.log(Level.SEVERE, "Error starting engine : {0}", ex);
+			status = TaskStatus.Error;
+			return new ExecutionResult(status, ex);
 		    }
 		}
 	    } catch (Exception ex) {
 		Log.log(Level.SEVERE, "Unexpected error : {0}", ex);
-		shutdown = true;
+		status = TaskStatus.Error;
+		return new ExecutionResult(status, ex);
 	    }
 	}
 	status = TaskStatus.Completed;
@@ -158,7 +163,7 @@ public final class TcpClient implements ManagedTask {
 
     //-------------------------------------------------------------------------------------------------------
     
-    private void connect(ConnectionData connData) throws UnrecoverableException, ConnectionException {
+    private void connect(ConnectionData connData) throws UnrecoverableException, ConnectionException, TaskStartException {
         if (connData == null) {
             return;
         }

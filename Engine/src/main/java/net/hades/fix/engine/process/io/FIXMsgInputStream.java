@@ -15,7 +15,7 @@ import java.io.PushbackInputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import net.hades.fix.engine.exception.ConnectionException;
+import net.hades.fix.engine.process.transport.ConnectionException;
 
 /**
  * Input stream that read FIX message bytes from abyte stream.

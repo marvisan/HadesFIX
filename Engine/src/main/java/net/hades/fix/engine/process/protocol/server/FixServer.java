@@ -16,8 +16,8 @@ import net.hades.fix.commons.exception.ExceptionUtil;
 
 import net.hades.fix.engine.process.TaskStatus;
 import net.hades.fix.engine.config.model.ClientSessionInfo;
-import net.hades.fix.engine.exception.ConfigurationException;
-import net.hades.fix.engine.exception.SeqNoPersistenceException;
+import net.hades.fix.engine.config.ConfigurationException;
+import net.hades.fix.engine.process.protocol.SeqNoPersistenceException;
 import net.hades.fix.engine.mgmt.alert.Alert;
 import net.hades.fix.engine.mgmt.alert.AlertCode;
 import net.hades.fix.engine.mgmt.alert.BaseSeverityType;

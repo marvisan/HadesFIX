@@ -150,11 +150,13 @@ public abstract class AbstractHandler implements Handler  {
     
     @Override
     public void shutdown() {
-	
+	status = TaskStatus.Completed;
     }
 
     @Override
     public void shutdownImmediate() {
+	inQueue.clear();;
+	status = TaskStatus.Completed;
     }
 
     private void populateHandlerParams() {

@@ -10,21 +10,27 @@ import net.hades.fix.engine.process.ExecutionResult;
 import net.hades.fix.engine.process.TaskStatus;
 import net.hades.fix.engine.process.transport.TcpClient;
 import java.net.Socket;
+import java.util.concurrent.TimeUnit;
 
 import net.hades.fix.engine.HadesInstance;
+import net.hades.fix.engine.config.model.ClientSessionInfo;
 import net.hades.fix.engine.config.model.ClientTcpConnectionInfo;
-import net.hades.fix.engine.config.model.ConnectionInfo;
 import net.hades.fix.engine.config.model.CounterpartyInfo;
 import net.hades.fix.engine.config.model.SessionInfo;
-import net.hades.fix.engine.exception.ConfigurationException;
-import net.hades.fix.engine.exception.ProtocolStatusException;
+import net.hades.fix.engine.config.ConfigurationException;
+import net.hades.fix.engine.process.protocol.ProtocolStatusException;
 import net.hades.fix.engine.mgmt.alert.Alert;
 import net.hades.fix.engine.mgmt.alert.AlertCode;
 import net.hades.fix.engine.mgmt.alert.BaseSeverityType;
 import net.hades.fix.engine.model.SessionAddress;
+import net.hades.fix.engine.process.EngineTask;
+import net.hades.fix.engine.process.TaskStartException;
 import net.hades.fix.engine.process.event.AlertEvent;
+import net.hades.fix.engine.process.protocol.client.FixClient;
 import net.hades.fix.engine.process.stream.ConsumerStream;
 import net.hades.fix.engine.process.stream.ProducerStream;
+import net.hades.fix.engine.process.transport.TcpWorker;
+import net.hades.fix.engine.util.TaskUtil;
 
 /**
  * The main class controlling the lifecycle of a counterparty client session.
@@ -47,6 +53,7 @@ public final class ClientSessionCoordinator extends SessionCoordinator {
 	consumerStream = new ConsumerStream(this, configuration.getConsumerStreamInfo(), cptyConfiguration.getHandlerDefs());
 	producerStream = new ProducerStream(this, configuration.getProducerStreamInfo(), cptyConfiguration.getHandlerDefs());
 	tcpClient = new TcpClient(this, (ClientTcpConnectionInfo) configuration.getConnection());
+	protocol = new FixClient(this, (ClientSessionInfo) configuration, consumerStream.findHandlerById(sessionConfiguration.getNextHandlers()[0].getId()));
 	status = TaskStatus.New;
     }
 
@@ -101,13 +108,28 @@ public final class ClientSessionCoordinator extends SessionCoordinator {
     }
 
     @Override
-    public void startStreamHandlers(Socket clientSocket) {
-	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void startStreamHandlers(Socket clientSocket) throws TaskStartException {
+	tcpWorker = new TcpWorker(this, clientSocket, protocol);
+	producerStream.setTransportHandler(tcpWorker);
+	consumerStream.start(getExecutorService());
+	EngineTask<ExecutionResult> task = new EngineTask<>(Thread.NORM_PRIORITY, protocol);
+	tasks.put(task.getName(), task);
+	getExecutorService().submit(task);
+	TaskUtil.waitToStart(task);
+	task = new EngineTask<>(Thread.NORM_PRIORITY, tcpWorker);
+	tasks.put(task.getName(), task);
+	getExecutorService().submit(task);
+	TaskUtil.waitToStart(task);
+	producerStream.start(getExecutorService());
+	timerExecutor.scheduleAtFixedRate(new SessionSuperviserTimerTask(this), 10, 10, TimeUnit.SECONDS);
     }
 
     @Override
     public void stopStreamHandlers() {
-	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	producerStream.stop();
+	tcpWorker.shutdown();
+	protocol.shutdown();
+	consumerStream.stop();
     }
 
     @Override

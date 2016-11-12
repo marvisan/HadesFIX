@@ -5,23 +5,30 @@
 package net.hades.fix.engine.process.session;
 
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Logger;
 
 import net.hades.fix.engine.HadesInstance;
 import net.hades.fix.engine.config.model.*;
-import net.hades.fix.engine.exception.ConfigurationException;
-import net.hades.fix.engine.exception.ProtocolStatusException;
+import net.hades.fix.engine.config.ConfigurationException;
+import net.hades.fix.engine.process.protocol.ProtocolStatusException;
 import net.hades.fix.engine.mgmt.data.SessionProcessData;
 import net.hades.fix.engine.mgmt.data.SessionStats;
 import net.hades.fix.engine.model.CounterpartyAddress;
 import net.hades.fix.engine.model.SessionAddress;
 import net.hades.fix.engine.process.Advisable;
+import net.hades.fix.engine.process.EngineTask;
+import net.hades.fix.engine.process.ExecutionResult;
 import net.hades.fix.engine.process.ManagedTask;
+import net.hades.fix.engine.process.TaskStartException;
 import net.hades.fix.engine.process.TaskStatus;
 import net.hades.fix.engine.process.event.AlertEvent;
 import net.hades.fix.engine.process.event.LifeCycleEvent;
@@ -29,6 +36,7 @@ import net.hades.fix.engine.process.event.MessageEvent;
 import net.hades.fix.engine.process.protocol.Protocol;
 import net.hades.fix.engine.process.stream.ConsumerStream;
 import net.hades.fix.engine.process.stream.ProducerStream;
+import net.hades.fix.engine.process.transport.TcpWorker;
 
 /**
  * Abstract class to be extended by a session coordinator.
@@ -55,6 +63,9 @@ public abstract class SessionCoordinator implements ManagedTask, Advisable {
     protected volatile TaskStatus status;
     protected volatile boolean shutdown;
     protected ConcurrentMap<String, Object> sessionContext;
+    protected TcpWorker tcpWorker;
+    protected Map<String, EngineTask<ExecutionResult>> tasks;
+    protected ScheduledExecutorService timerExecutor;
 
     public SessionCoordinator(HadesInstance hadesInstance, CounterpartyInfo cptyConfiguration, SessionAddress sessionAddress) throws ConfigurationException {
         this.hadesInstance = hadesInstance;
@@ -62,7 +73,9 @@ public abstract class SessionCoordinator implements ManagedTask, Advisable {
         this.sessionAddress = sessionAddress;
 	commandQueue = new ArrayBlockingQueue<>(1);
 	sessionContext = new ConcurrentHashMap<>();
+	tasks = new HashMap<>();
 	sessionConfiguration = getSessionConfiguration(cptyConfiguration, sessionAddress);
+	timerExecutor = Executors.newScheduledThreadPool(10);
     }
 
     public SessionInfo getConfiguration() {
@@ -77,7 +90,7 @@ public abstract class SessionCoordinator implements ManagedTask, Advisable {
      * Runs the stream handlers upon the TCP connection success.
      * @param clientSocket TCP connection
      */
-    public abstract void startStreamHandlers(Socket clientSocket);
+    public abstract void startStreamHandlers(Socket clientSocket) throws TaskStartException;
     
     public abstract void disconnectTransport() throws ProtocolStatusException;
     

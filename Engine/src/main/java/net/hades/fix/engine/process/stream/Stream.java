@@ -25,12 +25,14 @@ import net.hades.fix.engine.config.model.HandlerInfo;
 import net.hades.fix.engine.config.model.HandlerParamInfo;
 import net.hades.fix.engine.config.model.HandlerRefInfo;
 import net.hades.fix.engine.config.model.StreamInfo;
-import net.hades.fix.engine.exception.ConfigurationException;
+import net.hades.fix.engine.config.ConfigurationException;
 import net.hades.fix.engine.handler.Handler;
 import net.hades.fix.engine.process.EngineTask;
 import net.hades.fix.engine.process.ExecutionResult;
+import net.hades.fix.engine.process.TaskStartException;
 import net.hades.fix.engine.process.TaskStatus;
 import net.hades.fix.engine.process.session.SessionCoordinator;
+import net.hades.fix.engine.util.TaskUtil;
 
 
 /**
@@ -46,7 +48,7 @@ public abstract class Stream {
     protected StreamInfo configuration;
     protected LinkedHashMap<String, Handler> handlers;
     protected List<HandlerDefInfo> handlerDefs;
-    protected Map<String, EngineTask<ExecutionResult>> results;
+    protected Map<String, EngineTask<ExecutionResult>> tasks;
    
     protected Stream(SessionCoordinator sessionCoordinator, StreamInfo configuration, HandlerDefInfo[] handlerDefs) throws ConfigurationException {
         this.sessionCoordinator = sessionCoordinator;
@@ -54,18 +56,19 @@ public abstract class Stream {
 	this.handlerDefs = Arrays.asList(handlerDefs);
 	createHandlers();
 	wireupHandlers();
-	results = new HashMap<>();
+	tasks = new HashMap<>();
     }
 
     public Handler findHandlerById(String id) {
 	return handlers.get(id);
     }
     
-    public void start(ExecutorService executor) {
+    public void start(ExecutorService executor) throws TaskStartException {
 	for (Map.Entry<String, Handler> handlerEntry : handlers.entrySet()) {
 	    EngineTask<ExecutionResult> task = new EngineTask<>(Thread.NORM_PRIORITY, handlerEntry.getValue());
-	    results.put(task.getName(), task);
+	    tasks.put(task.getName(), task);
 	    executor.submit(task);
+	    TaskUtil.waitToStart(task);
 	}
     }
     
@@ -73,7 +76,7 @@ public abstract class Stream {
 	for (Map.Entry<String, Handler> handlerEntry : handlers.entrySet()) {
 	    Handler h = handlerEntry.getValue();
 	    if (h.getStatus().equals(TaskStatus.Running)) {
-		EngineTask<ExecutionResult> task = results.get(handlerEntry.getKey());
+		EngineTask<ExecutionResult> task = tasks.get(handlerEntry.getKey());
 		if (!task.isCancelled() && !task.isDone()) {
 		    handlerEntry.getValue().shutdown();
 		}

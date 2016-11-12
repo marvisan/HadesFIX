@@ -18,9 +18,11 @@ public class EngineTask<T extends ExecutionResult> extends FutureTask<ExecutionR
 
     private int threadPiority;
     private String threadName;
+    private Callable<ExecutionResult> callable;
 
     public EngineTask(Callable<ExecutionResult> callable) {
 	super(callable);
+	this.callable = callable;
 	if (callable instanceof Handler) {
 	    threadName = ((Handler) callable).getId();
 	}
@@ -39,6 +41,10 @@ public class EngineTask<T extends ExecutionResult> extends FutureTask<ExecutionR
     @Override
     public String getName() {
 	return threadName;
+    }
+
+    public Callable<ExecutionResult> getEngineTask() {
+	return callable;
     }
 
 }

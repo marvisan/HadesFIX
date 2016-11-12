@@ -13,8 +13,8 @@ package net.hades.fix.engine.process.session.persist;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
-import net.hades.fix.engine.exception.ConfigurationException;
-import net.hades.fix.engine.exception.SeqNoPersistenceException;
+import net.hades.fix.engine.config.ConfigurationException;
+import net.hades.fix.engine.process.protocol.SeqNoPersistenceException;
 
 /**
  * Persister in memory class for the session sequence numbers.

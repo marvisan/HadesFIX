@@ -10,8 +10,8 @@ import java.util.logging.Logger;
 
 import net.hades.fix.engine.HadesInstance;
 import net.hades.fix.engine.config.model.*;
-import net.hades.fix.engine.exception.ConfigurationException;
-import net.hades.fix.engine.exception.ProtocolException;
+import net.hades.fix.engine.config.ConfigurationException;
+import net.hades.fix.engine.process.protocol.ProtocolException;
 import net.hades.fix.engine.mgmt.alert.Alert;
 import net.hades.fix.engine.mgmt.alert.AlertCode;
 import net.hades.fix.engine.mgmt.alert.BaseSeverityType;

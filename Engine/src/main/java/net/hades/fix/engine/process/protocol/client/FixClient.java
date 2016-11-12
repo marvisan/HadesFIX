@@ -4,7 +4,6 @@
  */
 package net.hades.fix.engine.process.protocol.client;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -16,8 +15,9 @@ import java.util.logging.Logger;
 
 import net.hades.fix.commons.exception.ExceptionUtil;
 import net.hades.fix.engine.config.model.ClientSessionInfo;
-import net.hades.fix.engine.exception.ConfigurationException;
-import net.hades.fix.engine.exception.SeqNoPersistenceException;
+import net.hades.fix.engine.config.ConfigurationException;
+import net.hades.fix.engine.process.protocol.SeqNoPersistenceException;
+import net.hades.fix.engine.handler.Handler;
 import net.hades.fix.engine.mgmt.alert.Alert;
 import net.hades.fix.engine.mgmt.alert.AlertCode;
 import net.hades.fix.engine.mgmt.alert.BaseSeverityType;
@@ -59,10 +59,11 @@ public final class FixClient extends Protocol {
 
     private AtomicLong orderSequence;
 
-    public FixClient(ClientSessionCoordinator coordinator, ClientSessionInfo configuration) throws ConfigurationException {
+    public FixClient(ClientSessionCoordinator coordinator, ClientSessionInfo configuration, Handler next) throws ConfigurationException {
 	super(coordinator, configuration);
 	setSessionConfigData();
 	initialise();
+	nextHandlers.put(next.getId(), next);
 	status = TaskStatus.New;
     }
 

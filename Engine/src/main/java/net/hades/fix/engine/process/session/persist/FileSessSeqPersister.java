@@ -17,8 +17,8 @@ import java.util.logging.Level;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import net.hades.fix.commons.exception.ExceptionUtil;
-import net.hades.fix.engine.exception.ConfigurationException;
-import net.hades.fix.engine.exception.SeqNoPersistenceException;
+import net.hades.fix.engine.config.ConfigurationException;
+import net.hades.fix.engine.process.protocol.SeqNoPersistenceException;
 
 /**
  * Persister in file class for the session sequence numbers.

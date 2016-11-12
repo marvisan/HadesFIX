@@ -8,15 +8,14 @@ import net.hades.fix.engine.process.protocol.Protocol;
 
 /**
  * Super class for all timer classes.
- * 
+ *
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
  */
 public abstract class EngineTimerTask implements Runnable {
 
     protected Protocol protocol;
 
-	public EngineTimerTask(Protocol protocol) {
-		this.protocol = protocol;
-	}
+    public EngineTimerTask(Protocol protocol) {
+	this.protocol = protocol;
+    }
 }
-

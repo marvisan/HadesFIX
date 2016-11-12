@@ -24,14 +24,14 @@ import java.util.function.BiFunction;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import net.hades.fix.engine.exception.ConnectionException;
-import net.hades.fix.engine.exception.UnrecoverableException;
+import net.hades.fix.engine.process.protocol.UnrecoverableException;
 import net.hades.fix.engine.handler.Handler;
 import net.hades.fix.engine.handler.HandlerException;
 import net.hades.fix.engine.process.ExecutionResult;
 import net.hades.fix.engine.process.ManagedTask;
 import net.hades.fix.engine.process.TaskStatus;
 import net.hades.fix.engine.process.io.FIXMsgInputStream;
+import net.hades.fix.engine.process.protocol.Protocol;
 import net.hades.fix.engine.process.session.SessionCoordinator;
 import net.hades.fix.message.BinaryMessage;
 import net.hades.fix.message.Message;
@@ -70,11 +70,12 @@ public final class TcpWorker implements Handler {
 	return String.valueOf(Long.valueOf(old) + Long.valueOf(cur));
     };
 
-    public TcpWorker(SessionCoordinator coordinator, Socket socket) {
+    public TcpWorker(SessionCoordinator coordinator, Socket socket, Protocol protocol) {
 	this.coordinator = coordinator;
 	this.socket = socket;
 	statistics = new ConcurrentHashMap<>();
 	nextHandlers = new ConcurrentHashMap<>();
+	nextHandlers.put(protocol.getId(), protocol);
 	txQueue = new ArrayBlockingQueue<>(DEFAULT_TX_QUEUE_CAPACITY);
 	id = COMPONENT_NAME + "_" + socket.getLocalAddress().getHostAddress() + ":" + String.valueOf(socket.getPort());
 	sender = new MessageSender(id);
@@ -160,6 +161,7 @@ public final class TcpWorker implements Handler {
     public void shutdown() {
 	sender.shutdown();
 	closeStreams();
+	shutdown = true;
     }
 
     @Override

@@ -17,7 +17,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.hades.fix.engine.config.model.HadesInstanceInfo;
-import net.hades.fix.engine.exception.ConfigurationException;
 import net.hades.fix.engine.logging.LoggerController;
 import net.hades.fix.message.xml.codec.ValidationErrorHandler;
 import net.hades.fix.message.xml.codec.XMLValidationResult;

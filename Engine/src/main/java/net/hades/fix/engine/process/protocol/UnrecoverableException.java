@@ -2,18 +2,22 @@
  *   Copyright (c) 2006-2016 Marvisan Pty. Ltd. All rights reserved.
  *               Use is subject to license terms.
  */
-package net.hades.fix.engine.exception;
+package net.hades.fix.engine.process.protocol;
 
 /**
- * The persistence is turn on but the sequences cannot be written to the sequence file.
+ * Nothing to do if this is thrown.
  *
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
  */
-public class SeqNoPersistenceException extends Exception {
+public class UnrecoverableException extends Exception {
 
     private static final long serialVersionUID = 1L;
+    
+    public UnrecoverableException(String message) {
+        super(message);
+    }
 
-    public SeqNoPersistenceException(String message, Throwable cause) {
+    public UnrecoverableException(String message, Throwable cause) {
         super(message, cause);
     }
 }
