@@ -134,7 +134,7 @@ public abstract class SessionCoordinator implements ManagedTask, Advisable {
     private SessionInfo getSessionConfiguration(CounterpartyInfo cptyConfiguration, SessionAddress sessionAddress) {
 	for (SessionInfo config : cptyConfiguration.getSessions()) {
 	    CounterpartyAddress localAddr = new CounterpartyAddress(config.getCompID(), config.getSubID(), config.getLocationID());
-	    if (localAddr.equals(sessionAddress.getLocalAddress().getCompID())) {
+	    if (localAddr.equals(sessionAddress.getLocalAddress())) {
 		return config;
 	    }
 	}

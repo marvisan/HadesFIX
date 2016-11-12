@@ -12,6 +12,8 @@ import net.hades.fix.engine.process.transport.TcpClient;
 import java.net.Socket;
 
 import net.hades.fix.engine.HadesInstance;
+import net.hades.fix.engine.config.model.ClientTcpConnectionInfo;
+import net.hades.fix.engine.config.model.ConnectionInfo;
 import net.hades.fix.engine.config.model.CounterpartyInfo;
 import net.hades.fix.engine.config.model.SessionInfo;
 import net.hades.fix.engine.exception.ConfigurationException;
@@ -21,6 +23,8 @@ import net.hades.fix.engine.mgmt.alert.AlertCode;
 import net.hades.fix.engine.mgmt.alert.BaseSeverityType;
 import net.hades.fix.engine.model.SessionAddress;
 import net.hades.fix.engine.process.event.AlertEvent;
+import net.hades.fix.engine.process.stream.ConsumerStream;
+import net.hades.fix.engine.process.stream.ProducerStream;
 
 /**
  * The main class controlling the lifecycle of a counterparty client session.
@@ -33,13 +37,16 @@ public final class ClientSessionCoordinator extends SessionCoordinator {
 
     private int numOfLogonRetries;
 
-    protected TcpClient transport;
+    protected TcpClient tcpClient;
 
     public ClientSessionCoordinator(HadesInstance hadesInstance, SessionInfo configuration, CounterpartyInfo cptyConfiguration, SessionAddress sessionAddress)
 	    throws ConfigurationException {
 	super(hadesInstance, cptyConfiguration, sessionAddress);
 	this.hadesInstance = hadesInstance;
 	id = configuration.getID();
+	consumerStream = new ConsumerStream(this, configuration.getConsumerStreamInfo(), cptyConfiguration.getHandlerDefs());
+	producerStream = new ProducerStream(this, configuration.getProducerStreamInfo(), cptyConfiguration.getHandlerDefs());
+	tcpClient = new TcpClient(this, (ClientTcpConnectionInfo) configuration.getConnection());
 	status = TaskStatus.New;
     }
 
@@ -77,6 +84,8 @@ public final class ClientSessionCoordinator extends SessionCoordinator {
     @Override
     public void shutdownImmediate() {
 	try {
+	    producerStream.stop();
+	    consumerStream.stop();
 	    commandQueue.put("SHUTDOWN");
 	} catch (InterruptedException ex) {
 	    onAlertEvent(new AlertEvent(this,

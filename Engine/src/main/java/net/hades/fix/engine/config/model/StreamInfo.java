@@ -49,7 +49,6 @@ public abstract class StreamInfo implements CompositeDataView, Serializable {
     protected String id;
     protected String type;
     protected HandlerInfo[] handlers;
-    protected String firstHandlerId;
 
     public StreamInfo() {
     }
@@ -80,14 +79,6 @@ public abstract class StreamInfo implements CompositeDataView, Serializable {
 
     public void setHandlers(HandlerInfo[] handlers) {
         this.handlers = handlers;
-    }
-
-    public String getFirstHandlerId() {
-	return firstHandlerId;
-    }
-
-    public void setFirstHandlerId(String firstHandlerId) {
-	this.firstHandlerId = firstHandlerId;
     }
 
     private static final String[] COMPOSITE_DATA_ITEMS;

@@ -65,7 +65,14 @@
 		    </execution>
 		</executions>
 	    </plugin>
-
+	    <plugin>
+		<groupId>org.apache.maven.plugins</groupId>
+		<artifactId>maven-jar-plugin</artifactId>
+		<version>3.0.2</version>
+		<configuration>
+		    <finalName>hadesfix-engine</finalName>                   
+		</configuration>
+	    </plugin>      
 	</plugins>
     </build>
     

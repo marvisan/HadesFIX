@@ -5,8 +5,6 @@
 
 package net.hades.fix.engine.process;
 
-import net.hades.fix.engine.process.TaskStatus;
-
 /**
  * The result of a Callable task executed by engine.
  * 

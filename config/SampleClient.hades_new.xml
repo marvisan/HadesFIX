@@ -29,12 +29,11 @@
         <counterparty compID="SERVER">
             <sessions>
                 <session type="client" compID="CLIENT" fixVersion="4.4" heartBtInt="60">
-		    <tcpClientConnection id="TCP_CLI_LOCALHOST:27008" host="localhost" port="27008" numOfRetries="99">
-			<next>
-			    <handler id="PRNT_RAW_C" />
-			</next>
-		    </tcpClientConnection>
+		    <tcpClientConnection id="TCP_CLI_LOCALHOST:27008" host="localhost" port="27008" numOfRetries="99" />
                     <authInfo loginUsername="sampleuser" loginPassword="samplepass" />
+		    <next>
+			<handler id="PRNT_RAW_C" />
+		    </next>
                     <stream type="prod" id="PROD_STREAM">
 			<handler id="GENERATOR" name="RandomMessageHandler">
 			    <next>

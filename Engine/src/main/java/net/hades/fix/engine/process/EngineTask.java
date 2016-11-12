@@ -12,6 +12,7 @@ import net.hades.fix.engine.handler.Handler;
  * Fix engine task.
  *
  * @author <a href="mailto:support@marvisan.com">Support Team</a>
+ * @param <T> result
  */
 public class EngineTask<T extends ExecutionResult> extends FutureTask<ExecutionResult> implements PriorityNamedTask {
 

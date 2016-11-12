@@ -29,6 +29,7 @@ import net.hades.fix.engine.exception.ConfigurationException;
 import net.hades.fix.engine.handler.Handler;
 import net.hades.fix.engine.process.EngineTask;
 import net.hades.fix.engine.process.ExecutionResult;
+import net.hades.fix.engine.process.TaskStatus;
 import net.hades.fix.engine.process.session.SessionCoordinator;
 
 
@@ -45,7 +46,7 @@ public abstract class Stream {
     protected StreamInfo configuration;
     protected LinkedHashMap<String, Handler> handlers;
     protected List<HandlerDefInfo> handlerDefs;
-    protected Map<String, ExecutionResult> results;
+    protected Map<String, EngineTask<ExecutionResult>> results;
    
     protected Stream(SessionCoordinator sessionCoordinator, StreamInfo configuration, HandlerDefInfo[] handlerDefs) throws ConfigurationException {
         this.sessionCoordinator = sessionCoordinator;
@@ -63,10 +64,23 @@ public abstract class Stream {
     public void start(ExecutorService executor) {
 	for (Map.Entry<String, Handler> handlerEntry : handlers.entrySet()) {
 	    EngineTask<ExecutionResult> task = new EngineTask<>(Thread.NORM_PRIORITY, handlerEntry.getValue());
-	    results.put(task.getName(), (ExecutionResult) executor.submit(task));
+	    results.put(task.getName(), task);
+	    executor.submit(task);
 	}
     }
- 
+    
+    public void stop() {
+	for (Map.Entry<String, Handler> handlerEntry : handlers.entrySet()) {
+	    Handler h = handlerEntry.getValue();
+	    if (h.getStatus().equals(TaskStatus.Running)) {
+		EngineTask<ExecutionResult> task = results.get(handlerEntry.getKey());
+		if (!task.isCancelled() && !task.isDone()) {
+		    handlerEntry.getValue().shutdown();
+		}
+	    }
+	}
+    }
+
     //---------------------------------------------------------------------------------------------
     
     private void wireupHandlers() throws ConfigurationException {
@@ -165,7 +179,8 @@ public abstract class Stream {
             }
         }
         Set<String> keys = handlers.keySet();
-	if (configuration.getFirstHandlerId().equals(getLast(keys))) {
+	String firstHandlerId = getFirstHandlerId();
+	if (firstHandlerId.equals(getLast(keys))) {
 	    LinkedHashMap reversed = new LinkedHashMap();
 	    List<String> l = new ArrayList<>(handlers.keySet());
 	    for (int i = l.size() - 1; i >=0; i--) {
@@ -173,7 +188,7 @@ public abstract class Stream {
                 reversed.put(id, handlers.get(id));
             }
 	    handlers = reversed;
-	} else if (!configuration.getFirstHandlerId().equals(getFirst(keys))) {
+	} else if (!firstHandlerId.equals(getFirst(keys))) {
 	    throw new ConfigurationException("First handler does not match the ordered list");
 	}
     }
@@ -213,5 +228,23 @@ public abstract class Stream {
         visited.put(handler.getId(), VisitedStatus.Done);
     }
 
-
+    private String getFirstHandlerId() {
+	String first = null;
+	for (HandlerInfo hi : configuration.getHandlers()) {
+	    first = hi.getId();
+	    boolean found = false;
+	    for (HandlerInfo his : configuration.getHandlers()) {
+		if (his.getNextHandlers() == null || his.getNextHandlers().length == 0) continue;
+		for (HandlerRefInfo hr : his.getNextHandlers()) {
+		    if (first.equals(hr.getId())) {
+			found = true;
+			first = null;
+			break;
+		    }
+		}
+		if (found) break;
+	    }
+	}
+	return first;
+    }
 }
