@@ -58,7 +58,7 @@ public class ServerSessionInfo extends SessionInfo implements CompositeDataView,
         try {
             TABULAR_HANDLER_DEF_INDEX = new String[]{"name"};
 	    TABULAR_HANDLER_REF_INDEX = new String[]{"id"};
-            COMPOSITE_DATA_ITEMS = new String[]{"compID", "subID", "locationID", "disabled",
+            COMPOSITE_DATA_ITEMS = new String[]{"id", "compID", "subID", "locationID", "disabled",
                     "deliverToCompID", "deliverToSubID", "deliverToLocationID", "messageEncoding", "heartBtInt", "heartBtOffset",
                     "description", "testMessageIndicator", "resendTimeout", "enableRejectResponse", "fillLastMsgSeqNum",
                     "maxMsgLen", "logoutTimeout", "latencyCheck", "maxLatencyTreshold", "enableNextExpMsgSeqNum", "resetSeqAtStartup",
@@ -67,7 +67,7 @@ public class ServerSessionInfo extends SessionInfo implements CompositeDataView,
                     "defaultApplExtID", "defaultCstmApplVerID", "customApplVerID", "rxBufferSize", "txBufferSize", "resendEndSeqNum",
                     "logonTimeout", "authenticationInfo", "connection", "producerStreamInfo", "consumerStreamInfo", "handlerRefs", "handlerDefs",
                     "enableLogonPassThrough"};
-            COMPOSITE_DATA_ITEMS_DESCRIPTION = new String[]{"CompID", "SubID", "LocationID", "Is Disabled?",
+            COMPOSITE_DATA_ITEMS_DESCRIPTION = new String[]{"Unique identifier", "CompID", "SubID", "LocationID", "Is Disabled?",
                     "DeliverToCompID", "DeliverToSubID", "DeliverToLocationID", "Message Encoding", "Heartbeat Interval", "Heartbeat Offset",
                     "Description", "Test Message Indicator", "Resend Timeout", "Enable Reject Response", "Fill Last Msg SeqNum",
                     "Max Msg Len", "Logout Timeout", "Latency Check", "Max Latency Treshold", "Enable Next Exp Msg SeqNum", "Reset Seq At Startup",
@@ -80,7 +80,7 @@ public class ServerSessionInfo extends SessionInfo implements CompositeDataView,
             TABULAR_HANDLER_DEFS = new TabularDataSupport(TABULAR_HANDLER_DEF_TYPE);
 	    TABULAR_HANDLER_REF_TYPE = new TabularType("HandlerRefInfo", "List of Handler References", HandlerDefInfo.DataType, TABULAR_HANDLER_REF_INDEX);
 	    TABULAR_HANDLER_REFS = new TabularDataSupport(TABULAR_HANDLER_REF_TYPE);
-            COMPOSITE_DATA_OPEN_TYPES = new OpenType<?>[]{SimpleType.STRING, SimpleType.STRING, SimpleType.STRING, SimpleType.BOOLEAN,
+            COMPOSITE_DATA_OPEN_TYPES = new OpenType<?>[]{SimpleType.STRING, SimpleType.STRING, SimpleType.STRING, SimpleType.STRING, SimpleType.BOOLEAN,
                     SimpleType.STRING, SimpleType.STRING, SimpleType.STRING, SimpleType.STRING, SimpleType.INTEGER, SimpleType.INTEGER,
                     SimpleType.STRING, SimpleType.BOOLEAN, SimpleType.INTEGER, SimpleType.BOOLEAN, SimpleType.BOOLEAN,
                     SimpleType.INTEGER, SimpleType.INTEGER, SimpleType.BOOLEAN, SimpleType.INTEGER, SimpleType.BOOLEAN, SimpleType.BOOLEAN,
@@ -140,7 +140,7 @@ public class ServerSessionInfo extends SessionInfo implements CompositeDataView,
             for (HandlerDefInfo handlerDef : handlerDefs) {
                 TABULAR_HANDLER_DEFS.put(handlerDef.toCompositeData(HandlerDefInfo.DataType));
             }
-            CompositeData cd = new CompositeDataSupport(xct, COMPOSITE_DATA_ITEMS, new Object[]{compID, subID, locationID, disabled,
+            CompositeData cd = new CompositeDataSupport(xct, COMPOSITE_DATA_ITEMS, new Object[]{id, compID, subID, locationID, disabled,
                     deliverToCompID, deliverToSubID, deliverToLocationID, messageEncoding, heartBtInt, heartBtOffset,
                     description, testMessageIndicator, resendTimeout, enableRejectResponse, fillLastMsgSeqNum,
                     maxMsgLen, logoutTimeout, latencyCheck, maxLatencyTreshold, enableNextExpMsgSeqNum, resetSeqAtStartup,

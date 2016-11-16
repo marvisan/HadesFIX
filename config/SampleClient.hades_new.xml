@@ -28,8 +28,8 @@
     <counterparties>
         <counterparty compID="SERVER">
             <sessions>
-                <session type="client" compID="CLIENT" fixVersion="4.4" heartBtInt="60">
-		    <tcpClientConnection id="TCP_CLI_LOCALHOST:27008" host="localhost" port="27008" numOfRetries="99" />
+                <session id="CLIENT" type="client" compID="CLIENT" fixVersion="4.4" heartBtInt="60">
+		    <tcpClientConnection host="localhost" port="27008" numOfRetries="99" />
                     <authInfo loginUsername="sampleuser" loginPassword="samplepass" />
 		    <next>
 			<handler id="PRNT_RAW_C" />
@@ -42,7 +42,7 @@
 			</handler>
 			<handler id="PRNT_RAW_P" name="PrintRawMessageHandler">
 			    <next>
-				<handler id="TCP_CLI_LOCALHOST:27008" />
+				<handler id="CLIENT" />
 			    </next>
 			</handler>
                     </stream>

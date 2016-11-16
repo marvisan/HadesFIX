@@ -32,6 +32,9 @@ public class SessionInfo implements Serializable {
 
      private static final long serialVersionUID = 1L;
 
+    @XmlAttribute(name = "id", required = true)
+    protected String id;
+     
     @XmlAttribute(name = "compID", required = true)
     protected String compID;
 
@@ -215,6 +218,14 @@ public class SessionInfo implements Serializable {
         resetSeqAtLogon = Boolean.FALSE;
         resetSeqAtLogout = Boolean.FALSE;
         resetSeqAtStartup = Boolean.FALSE;
+    }
+
+    public String getId() {
+	return id;
+    }
+
+    public void setId(String id) {
+	this.id = id;
     }
 
     public String getCompID() {
@@ -640,6 +651,7 @@ public class SessionInfo implements Serializable {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("{SessionInfo[");
+	sb.append("id=").append(id).append(",");
         sb.append("compID=").append(compID).append(",");
         if (subID != null) {
             sb.append("subID=").append(subID).append(",");
