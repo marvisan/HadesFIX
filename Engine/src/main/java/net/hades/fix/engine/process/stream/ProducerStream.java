@@ -4,16 +4,17 @@
  */
 package net.hades.fix.engine.process.stream;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.logging.Logger;
 import net.hades.fix.engine.config.model.HandlerDefInfo;
-import net.hades.fix.engine.config.model.HandlerInfo;
-import net.hades.fix.engine.config.model.HandlerRefInfo;
 
 import net.hades.fix.engine.config.ConfigurationException;
 import net.hades.fix.engine.process.session.SessionCoordinator;
 import net.hades.fix.engine.config.model.StreamInfo;
 import net.hades.fix.engine.handler.Handler;
-import net.hades.fix.engine.process.transport.TcpWorker;
+import net.hades.fix.engine.process.protocol.Protocol;
 
 /**
  * Stream that produces (transmits) messages to a counterparty.
@@ -28,18 +29,36 @@ public class ProducerStream extends Stream {
        super(sessionCoordinator, configuration, handlerDefs);
     }
 
-    public void setTransportHandler(TcpWorker tcpWorker) {
-	String transportId = tcpWorker.getId();
-	for (HandlerInfo config : configuration.getHandlers()) {
-	    if (config.getNextHandlers() == null || config.getNextHandlers().length == 0) continue;
-	    for (HandlerRefInfo ref : config.getNextHandlers()) {
-		if (ref.getId().equals(transportId)) {
-		    Handler handler = handlers.get(config.getId());
-		    if (handler != null) {
-			handler.addNextHandler(transportId, tcpWorker);
-		    }
-		}
+    public void addLastHandler(Protocol protocol) {
+	List<Handler> leaves = findLeavesHandlers();
+	if (!leaves.isEmpty()) {
+	    for (Handler h : leaves) {
+		h.addNextHandler(protocol.getId(), protocol);
 	    }
 	}
+    }
+
+    private List<Handler> findLeavesHandlers() {
+	List<Handler> leaves = new ArrayList<>();
+	for (Handler h1 : handlers.values()) {
+	    String h1Id = h1.getId();
+	    boolean found = false;
+	    for (Handler h2 : handlers.values()) {
+		for (Iterator it = h2.getNextHandlers().iterator(); it.hasNext();) {
+		    Handler h3 = (Handler) it.next();
+		    if (h2.getId().equals(h1Id)) {
+			found = true;
+			break;
+		    }
+		}
+		if (found) {
+		    break;
+		}
+	    }
+	    if (!found) {
+		leaves.add(h1);
+	    }
+	}
+	return leaves;
     }
 }

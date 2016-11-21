@@ -12,6 +12,8 @@ import net.hades.fix.engine.HadesInstance;
 import net.hades.fix.engine.config.model.CounterpartyInfo;
 import net.hades.fix.engine.config.model.SessionInfo;
 import net.hades.fix.engine.config.ConfigurationException;
+import net.hades.fix.engine.config.model.ServerSessionInfo;
+import net.hades.fix.engine.config.model.ServerTcpConnectionInfo;
 import net.hades.fix.engine.process.protocol.ProtocolStatusException;
 import net.hades.fix.engine.mgmt.alert.Alert;
 import net.hades.fix.engine.mgmt.alert.AlertCode;
@@ -20,6 +22,9 @@ import net.hades.fix.engine.model.SessionAddress;
 import net.hades.fix.engine.process.ExecutionResult;
 import net.hades.fix.engine.process.event.AlertEvent;
 import net.hades.fix.engine.process.TaskStatus;
+import net.hades.fix.engine.process.protocol.server.FixServer;
+import net.hades.fix.engine.process.stream.ConsumerStream;
+import net.hades.fix.engine.process.stream.ProducerStream;
 import net.hades.fix.engine.process.transport.TcpServer;
 
 /**
@@ -38,6 +43,10 @@ public final class ServerSessionCoordinator extends SessionCoordinator {
         super(hadesInstance, cptyConfiguration, sessionAddress);
 	this.hadesInstance = hadesInstance;
 	id = configuration.getID();
+	consumerStream = new ConsumerStream(this, configuration.getConsumerStreamInfo(), cptyConfiguration.getHandlerDefs());
+	producerStream = new ProducerStream(this, configuration.getProducerStreamInfo(), cptyConfiguration.getHandlerDefs());
+	transport = new TcpServer(this, (ServerTcpConnectionInfo) configuration.getConnection());
+	protocol = new FixServer(this, (ServerSessionInfo) configuration);
 	status = TaskStatus.New;
     }
 

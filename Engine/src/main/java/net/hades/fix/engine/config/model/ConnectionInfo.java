@@ -25,7 +25,7 @@ public abstract class ConnectionInfo implements Serializable {
     public ConnectionInfo() {
     }
     
-    @XmlAttribute(name="id", required = true)
+    @XmlAttribute(name="id")
     protected String id;
 
     public String getId() {

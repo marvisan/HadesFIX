@@ -54,7 +54,7 @@ public final class TcpClient implements ManagedTask {
     private static final int DEFAULT_SO_LINGER = -1;
     private static final int DEFAULT_TOTAL_NUM_OF_RETRIES = 3;
     private static final int DEFAULT_RETRY_SECONDS_TO_WAIT = 3;
-    private static final int DEFAULT_TIMEOUT_MILLIS = 10000; // 10 seconds wait
+    private static final int DEFAULT_TIMEOUT_MILLIS = 5000; // 5 seconds wait
     private static final int DEFAULT_TIMEOUT_SECS = 30;
     private static final int DEFAULT_SLEEP_MILLIS = 5;
 

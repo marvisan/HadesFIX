@@ -46,8 +46,8 @@ public class ServerTcpConnectionInfo extends TcpConnectionInfo implements Compos
 	    COMPOSITE_DATA_ITEMS = new String[]{"id", "host", "port", "soLinger", "tcpNodelay",
 		"soTimeout", "soRcvbuf", "soSndbuf", "sendKeepAlive", "restrHostsIPAddresses"};
 	    COMPOSITE_DATA_ITEMS_DESCRIPTION = new String[]{"Tcp Server Id", "Sell side host", "Sell side port",
-		"Socket SO_LINGER Value", "Socket TCP_NODELAY Value", "Socket SO_TIMEOUT Value",
-		"Socket Rx Buffer Size", "Socket Tx Buffer Size", "Socket SEND_ALIVE Value", "Restricted Hosts List"};
+		"Socket SO_LINGER Value", "Socket TCP_NODELAY Value", "Socket SO_TIMEOUT Value", "Socket Rx Buffer Size",
+		"Socket Tx Buffer Size", "Socket SEND_ALIVE Value", "Restricted Hosts List"};
 	    COMPOSITE_DATA_OPEN_TYPES = new OpenType<?>[]{SimpleType.STRING, SimpleType.STRING, SimpleType.INTEGER, SimpleType.INTEGER, 
 		SimpleType.BOOLEAN, SimpleType.INTEGER, SimpleType.INTEGER, SimpleType.INTEGER, SimpleType.BOOLEAN,
 		SimpleType.STRING};

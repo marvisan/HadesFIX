@@ -18,6 +18,7 @@ import net.hades.fix.engine.config.model.ClientTcpConnectionInfo;
 import net.hades.fix.engine.config.model.CounterpartyInfo;
 import net.hades.fix.engine.config.model.SessionInfo;
 import net.hades.fix.engine.config.ConfigurationException;
+import net.hades.fix.engine.config.model.HandlerRefInfo;
 import net.hades.fix.engine.process.protocol.ProtocolStatusException;
 import net.hades.fix.engine.mgmt.alert.Alert;
 import net.hades.fix.engine.mgmt.alert.AlertCode;
@@ -41,9 +42,7 @@ public final class ClientSessionCoordinator extends SessionCoordinator {
 
     private static final Logger LOGGER = Logger.getLogger(ClientSessionCoordinator.class.getName());
 
-    private int numOfLogonRetries;
-
-    protected TcpClient tcpClient;
+    protected TcpClient transport;
 
     public ClientSessionCoordinator(HadesInstance hadesInstance, SessionInfo configuration, CounterpartyInfo cptyConfiguration, SessionAddress sessionAddress)
 	    throws ConfigurationException {
@@ -52,8 +51,8 @@ public final class ClientSessionCoordinator extends SessionCoordinator {
 	id = configuration.getID();
 	consumerStream = new ConsumerStream(this, configuration.getConsumerStreamInfo(), cptyConfiguration.getHandlerDefs());
 	producerStream = new ProducerStream(this, configuration.getProducerStreamInfo(), cptyConfiguration.getHandlerDefs());
-	tcpClient = new TcpClient(this, (ClientTcpConnectionInfo) configuration.getConnection());
-	protocol = new FixClient(this, (ClientSessionInfo) configuration, consumerStream.findHandlerById(sessionConfiguration.getNextHandlers()[0].getId()));
+	transport = new TcpClient(this, (ClientTcpConnectionInfo) configuration.getConnection());
+	protocol = new FixClient(this, (ClientSessionInfo) configuration);
 	status = TaskStatus.New;
     }
 
@@ -110,8 +109,10 @@ public final class ClientSessionCoordinator extends SessionCoordinator {
     @Override
     public void startStreamHandlers(Socket clientSocket) throws TaskStartException {
 	tcpWorker = new TcpWorker(this, clientSocket, protocol);
-	producerStream.setTransportHandler(tcpWorker);
 	consumerStream.start(getExecutorService());
+	for (HandlerRefInfo h : protocol.getConfiguration().getNextHandlers()) {
+	    protocol.addNextHandler(h.getId(), consumerStream.findHandlerById(h.getId()));
+	}
 	EngineTask<ExecutionResult> task = new EngineTask<>(Thread.NORM_PRIORITY, protocol);
 	tasks.put(task.getName(), task);
 	getExecutorService().submit(task);
@@ -120,6 +121,7 @@ public final class ClientSessionCoordinator extends SessionCoordinator {
 	tasks.put(task.getName(), task);
 	getExecutorService().submit(task);
 	TaskUtil.waitToStart(task);
+	producerStream.addLastHandler(protocol);
 	producerStream.start(getExecutorService());
 	timerExecutor.scheduleAtFixedRate(new SessionSuperviserTimerTask(this), 10, 10, TimeUnit.SECONDS);
     }

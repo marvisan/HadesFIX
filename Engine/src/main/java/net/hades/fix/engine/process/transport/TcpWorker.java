@@ -76,7 +76,8 @@ public final class TcpWorker implements Handler {
 	statistics = new ConcurrentHashMap<>();
 	nextHandlers = new ConcurrentHashMap<>();
 	nextHandlers.put(protocol.getId(), protocol);
-	txQueue = new ArrayBlockingQueue<>(DEFAULT_TX_QUEUE_CAPACITY);
+	Integer txBufSize = protocol.getConfiguration().getTxBufferSize();
+	txQueue = new ArrayBlockingQueue<>(txBufSize != null ? txBufSize : DEFAULT_TX_QUEUE_CAPACITY);
 	id = COMPONENT_NAME + "_" + socket.getLocalAddress().getHostAddress() + ":" + String.valueOf(socket.getPort());
 	sender = new MessageSender(id);
 	status = TaskStatus.New;

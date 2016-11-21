@@ -26,12 +26,6 @@ public abstract class TcpConnectionInfo extends ConnectionInfo {
     @XmlAttribute(name="port", required = true)
     protected int port;
 
-    @XmlAttribute(name = "rxBufferSize")
-    protected Integer rxBufferSize;
-
-    @XmlAttribute(name = "txBufferSize")
-    protected Integer txBufferSize;
-    
     @XmlAttribute(name = "soLinger")
     protected Integer socketLingerTimeout;
 
@@ -131,22 +125,6 @@ public abstract class TcpConnectionInfo extends ConnectionInfo {
         this.sslData = sslData;
     }
 
-    public Integer getTxBufferSize() {
-        return txBufferSize;
-    }
-
-    public void setTxBufferSize(Integer txBufferSize) {
-        this.txBufferSize = txBufferSize;
-    }
-
-    public Integer getRxBufferSize() {
-        return rxBufferSize;
-    }
-
-    public void setRxBufferSize(Integer rxBufferSize) {
-        this.rxBufferSize = rxBufferSize;
-    }
-
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("{TcpConnectionInfo[");
@@ -160,12 +138,6 @@ public abstract class TcpConnectionInfo extends ConnectionInfo {
         }
         if (socketLingerTimeout != null) {
             sb.append(",").append("socketLingerTimeout=").append(socketLingerTimeout);
-        }
-        if (rxBufferSize != null) {
-            sb.append(",").append("rxBufferSize=").append(rxBufferSize);
-        }
-        if (txBufferSize != null) {
-            sb.append(",").append("txBufferSize=").append(txBufferSize);
         }
         if (tcpNodelay != null) {
             sb.append(",").append("tcpNodelay=").append(tcpNodelay);

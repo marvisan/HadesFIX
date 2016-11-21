@@ -37,17 +37,17 @@ public class ClientTcpConnectionInfo extends TcpConnectionInfo implements Compos
     static {
         try {
             BACKUP_CONNECTIONS_INDEX = new String[]{"host", "port"};
-            COMPOSITE_DATA_ITEMS = new String[]{"id", "host", "port", "txBufferSize", "soLinger", "tcpNodelay",
+            COMPOSITE_DATA_ITEMS = new String[]{"id", "host", "port", "soLinger", "tcpNodelay",
                     "soTimeout", "soRcvbuf", "soSndbuf", "sendKeepAlive", "numOfRetries", "retrySecondsToWait", "proxyHost",
                     "proxyPort", "backupConnections"};
             COMPOSITE_DATA_ITEMS_DESCRIPTION = new String[]{"Tcp Client Id", "Sell side host", "Sell side port", 
-                    "Msg Tx Buffer Size", "Socket SO_LINGER Value", "Socket TCP_NODELAY Value", "Socket SO_TIMEOUT Value",
+                    "Socket SO_LINGER Value", "Socket TCP_NODELAY Value", "Socket SO_TIMEOUT Value",
                     "Socket Rx Buffer Size", "Socket Tx Buffer Size", "Socket SEND_ALIVE Value", "Number of connections retries",
                     "Seconds wait before each retry", "Proxy Host", "Proxy Port", "List of Backup Connections"};
             TABULAR_BACKUP_CONNECTIONS_TYPE = new TabularType("Backup Connections", "List of Backup Connections",
                     BackupConnectionInfo.DataType, BACKUP_CONNECTIONS_INDEX);
             TABULAR_BACKUP_CONNECTIONS = new TabularDataSupport(TABULAR_BACKUP_CONNECTIONS_TYPE);
-            COMPOSITE_DATA_OPEN_TYPES = new OpenType<?>[]{SimpleType.STRING, SimpleType.STRING, SimpleType.INTEGER, SimpleType.INTEGER,
+            COMPOSITE_DATA_OPEN_TYPES = new OpenType<?>[]{SimpleType.STRING, SimpleType.STRING, SimpleType.INTEGER,
                     SimpleType.INTEGER, SimpleType.BOOLEAN, SimpleType.INTEGER, SimpleType.INTEGER, SimpleType.INTEGER, SimpleType.BOOLEAN,
                     SimpleType.INTEGER, SimpleType.INTEGER, SimpleType.STRING, SimpleType.INTEGER, TABULAR_BACKUP_CONNECTIONS_TYPE};
 
@@ -142,7 +142,7 @@ public class ClientTcpConnectionInfo extends TcpConnectionInfo implements Compos
             for (BackupConnectionInfo backupConnection : backupConnections) {
                 TABULAR_BACKUP_CONNECTIONS.put(backupConnection.toCompositeData(BackupConnectionInfo.DataType));
             }
-            CompositeData cd = new CompositeDataSupport(xct, COMPOSITE_DATA_ITEMS, new Object[]{id, host, port, txBufferSize,
+            CompositeData cd = new CompositeDataSupport(xct, COMPOSITE_DATA_ITEMS, new Object[]{id, host, port,
                     socketLingerTimeout, tcpNodelay, socketTimeout, socketRcvbuf, socketSndbuf, sendKeepAlive, numOfRetries, retrySecondsToWait,
                     proxyHost, proxyPort, TABULAR_BACKUP_CONNECTIONS});
             assert ct.isValue(cd);

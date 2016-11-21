@@ -20,7 +20,6 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
@@ -71,7 +70,6 @@ public class TcpServer implements ManagedTask {
     private boolean hasSSL;
     private SSLContext sslCtx;
     private final String id;
-    private final Duration timeout;
 
     private List<String> restrictedHosts;
 
@@ -85,7 +83,6 @@ public class TcpServer implements ManagedTask {
 	this.coordinator = coordinator;
 	totalNumConnections = 1;
 	id = COMPONENT_NAME + "_" + configuration.getHost() + ":" + String.valueOf(configuration.getPort());
-	timeout = Duration.ofSeconds(DEFAULT_TIMEOUT_SECS, 1);
 	setServerAddress();
 	setServerParameters();
 	status = TaskStatus.New;
@@ -192,8 +189,8 @@ public class TcpServer implements ManagedTask {
     }
 
     private void setServerParameters() throws ConfigurationException {
-	if (configuration.getRxBufferSize() != null) {
-	    rcvBuffSize = configuration.getRxBufferSize();
+	if (configuration.getSocketRcvbuf() != null) {
+	    rcvBuffSize = configuration.getSocketRcvbuf();
 	}
 	if (configuration.getRestrHostsIPAddresses() != null && !configuration.getRestrHostsIPAddresses().isEmpty()) {
 	    String restrAddr = configuration.getRestrHostsIPAddresses();

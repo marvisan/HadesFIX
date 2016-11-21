@@ -59,11 +59,10 @@ public final class FixClient extends Protocol {
 
     private AtomicLong orderSequence;
 
-    public FixClient(ClientSessionCoordinator coordinator, ClientSessionInfo configuration, Handler next) throws ConfigurationException {
+    public FixClient(ClientSessionCoordinator coordinator, ClientSessionInfo configuration) throws ConfigurationException {
 	super(coordinator, configuration);
 	setSessionConfigData();
 	initialise();
-	nextHandlers.put(next.getId(), next);
 	status = TaskStatus.New;
     }
 

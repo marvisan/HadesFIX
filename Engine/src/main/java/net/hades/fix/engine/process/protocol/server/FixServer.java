@@ -17,6 +17,7 @@ import net.hades.fix.commons.exception.ExceptionUtil;
 import net.hades.fix.engine.process.TaskStatus;
 import net.hades.fix.engine.config.model.ClientSessionInfo;
 import net.hades.fix.engine.config.ConfigurationException;
+import net.hades.fix.engine.config.model.ServerSessionInfo;
 import net.hades.fix.engine.process.protocol.SeqNoPersistenceException;
 import net.hades.fix.engine.mgmt.alert.Alert;
 import net.hades.fix.engine.mgmt.alert.AlertCode;
@@ -25,7 +26,7 @@ import net.hades.fix.engine.process.ExecutionResult;
 import net.hades.fix.engine.process.event.AlertEvent;
 import net.hades.fix.engine.process.protocol.*;
 import net.hades.fix.engine.process.protocol.client.FixClient;
-import net.hades.fix.engine.process.session.ClientSessionCoordinator;
+import net.hades.fix.engine.process.session.ServerSessionCoordinator;
 import net.hades.fix.engine.util.PartyUtil;
 import net.hades.fix.engine.util.ThreadLocalSessionDataUtil;
 import net.hades.fix.message.BinaryMessage;
@@ -52,7 +53,7 @@ public final class FixServer extends Protocol {
 
     private AtomicLong orderSequence;
 
-    public FixServer(ClientSessionCoordinator coordinator, ClientSessionInfo configuration) throws ConfigurationException {
+    public FixServer(ServerSessionCoordinator coordinator, ServerSessionInfo configuration) throws ConfigurationException {
 	super(coordinator, configuration);
 	setSessionConfigData();
 	initialise();
@@ -144,6 +145,7 @@ public final class FixServer extends Protocol {
 	return true;
     }
 
+    @Override
     public void relayMessage(FIXMsg message) {
 	nextHandlers.values().iterator().next().write(message);
     }
