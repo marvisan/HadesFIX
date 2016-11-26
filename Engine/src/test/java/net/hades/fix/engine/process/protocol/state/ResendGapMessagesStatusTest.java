@@ -60,7 +60,7 @@ public class ResendGapMessagesStatusTest {
         SessionAddress address = new SessionAddress();
         address.setLocalAddress(new CounterpartyAddress("CLIENT", null, null));
         address.setRemoteAddress(new CounterpartyAddress("SERVER", null, null));
-        ServerSessionCoordinator coordinator = new ServerSessionCoordinator(null, null, null, address);
+        ServerSessionCoordinator coordinator = new ServerSessionCoordinator(null, null, address);
 //        coordinator.setName("SESS");
 //        Protocol protocol = new FixServer(coordinator, null);
 //        ResendGapMessagesStatus instance = new ResendGapMessagesStatus(protocol.getStateProcessor());

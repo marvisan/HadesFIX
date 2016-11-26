@@ -148,7 +148,7 @@ public class ServerSessionInfo extends SessionInfo implements CompositeDataView,
                     validateOutgoingFIXML, abortFIXMLValidationOnError, enableMsgValidation, persistence, fixVersion, defaultApplVerID,
                     defaultApplExtID, defaultCstmApplVerID, customApplVerID, rxBufferSize, txBufferSize, resendEndSeqNum,
                     logonTimeout, authenticationInfo != null ? authenticationInfo.toCompositeData(AuthenticationInfo.DataType) : null,
-                    connection != null ? ((ServerTcpConnectionInfo) connection).toCompositeData(ServerTcpConnectionInfo.DataType) : null,
+                    connectionInfo != null ? ((ServerTcpConnectionInfo) connectionInfo).toCompositeData(ServerTcpConnectionInfo.DataType) : null,
                     producerStreamInfo != null ? producerStreamInfo.toCompositeData(StreamInfo.DataType) : null,
                     consumerStreamInfo != null ? consumerStreamInfo.toCompositeData(StreamInfo.DataType) : null, 
 		    TABULAR_HANDLER_REFS, TABULAR_HANDLER_DEFS, enableLogonPassThrough});

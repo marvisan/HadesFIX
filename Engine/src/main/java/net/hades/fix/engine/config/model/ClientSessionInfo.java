@@ -169,7 +169,7 @@ public class ClientSessionInfo extends SessionInfo implements CompositeDataView,
                     resetSeqAtLogon, resetSeqAtLogout, resetSeqAtDisconnect, disableGapDetection, printableFIXML, validateIncomingFIXML,
                     validateOutgoingFIXML, abortFIXMLValidationOnError, enableMsgValidation, persistence, fixVersion, defaultApplVerID,
                     defaultApplExtID, defaultCstmApplVerID, customApplVerID, rxBufferSize, txBufferSize, resendEndSeqNum,
-                    connection != null ? ((ClientTcpConnectionInfo) connection).toCompositeData(ClientTcpConnectionInfo.DataType) : null,
+                    connectionInfo != null ? ((ClientTcpConnectionInfo) connectionInfo).toCompositeData(ClientTcpConnectionInfo.DataType) : null,
                     producerStreamInfo != null ? producerStreamInfo.toCompositeData(StreamInfo.DataType) : null,
                     consumerStreamInfo != null ? consumerStreamInfo.toCompositeData(StreamInfo.DataType) : null,
                     TABULAR_HANDLER_REFS, TABULAR_HANDLER_DEFS, maxNumLogonRetries, doNotReconnWhenSeqNumTooLow, connectOnStartup, reconnectDelay});

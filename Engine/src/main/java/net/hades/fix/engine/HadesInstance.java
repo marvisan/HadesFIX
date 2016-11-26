@@ -94,8 +94,6 @@ public class HadesInstance implements Reportable {
 
     private Scheduler scheduler;
 
-    private static volatile boolean shutdown;
-
     private EventProcessor eventProcessor;
     private ExecutorService exeuctorService;
 
@@ -205,22 +203,19 @@ public class HadesInstance implements Reportable {
     }
 
     public void waitToExit() {
-        LOGGER.log(Level.INFO, "HadesFIX engine started : {0}", DateFormatter.getFixTSFormat().format(new Date()));
+	LOGGER.log(Level.INFO, "HadesFIX engine started : {0}", DateFormatter.getFixTSFormat().format(new Date()));
 
-        while (!shutdown) {
-            try {
-		Thread.sleep(5);
-            } catch (InterruptedException ex) {
-		String error = "Thread interrupted unexpectedly.";
-		LOGGER.log(Level.SEVERE, "{0} Error was : {1}", new Object[]{error, ExceptionUtil.getStackTrace(ex)});
+	try {
+	    commandQueue.take();
+	} catch (InterruptedException ex) {
+	    String error = "Thread interrupted unexpectedly.";
+	    LOGGER.log(Level.SEVERE, "{0} Error was : {1}", new Object[]{error, ExceptionUtil.getStackTrace(ex)});
 
-		eventProcessor.onAlertEvent(new AlertEvent(this,
-			Alert.createAlert(configuration.getName(), HadesInstance.class.getSimpleName(),
-				BaseSeverityType.WARNING, AlertCode.THREAD_INTERRUPTED, "HadesFIX engine process interrupted", ex)));
+	    eventProcessor.onAlertEvent(new AlertEvent(this,
+		    Alert.createAlert(configuration.getName(), HadesInstance.class.getSimpleName(),
+			    BaseSeverityType.WARNING, AlertCode.THREAD_INTERRUPTED, "HadesFIX engine process interrupted", ex)));
 
-		ThreadUtil.sleep(1000);
-		shutdown = true;
-	    }
+	    ThreadUtil.sleep(1000);
 	}
     }
 
@@ -284,9 +279,9 @@ public class HadesInstance implements Reportable {
                             throw new ConfigurationException("Could not start the session. Session configuration disabled flag is set to true.");
                         }
                         if (sessionInfo instanceof ClientSessionInfo) {
-                            coordinator = new ClientSessionCoordinator(this, sessionInfo, cptyInfo, address);
+                            coordinator = new ClientSessionCoordinator(this, cptyInfo, address);
                         } else {
-                            coordinator = new ServerSessionCoordinator(this, sessionInfo, cptyInfo, address);
+                            coordinator = new ServerSessionCoordinator(this, cptyInfo, address);
                         }
 //                        startSessionCoordinator(coordinator);
                         sessions.put(address, coordinator);
@@ -352,7 +347,8 @@ public class HadesInstance implements Reportable {
 //        tcpServers.clear();
 
         LOGGER.log(Level.INFO, "HadesFIX engine [{0}] shutdown successfully.", configuration.getName());
-	shutdown = true;
+	
+	commandQueue.add("SHURDOWN");
     }
 
     public void shutdownImmediateEngine() {
@@ -380,7 +376,7 @@ public class HadesInstance implements Reportable {
 
         LOGGER.log(Level.INFO, "HadesFIX engine [{0}] shutdown successfully.", configuration.getName());
 
-        shutdown = true;
+        commandQueue.add("SHURDOWN");
     }
 
     public Scheduler getScheduler() {
@@ -407,9 +403,9 @@ public class HadesInstance implements Reportable {
         SessionAddress address = new SessionAddress(remoteAddr, localAddr);
         SessionCoordinator coordinator;
         if (sessionInfo instanceof ClientSessionInfo) {
-            coordinator = new ClientSessionCoordinator(this, sessionInfo, cptyInfo, address);
+            coordinator = new ClientSessionCoordinator(this, cptyInfo, address);
         } else {
-            coordinator = new ServerSessionCoordinator(this, sessionInfo, cptyInfo, address);
+            coordinator = new ServerSessionCoordinator(this, cptyInfo, address);
         }
         sessions.put(address, coordinator);
     }

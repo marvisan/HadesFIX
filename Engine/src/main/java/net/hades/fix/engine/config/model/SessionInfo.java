@@ -176,7 +176,7 @@ public class SessionInfo implements Serializable {
     protected EncryptedAuthenticationInfo encryptedAuthenticationInfo;
     
     @XmlElementRef()
-    protected ConnectionInfo connection;
+    protected ConnectionInfo connectionInfo;
 
     @XmlElement(name = "encryption")
     protected EncryptionInfo encryption;
@@ -497,12 +497,12 @@ public class SessionInfo implements Serializable {
         this.msgTypes = msgTypes;
     }
 
-    public ConnectionInfo getConnection() {
-        return connection;
+    public ConnectionInfo getConnectionInfo() {
+        return connectionInfo;
     }
 
-    public void setConnection(ConnectionInfo connection) {
-        this.connection = connection;
+    public void setConnectionInfo(ConnectionInfo connectionInfo) {
+        this.connectionInfo = connectionInfo;
     }
 
     public AuthenticationInfo getAuthenticationInfo() {
@@ -767,8 +767,8 @@ public class SessionInfo implements Serializable {
         if (encryptedAuthenticationInfo != null) {
             sb.append("encryptedAuthenticationInfo=").append(encryptedAuthenticationInfo.toString()).append(",");
         }
-        if (connection != null) {
-            sb.append("connection=").append(connection.toString()).append(",");
+        if (connectionInfo != null) {
+            sb.append("connection=").append(connectionInfo.toString()).append(",");
         }
         if (encryption != null) {
             sb.append("encryption=").append(encryption.toString()).append(",");

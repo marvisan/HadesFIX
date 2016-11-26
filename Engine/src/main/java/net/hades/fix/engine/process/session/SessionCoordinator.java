@@ -5,6 +5,9 @@
 package net.hades.fix.engine.process.session;
 
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,6 +24,8 @@ import net.hades.fix.engine.mgmt.data.SessionStats;
 import net.hades.fix.engine.model.CounterpartyAddress;
 import net.hades.fix.engine.model.SessionAddress;
 import net.hades.fix.engine.process.Advisable;
+import net.hades.fix.engine.process.EngineTask;
+import net.hades.fix.engine.process.ExecutionResult;
 import net.hades.fix.engine.process.ManagedTask;
 import net.hades.fix.engine.process.TaskStatus;
 import net.hades.fix.engine.process.event.AlertEvent;
@@ -55,6 +60,8 @@ public abstract class SessionCoordinator implements ManagedTask, Advisable {
     protected volatile TaskStatus status;
     protected volatile boolean shutdown;
     protected ConcurrentMap<String, Object> sessionContext;
+    protected LinkedHashMap<String, EngineTask> tasks;
+    protected Map<String, ExecutionResult> results;
 
     public SessionCoordinator(HadesInstance hadesInstance, CounterpartyInfo cptyConfiguration, SessionAddress sessionAddress) throws ConfigurationException {
         this.hadesInstance = hadesInstance;
@@ -62,6 +69,8 @@ public abstract class SessionCoordinator implements ManagedTask, Advisable {
         this.sessionAddress = sessionAddress;
 	commandQueue = new ArrayBlockingQueue<>(1);
 	sessionContext = new ConcurrentHashMap<>();
+	tasks = new LinkedHashMap<>();
+	results = new HashMap<>();
 	sessionConfiguration = getSessionConfiguration(cptyConfiguration, sessionAddress);
     }
 
@@ -72,7 +81,7 @@ public abstract class SessionCoordinator implements ManagedTask, Advisable {
     public ConcurrentMap<String, Object> getSessionContext() {
 	return sessionContext;
     }
-    
+
     /**
      * Runs the stream handlers upon the TCP connection success.
      * @param clientSocket TCP connection
@@ -134,7 +143,7 @@ public abstract class SessionCoordinator implements ManagedTask, Advisable {
     private SessionInfo getSessionConfiguration(CounterpartyInfo cptyConfiguration, SessionAddress sessionAddress) {
 	for (SessionInfo config : cptyConfiguration.getSessions()) {
 	    CounterpartyAddress localAddr = new CounterpartyAddress(config.getCompID(), config.getSubID(), config.getLocationID());
-	    if (localAddr.equals(sessionAddress.getLocalAddress().getCompID())) {
+	    if (localAddr.equals(sessionAddress.getLocalAddress())) {
 		return config;
 	    }
 	}

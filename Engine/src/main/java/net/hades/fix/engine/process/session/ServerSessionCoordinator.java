@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 
 import net.hades.fix.engine.HadesInstance;
 import net.hades.fix.engine.config.model.CounterpartyInfo;
+import net.hades.fix.engine.config.model.ServerTcpConnectionInfo;
 import net.hades.fix.engine.config.model.SessionInfo;
 import net.hades.fix.engine.exception.ConfigurationException;
 import net.hades.fix.engine.exception.ProtocolStatusException;
@@ -17,6 +18,7 @@ import net.hades.fix.engine.mgmt.alert.Alert;
 import net.hades.fix.engine.mgmt.alert.AlertCode;
 import net.hades.fix.engine.mgmt.alert.BaseSeverityType;
 import net.hades.fix.engine.model.SessionAddress;
+import net.hades.fix.engine.process.EngineTask;
 import net.hades.fix.engine.process.ExecutionResult;
 import net.hades.fix.engine.process.event.AlertEvent;
 import net.hades.fix.engine.process.TaskStatus;
@@ -33,17 +35,20 @@ public final class ServerSessionCoordinator extends SessionCoordinator {
 
     protected TcpServer transport;
 
-    public ServerSessionCoordinator(HadesInstance hadesInstance, SessionInfo configuration, CounterpartyInfo cptyConfiguration, SessionAddress sessionAddress) 
+    public ServerSessionCoordinator(HadesInstance hadesInstance, CounterpartyInfo cptyConfiguration, SessionAddress sessionAddress) 
 	    throws ConfigurationException {
         super(hadesInstance, cptyConfiguration, sessionAddress);
-	this.hadesInstance = hadesInstance;
-	id = configuration.getID();
+	id = sessionConfiguration.getID();
 	status = TaskStatus.New;
     }
 
     @Override
     public ExecutionResult call() throws Exception {
 	LOGGER.log(Level.INFO, "Server session coordinator [{0}] running.", id);
+	transport = new TcpServer(this, (ServerTcpConnectionInfo) sessionConfiguration.getConnectionInfo());
+	EngineTask<ExecutionResult> task = new EngineTask<>(Thread.NORM_PRIORITY, transport);
+	tasks.put(task.getName(), task);
+	results.put(task.getName(), (ExecutionResult) getExecutorService().submit(task));
 	status = TaskStatus.Running;
 	ExecutionResult result;
 

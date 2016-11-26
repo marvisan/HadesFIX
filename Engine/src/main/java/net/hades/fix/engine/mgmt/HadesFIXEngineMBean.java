@@ -231,22 +231,6 @@ public class HadesFIXEngineMBean extends NotificationBroadcasterSupport implemen
             }
 
             return result;
-        } else if (actionName.equals("killSession")) {
-            CompositeData result;
-            if ((params.length != 2) || !(params[0] instanceof String || params[1] instanceof String)) {
-                throw new RuntimeOperationsException(
-                        new IllegalArgumentException("Cannot invoke [killSession] : expecting params[i] : "
-                                + "instanceof SimpleType.STRING for i = 0, instanceof SimpleType.STRING for i = 1 "),
-                        "Wrong content for array Object[] params to invoke killSession() method");
-            }
-            try {
-                result = killSession((String) params[0], (String) params[1]);
-            } catch (Exception e) {
-                throw new MBeanException(e, "invoking killSession: " + e.getClass().getName() + " caught ["
-                        + e.getMessage() + "]");
-            }
-
-            return result;
         } else if (actionName.equals("startSession")) {
             CompositeData result;
             if ((params.length != 2) || !(params[0] instanceof String || params[1] instanceof String)) {
@@ -423,24 +407,6 @@ public class HadesFIXEngineMBean extends NotificationBroadcasterSupport implemen
                 OutcomeData.DataType,
                 MBeanOperationInfo.ACTION);
 
-        OpenMBeanParameterInfo[] freezeSessParameters = new OpenMBeanParameterInfoSupport[2];
-        freezeSessParameters[0] = new OpenMBeanParameterInfoSupport("cptyAddress", "Counterparty Address", SimpleType.STRING);
-        freezeSessParameters[1] = new OpenMBeanParameterInfoSupport("sessAddress", "Session Address", SimpleType.STRING);
-        operations[3] = new OpenMBeanOperationInfoSupport("freezeSess",
-                "Freezes the specified session.",
-                freezeSessParameters,
-                OutcomeData.DataType,
-                MBeanOperationInfo.ACTION);
-
-        OpenMBeanParameterInfo[] thawSessParameters = new OpenMBeanParameterInfoSupport[2];
-        thawSessParameters[0] = new OpenMBeanParameterInfoSupport("cptyAddress", "Counterparty Address", SimpleType.STRING);
-        thawSessParameters[1] = new OpenMBeanParameterInfoSupport("sessAddress", "Session Address", SimpleType.STRING);
-        operations[4] = new OpenMBeanOperationInfoSupport("thawSess",
-                "Unfreezes the specified session.",
-                thawSessParameters,
-                OutcomeData.DataType,
-                MBeanOperationInfo.ACTION);
-
         OpenMBeanParameterInfo[] resetSequencesParameters = new OpenMBeanParameterInfoSupport[3];
         resetSequencesParameters[0] = new OpenMBeanParameterInfoSupport("cptyAddress", "Counterparty Address", SimpleType.STRING);
         resetSequencesParameters[1] = new OpenMBeanParameterInfoSupport("sessAddress", "Session Address", SimpleType.STRING);
@@ -457,15 +423,6 @@ public class HadesFIXEngineMBean extends NotificationBroadcasterSupport implemen
         operations[6] = new OpenMBeanOperationInfoSupport("getSessionStats",
                 "Retrieve session stats per component.",
                 statsParameters,
-                OutcomeData.DataType,
-                MBeanOperationInfo.ACTION);
-
-        OpenMBeanParameterInfo[] killSessionParameters = new OpenMBeanParameterInfoSupport[2];
-        killSessionParameters[0] = new OpenMBeanParameterInfoSupport("cptyAddress", "Counterparty Address", SimpleType.STRING);
-        killSessionParameters[1] = new OpenMBeanParameterInfoSupport("sessAddress", "Session Address", SimpleType.STRING);
-        operations[7] = new OpenMBeanOperationInfoSupport("killSession",
-                "Kills the session and release all the resources.",
-                killSessionParameters,
                 OutcomeData.DataType,
                 MBeanOperationInfo.ACTION);
 
