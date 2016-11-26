@@ -8,7 +8,7 @@
         Configuration for unit test.
 -->
 
-<hadesInstance xmlns="http://www.marvisan.com/schema/hades-engine-config-1-0"
+<hadesInstance xmlns="http://www.marvisan.com/schema/hades-engine-config-2-0"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                xsi:schemaLocation="http://www.marvisan.com/schema/hades-engine-config-2-0 HadesEngineConfig.xsd"
                name="Sell Side" 
